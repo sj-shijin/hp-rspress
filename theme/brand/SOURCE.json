@@ -26,16 +26,30 @@
     "source": "https://www.ibm.com/plex/",
     "font_file": "IBMPlexMono-SemiBold.ttf",
     "font_sha256": "d3c38e55c78f5b0f28009fddba4834ec503278936a5986032424c9bd2d23aa46",
-    "license_file": "OFL-IBM-Plex.txt"
+    "license_file": "OFL-IBM-Plex.txt",
+    "transform": {
+      "translate": [
+        9.04954,
+        33.178012
+      ],
+      "scale": [
+        0.026312,
+        -0.026312
+      ]
+    }
   },
   "palette": {
     "light": {
-      "background": "#173c36",
-      "letters": "#faf7ee"
+      "background": "#242424",
+      "letters": "#ffffff"
     },
     "dark": {
-      "background": "#f2efe4",
-      "letters": "#173c36"
+      "background": "#fffff5ed",
+      "letters": "#121212"
+    },
+    "favicon": {
+      "background": "#f97316",
+      "letters": "#ffffff"
     }
   },
   "reference": "https://www.mi.com/global/",
@@ -43,5 +57,15 @@
     "light": "sj-light.svg",
     "dark": "sj-dark.svg",
     "favicon": "sj-favicon.svg"
+  },
+  "palette_roles": {
+    "navigation": {
+      "background": "--rp-c-text-1",
+      "letters": "--rp-c-bg"
+    },
+    "favicon": {
+      "background": "--rp-c-brand",
+      "letters": "light --rp-c-bg"
+    }
   }
 }

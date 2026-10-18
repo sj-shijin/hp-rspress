@@ -101,8 +101,9 @@ uv run --no-project --with 'fonttools[woff]==4.61.1' python scripts/prepare_font
 外轮廓为指数 n = 3 的超椭圆，参考[小米官网图标](https://www.mi.com/global/)的方圆形态。
 内部字形基于 [IBM Plex Mono](https://www.ibm.com/plex/) 600，已转为 SVG 轮廓，不额外加载该字体。
 
-SVG 文件位于 `theme/brand/`，通过原生 `logo.light`、`logo.dark` 配置切换墨绿／米白版本；
-网站标签页图标使用同一 M2 图形 `sj-favicon.svg`。资源由构建复制到 `/brand/`。
+SVG 文件位于 `theme/brand/`，通过原生 `logo.light`、`logo.dark` 配置切换亮暗版本。
+导航标识以当前主题的正文前景色作底色、页面背景色作字色；具体色值及对应变量记录于 `SOURCE.json`。
+网站标签页图标独立使用橙底白字的 `sj-favicon.svg`。资源由构建复制到 `/brand/`。
 设计参数、字体来源和原始文件 SHA-256 记录在 `theme/brand/SOURCE.json`，
 IBM Plex 的原始 OFL-1.1 许可证保存在同目录的 `OFL-IBM-Plex.txt`。
 
