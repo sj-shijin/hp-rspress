@@ -1,168 +1,94 @@
 # hp-rspress
 
-ShiJin 的科研知识网站，使用 Rspress 2。
+ShiJin 的个人网站，使用 Rspress 2 构建，包含个人主页与知识库。
 
 - 网站：<https://shijin.space/>
-- 网站代码：<https://github.com/sj-shijin/hp-rspress>
+- 代码：<https://github.com/sj-shijin/hp-rspress>
 
-## 安装与预览
+## 本地使用
 
 需要 Node.js 20.19+／22.12+ 和 Python 3。
 
 ```sh
-sh scripts/install.sh
-npm run build
-npm run preview
+sh scripts/install.sh  # 首次安装依赖
+npm run dev           # 开发预览；修改内容或公开清单后需重启
+npm run build         # 导出、构建、校正 Markdown 并检查产物
+npm run preview       # 预览已构建的静态网站
+npm test              # 使用独立临时知识库运行测试
+npm run check:build   # 单独检查现有构建产物
 ```
 
-访问 `http://127.0.0.1:1320/`。网页仅监听本机。
+预览地址为 `http://127.0.0.1:1320/`，仅监听本机。
 
-知识库以私有 Git 子模块接入，`knowledge/publish.json` 是网页内容的唯一公开清单。
-正式笔记仍在 Obsidian 知识库维护；不在子模块副本中编辑。
-导出的网页源文件和构建结果位于被 Git 忽略的 `.generated/`，完整知识库不会进入网站构建目录。
-
-## 内容与构建
-
-```sh
-npm run export  # 按清单生成正文、目录、反链、原始 Markdown 和关联索引
-npm run build   # 导出、静态构建、校正 Markdown，并检查实际产物
-npm run preview # 预览已构建的静态站点
-npm run dev     # 开发预览；修改 site/、知识库或清单后重新启动
-npm test        # 使用独立临时知识库检查公开范围、链接、公式及附件
-npm run check:build # 单独复核现有构建产物；正式域名模式需设置相同的 SITE_ORIGIN
-```
-
-构建链路：
+## 项目目录
 
 ```text
-site/（网站专属正文） + 私有知识库子模块的固定提交
-  → 合并网站正文与 knowledge/publish.json 中允许的笔记、附件
-  → .generated/docs/（Rspress 内容输入）
-  → .generated/site/（唯一的网站发布产物）
-  → 自动检查公开范围、旧网址、搜索索引与 Markdown
+site/                   # 个人主页、知识库入口等网站专属正文
+  index.md              # /
+  knowledge/index.md    # /knowledge/
+theme/                  # 样式、字体与标识资源
+knowledge/publish.json  # 知识库笔记与附件的唯一公开清单
+knowledge-vault/        # 私有知识库的固定版本子模块
+scripts/                # 内容导出、Markdown 校正与产物检查
+.generated/docs/        # 生成的 Rspress 输入，不提交
+.generated/site/        # 唯一发布产物，不提交
+.runtime/               # 本地日志，不提交
 ```
 
-网站专属内容维护在 `site/`，使用普通 Markdown、MDX 和 Rspress frontmatter。
-`site/index.md` 对应首页，`site/knowledge/index.md` 对应知识库入口；文案直接在这两个文件中修改。
-个人首页独立维护；仅知识库入口的领域卡片由公开清单自动注入。
-以后新增网站专属页面可放在 `site/` 下；导出时复制到同一文档根目录，原文件不会被改写。
-`site/knowledge/` 只允许维护入口 `index.md`，`public/knowledge/` 由导出器生成，避免覆盖知识库公开边界。
+开发约定见 [AGENTS.md](AGENTS.md)，框架与主题用法见 `.agents/skills/`。
+项目技能来自 [rstackjs/agent-skills](https://github.com/rstackjs/agent-skills)，
+通过 Skills Manager 导出为项目副本；更新时先更新共享库，再重新导出，不做全局部署。
 
-首页使用原生 `pageType: custom` 展示单栏名片，并提供知识库入口；
-`/knowledge/` 保留官方 Home 布局与领域卡片。两页均使用与正文一致的亮暗主题纯色背景。
+## 知识库内容
 
-清单中的 `categories[].overview` 指定领域概览笔记，
-其正文直接生成到 `/knowledge/<category>/`，作为领域首页；不再额外生成卡片目录和独立概览正文页。
-未指定概览的领域仍使用官方 `OverviewGroup` 目录作为入口。
-侧栏按清单中的 `category`、`group`、`chapter` 和笔记顺序生成，每个领域只显示一个概览入口。
-普通笔记保留 `.md`，双链和章节链接在导出时转换，并生成反向链接。
-公式通过 `remark-math` 与 `rehype-katex` 渲染，不修改知识库原文。
-整篇笔记嵌入、块引用及未获允许的附件会中止导出；未公开笔记链接显示为文字。
+正式笔记在 Obsidian 知识库维护，不在子模块副本中编辑。
+公开清单维护笔记摘要、领域、分组、章节和顺序；导出不继承私有 frontmatter，也不沿链接扩大公开范围。
+`site/knowledge/` 仅维护入口 `index.md`，领域页面和附件由清单生成。
 
-普通笔记网址继续使用 `/knowledge/<slug>/`。概览保留原知识库文件、笔记 id 和原始 Markdown 地址，
-网站链接统一指向领域首页；旧概览网页通过原生运行时跳转，并保留查询参数和章节锚点。
-旧 Markdown 链接继续可读，站内搜索和 AI 索引只收录领域首页一次。
-`/knowledge/index.json` 提供类别、链接、反链和旧地址，`/knowledge/raw/<slug>.md` 提供内容副本。
-Rspress 的 SSG-MD 另生成 `llms.txt`、`llms-full.txt` 和每页的 Markdown；均只来自本次导出内容。
-Rspress 2.0 的 SSG-MD 会转义部分 LaTeX；`postbuild` 用已导出的 Markdown 校正笔记副本，
-再按原生 `llms.txt` 索引重建全文，保证公式与链接内容一致。
-每次构建随后自动执行 `check:build`：核对清单、实际网页、附件、原生搜索索引、旧入口和 AI 索引，
-检查 Markdown 副本、全文及公式渲染，失败时阻止构建成功。报告保存在 `.generated/build-check.json`。
-构建缓存通过官方 `cacheDigest` 纳入 `SITE_ORIGIN`，切换本地与正式域名时自动失效。
+`categories[].overview` 指定的概览正文作为 `/knowledge/<category>/` 领域首页，
+普通笔记使用 `/knowledge/<slug>/`。旧概览网页与 Markdown 地址继续兼容，搜索和 AI 索引不重复收录。
+双链在导出时转换并生成反链；未公开笔记链接显示为文字，整篇嵌入、块引用及未获允许的附件会中止导出。
 
-本地预览默认不读取正式知识库中尚未提交的修改。
-修改公开范围后重新启动预览；更新笔记版本时，先在正式库提交并推送，再更新网站的子模块：
+预览使用子模块的固定提交，不读取正式库中尚未提交的修改。
+更新笔记时，先在正式库提交并推送，再更新网站的子模块版本、检查差异并重新构建：
 
 ```sh
 git -C knowledge-vault fetch origin
 git -C knowledge-vault checkout --detach origin/main
 git diff --submodule
-npm run dev
 ```
 
-## 网页字体
+## 构建与 AI 读取
 
-正文、导航、目录与代码使用 [LXGW WenKai Mono GB v1.530](https://github.com/lxgw/LxgwWenkaiGB/releases/tag/v1.530)。
-Regular 对应 400，Medium 对应 500；标题与强调文字匹配 Medium，公式继续使用 KaTeX 字体。
-网站自托管 WOFF2 字体，按拉丁字符、常用汉字和扩展字符加载，保留原字体的全部 Unicode 字符覆盖。
-来源版本、原始文件 SHA-256 与分片信息记录在 `theme/fonts/lxgw-wenkai-mono-gb/SOURCE.json`。
-字体遵循 OFL-1.1，原许可证随网页一同发布到 `/fonts/lxgw-wenkai-mono-gb/OFL.txt`。
-
-日常构建直接使用已生成的字体文件。需要重新生成时，从上述官方版本下载
-`LXGWWenKaiMonoGB-Regular.ttf`、`LXGWWenKaiMonoGB-Medium.ttf`，并放入同版本的 `OFL.txt`：
-
-```sh
-uv run --no-project --with 'fonttools[woff]==4.61.1' python scripts/prepare_fonts.py /path/to/font-sources
+```text
+网站正文 + 私有子模块中的公开内容
+  → .generated/docs/ → Rspress → Markdown 校正 → 产物检查
+  → .generated/site/
 ```
 
-## 网站标识与导航
+- `/llms.txt`：按领域、分组和章节发现笔记，链接与摘要来自公开清单。
+- `/llms-full.txt`：按上述索引合并的全文。
+- `/knowledge/<slug>/index.md`、`/knowledge/raw/<slug>.md`：单篇 Markdown 与下载副本。
+- `/knowledge/index.json`：单独标识的 JSON 辅助资源，提供链接、反链与旧地址。
+- `/sitemap.xml`：官方插件生成的公开页面索引，排除旧概览跳转页和 404。
 
-左上角采用 M2 柔方 SJ 徽章与 ShiJin 全名，整体链接到首页；顶部菜单仅保留知识库入口。
-外轮廓为指数 n = 3 的超椭圆，参考[小米官网图标](https://www.mi.com/global/)的方圆形态。
-内部字形基于 [IBM Plex Mono](https://www.ibm.com/plex/) 600，已转为 SVG 轮廓，不额外加载该字体。
+`postbuild` 校正 Rspress 2.0 SSG-MD 的 LaTeX 转义，恢复 AI 导航提示，并按 `SITE_ORIGIN` 补全链接。
+构建检查核对公开范围、搜索、链接、提示及 sitemap，逐个比较公式并双向核验正文。
+检查失败会中止构建，报告见 `.generated/build-check.json`。
+AFDocs 的通用正文比较可能误报 KaTeX，公式一致性由构建检查验证。
+内容协商与 WebMCP 尚未接入。
 
-SVG 文件位于 `theme/brand/`，通过原生 `logo.light`、`logo.dark` 配置切换亮暗版本。
-导航标识以当前主题的正文前景色作底色、页面背景色作字色；具体色值及对应变量记录于 `SOURCE.json`。
-网站标签页图标独立使用橙底白字的 `sj-favicon.svg`。资源由构建复制到 `/brand/`。
-设计参数、字体来源和原始文件 SHA-256 记录在 `theme/brand/SOURCE.json`，
-IBM Plex 的原始 OFL-1.1 许可证保存在同目录的 `OFL-IBM-Plex.txt`。
+## 部署
 
-## 自动发布
+推送网站 `main` 会触发 `.github/workflows/pages.yml`，执行测试、构建并发布到 GitHub Pages。
+构建通过只读 `KNOWLEDGE_VAULT_DEPLOY_KEY` 获取私有知识库的固定提交，仅上传 `.generated/site/`。
+知识库仓库保持私有；仅推送知识库不会更新网站，还需提交网站中的子模块版本。
 
-推送网站 `main` 分支后，`.github/workflows/pages.yml` 自动执行测试、构建、产物检查和 GitHub Pages 发布；
-也可以在 GitHub Actions 中手动运行。仅推送知识库不会自动更新网站，需要更新并提交网站的子模块版本。
-
-构建使用网站记录的子模块提交，通过 `KNOWLEDGE_VAULT_DEPLOY_KEY` 读取私有知识库。
-该密钥是知识库仓库的专用只读 Deploy Key，私钥仅保存在网站仓库的 Actions Secret 中。
-网站仓库公开，知识库仓库保持私有；公开范围始终由 `knowledge/publish.json` 控制。
-只有 `.generated/site/` 被上传为 Pages 发布产物。
-
-GitHub Pages 使用 Actions 作为发布来源，自定义域名在仓库 Pages 设置中绑定。
-DNS 指向 GitHub Pages，网站根路径为 `/`。Actions 发布不依赖仓库中的 `CNAME` 文件。
-线上构建设置 `SITE_ORIGIN=https://shijin.space`，生成带正式域名的 Markdown 索引；
-本地预览不设置该变量，继续使用本机链接。
+自定义域名在 GitHub Pages 设置中绑定，不依赖 `CNAME` 文件。
+线上设置 `SITE_ORIGIN=https://shijin.space`；本地默认使用本机路径。
+构建缓存随 `SITE_ORIGIN` 切换失效。检查正式域名产物时，构建与检查需使用相同的变量：
 
 ```sh
-# 修改网站代码或更新子模块版本后，推送网站触发部署
-git push origin main
-
-# 本地检查与线上相同的构建
 SITE_ORIGIN=https://shijin.space npm run build
+SITE_ORIGIN=https://shijin.space npm run check:build
 ```
-
-## AI 协作与内容读取
-
-项目开发约定见 `AGENTS.md`。两个官方技能保存在本仓库的 `.agents/skills/`，
-通过 `manage-skills` 和 Skills Manager CLI 从共享库导出，供本项目使用。
-共享库保留官方 Git 来源与更新记录；这两个技能不做全局部署。
-
-- [rspress-best-practices](https://github.com/rstackjs/agent-skills/tree/main/skills/rspress-best-practices)
-- [rspress-custom-theme](https://github.com/rstackjs/agent-skills/tree/main/skills/rspress-custom-theme)
-
-首次从已安装的共享库导出时，在仓库根目录执行：
-
-```sh
-"$HOME/.skills-manager/bin/skills-manager-cli" --json skills export rspress-best-practices \
-  --dest .agents/skills/rspress-best-practices
-"$HOME/.skills-manager/bin/skills-manager-cli" --json skills export rspress-custom-theme \
-  --dest .agents/skills/rspress-custom-theme
-```
-
-项目中保留实际文件副本，随仓库版本管理；上游 MIT 许可证保存在
-`.agents/skills/LICENSE-rstack-agent-skills.txt`。
-当前 CLI 的 `deploy/undeploy/status` 面向全局部署，项目目录通过 `export --dest` 写入。
-共享库更新不会自动刷新项目副本；更新前先核对项目中的修改，再重新导出。
-默认导出不会覆盖已有目录。
-
-每篇公开笔记的简短摘要放在 `knowledge/publish.json` 的 `description` 中，
-仅作为网站发布元数据，不修改正式笔记，也不自动继承私有 frontmatter。
-导出时同步生成页面 description 与 `/knowledge/index.json` 中的摘要。
-新增公开笔记必须填写摘要。
-
-`llms.llmsTxt` 使用 Rspress 官方回调，按公开清单的领域、分组、章节与顺序生成索引；
-链接沿用原生 SSG-MD 地址，同时兼容本地相对链接和 `SITE_ORIGIN` 正式域名链接。
-`postbuild` 继续按该索引重建 `llms-full.txt`，保留原始 LaTeX 与公开范围。
-
-AI 阅读时先访问 `/llms.txt`，按需读取单篇 Markdown，再用 `/knowledge/index.json`
-查找正向链接与反向链接；整体梳理时可以读取 `/llms-full.txt`。
-WebMCP 等稳定版发布后另行评估，当前不接入。
