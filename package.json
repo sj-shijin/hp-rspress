@@ -7,9 +7,10 @@
     "export": ".venv/bin/python scripts/export_knowledge.py",
     "dev": "npm run export && rspress dev --host 127.0.0.1 --port 1320",
     "build": "npm run export && rspress build",
-    "postbuild": ".venv/bin/python scripts/finalize_markdown.py",
+    "postbuild": ".venv/bin/python scripts/finalize_markdown.py && npm run check:build",
     "preview": "rspress preview --host 127.0.0.1 --port 1320",
-    "test": ".venv/bin/python -m unittest discover -s tests -v"
+    "test": ".venv/bin/python -m unittest discover -s tests -v",
+    "check:build": ".venv/bin/python scripts/check_build.py"
   },
   "devDependencies": {
     "@rspress/core": "2.0.23",

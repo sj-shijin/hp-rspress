@@ -25,20 +25,28 @@ npm run preview
 
 ```sh
 npm run export  # 按清单生成正文、目录、反链、原始 Markdown 和关联索引
-npm run build   # 导出后执行 Rspress 静态构建，包含 SSG-MD
+npm run build   # 导出、静态构建、校正 Markdown，并检查实际产物
 npm run preview # 预览已构建的静态站点
-npm run dev     # 开发时热更新；修改知识库或清单后重新启动
+npm run dev     # 开发预览；修改 site/、知识库或清单后重新启动
 npm test        # 使用独立临时知识库检查公开范围、链接、公式及附件
+npm run check:build # 单独复核现有构建产物；正式域名模式需设置相同的 SITE_ORIGIN
 ```
 
 构建链路：
 
 ```text
-私有知识库子模块的固定提交
-  → knowledge/publish.json 中的笔记与实际引用的允许附件
+site/（网站专属正文） + 私有知识库子模块的固定提交
+  → 合并网站正文与 knowledge/publish.json 中允许的笔记、附件
   → .generated/docs/（Rspress 内容输入）
   → .generated/site/（唯一的网站发布产物）
+  → 自动检查公开范围、旧网址、搜索索引与 Markdown
 ```
+
+网站专属内容维护在 `site/`，使用普通 Markdown、MDX 和 Rspress frontmatter。
+`site/index.md` 对应首页，`site/knowledge/index.md` 对应知识库入口；文案直接在这两个文件中修改。
+两个入口的领域卡片，以及知识库入口的领域按钮，仍由公开清单自动注入。
+以后新增网站专属页面可放在 `site/` 下；导出时复制到同一文档根目录，原文件不会被改写。
+`site/knowledge/` 只允许维护入口 `index.md`，`public/knowledge/` 由导出器生成，避免覆盖知识库公开边界。
 
 首页使用官方 Home 布局与领域入口。清单中的 `categories[].overview` 指定领域概览笔记，
 其正文直接生成到 `/knowledge/<category>/`，作为领域首页；不再额外生成卡片目录和独立概览正文页。
@@ -55,6 +63,9 @@ npm test        # 使用独立临时知识库检查公开范围、链接、公�
 Rspress 的 SSG-MD 另生成 `llms.txt`、`llms-full.txt` 和每页的 Markdown；均只来自本次导出内容。
 Rspress 2.0 的 SSG-MD 会转义部分 LaTeX；`postbuild` 用已导出的 Markdown 校正笔记副本，
 再按原生 `llms.txt` 索引重建全文，保证公式与链接内容一致。
+每次构建随后自动执行 `check:build`：核对清单、实际网页、附件、原生搜索索引、旧入口和 AI 索引，
+检查 Markdown 副本、全文及公式渲染，失败时阻止构建成功。报告保存在 `.generated/build-check.json`。
+构建缓存通过官方 `cacheDigest` 纳入 `SITE_ORIGIN`，切换本地与正式域名时自动失效。
 
 本地预览默认不读取正式知识库中尚未提交的修改。
 修改公开范围后重新启动预览；更新笔记版本时，先在正式库提交并推送，再更新网站的子模块：
@@ -94,7 +105,7 @@ IBM Plex 的原始 OFL-1.1 许可证保存在同目录的 `OFL-IBM-Plex.txt`。
 
 ## 自动发布
 
-推送网站 `main` 分支后，`.github/workflows/pages.yml` 自动执行测试、构建和 GitHub Pages 发布；
+推送网站 `main` 分支后，`.github/workflows/pages.yml` 自动执行测试、构建、产物检查和 GitHub Pages 发布；
 也可以在 GitHub Actions 中手动运行。仅推送知识库不会自动更新网站，需要更新并提交网站的子模块版本。
 
 构建使用网站记录的子模块提交，通过 `KNOWLEDGE_VAULT_DEPLOY_KEY` 读取私有知识库。

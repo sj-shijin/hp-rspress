@@ -19,6 +19,8 @@ class KnowledgeExportTests(unittest.TestCase):
         self.vault = self.root / 'vault'
         self.vault.mkdir()
         (self.root / 'state').mkdir()  # Basic Memory 配置和数据库与正式库隔离。
+        self.site = self.root / 'site'
+        shutil.copytree(Path(__file__).resolve().parents[1] / 'site', self.site)
         self.out = self.root / 'export'
         self.manifest = self.root / 'publish.json'
         (self.vault / '甲.md').write_text('''---
@@ -64,7 +66,7 @@ $$
 
     def run_export(self, spec=None):
         self.manifest.write_text(json.dumps(self.spec if spec is None else spec))
-        return export(self.vault, self.manifest, self.out)
+        return export(self.vault, self.manifest, self.out, site_source=self.site)
 
     def test_public_boundary_links_backlinks_and_math(self):
         report = self.run_export()
@@ -191,6 +193,30 @@ $$
         self.assertIn('## 其他笔记', text)
         self.assertEqual(text.count('[丙]'), 1)
         self.assertNotIn('## 其他页面', text)
+
+    def test_site_content_is_copied_and_refreshes_without_editing_source(self):
+        home = self.site / 'index.md'
+        home.write_text(home.read_text() + '\n临时网站介绍。\n')
+        original = home.read_bytes()
+        (self.site / 'about.md').write_text('# 临时介绍\n\n独立网站正文。\n')
+        self.run_export()
+        self.assertIn('临时网站介绍。', (self.out / 'docs/index.md').read_text())
+        self.assertIn('数学领域', (self.out / 'docs/index.md').read_text())
+        self.assertEqual((self.out / 'docs/about.md').read_bytes(), (self.site / 'about.md').read_bytes())
+        self.assertEqual(home.read_bytes(), original)
+        home.write_text(home.read_text().replace('临时网站介绍。', '更新后的临时介绍。'))
+        self.run_export()
+        self.assertIn('更新后的临时介绍。', (self.out / 'docs/index.md').read_text())
+
+    def test_site_cannot_override_knowledge_publication(self):
+        target = self.site / 'knowledge/unapproved.md'
+        target.write_text('临时未允许内容。')
+        with self.assertRaisesRegex(ValueError, '公开清单'):
+            self.run_export()
+        target.unlink()
+        (self.site / 'public/knowledge').mkdir(parents=True)
+        with self.assertRaisesRegex(ValueError, '公开清单'):
+            self.run_export()
 
     def test_public_note_requires_explicit_summary(self):
         del self.spec['notes'][0]['description']

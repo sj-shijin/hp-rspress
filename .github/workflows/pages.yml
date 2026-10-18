@@ -58,7 +58,7 @@ jobs:
       - name: 验证导出范围、关联与公式
         run: npm test
 
-      - name: 按公开清单构建网站
+      - name: 按公开清单构建并校验网站产物
         run: npm run build
         env:
           SITE_ORIGIN: https://shijin.space

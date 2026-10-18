@@ -256,7 +256,13 @@ class Exporter:
                 result.extend(children)
         return result
 
-    def write(self, output: Path, *, preview: bool = True) -> dict:
+    def write(self, output: Path, *, preview: bool = True, site_source: Path | None = None) -> dict:
+        site_source = site_source or Path(__file__).resolve().parents[1] / 'site'
+        # 网站入口与知识笔记分开维护，知识页面与附件始终只能由公开清单导出。
+        if (site_source / 'public/knowledge').exists() or any(
+                p.is_file() and p.relative_to(site_source / 'knowledge').as_posix() != 'index.md'
+                for p in (site_source / 'knowledge').rglob('*')):
+            raise ValueError('site/knowledge/ 仅允许入口 index.md，知识内容请使用公开清单')
         converted = {note.slug: self.convert(note) for note in self.notes}
         marker = output / '.knowledge-export'
         if output.exists() and any(output.iterdir()) and not marker.exists():
@@ -268,11 +274,11 @@ class Exporter:
         docs = output / 'docs'
         if docs.exists():
             shutil.rmtree(docs)
-        docs.mkdir()
+        shutil.copytree(site_source, docs)
         public = docs / 'public/knowledge'
         (public / 'raw').mkdir(parents=True)
         content = docs / 'knowledge'
-        content.mkdir()
+        content.mkdir(exist_ok=True)
 
         def page(path: Path, metadata: dict, body: str = ''):
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -321,20 +327,19 @@ class Exporter:
                  {'title': category['title'], 'description': description},
                  '\n'.join(blocks))
 
-        home = {'pageType': 'home', 'title': 'ShiJin 科研知识库',
-                'description': '整理基础知识，记录研究增量，沿知识关联继续阅读。',
-                'hero': {'name': 'ShiJin', 'text': '科研知识库',
-                         'tagline': '整理基础知识，记录研究增量。',
-                         'actions': [{'theme': 'brand', 'text': '进入知识库',
-                                      'link': '/knowledge/'}]},
-                'features': features}
-        page(docs / 'index.md', home)
-        page(content / 'index.md', {'pageType': 'home', 'title': '知识库',
-             'description': '按领域查阅基础知识、研究增量与阅读路线。',
-             'hero': {'name': '知识库', 'text': '按领域阅读',
-                      'tagline': '从概览与基础概念出发，沿着知识关联继续阅读。',
-                      'actions': [{'theme': 'brand', 'text': n['text'], 'link': n['link']}
-                                  for n in navigation]}, 'features': features})
+        # 固定文案来自 site/；仅把清单派生的卡片与领域按钮注入两个入口。
+        for relative in ['index.md', 'knowledge/index.md']:
+            source = docs / relative
+            raw = source.read_text(encoding='utf-8')
+            metadata, separator, body = raw[4:].partition('\n---\n')
+            if not raw.startswith('---\n') or not separator:
+                raise ValueError(f'网站入口需要 YAML frontmatter：{relative}')
+            metadata = yaml.safe_load(metadata)
+            metadata['features'] = features
+            if relative == 'knowledge/index.md':
+                metadata['hero']['actions'] = [
+                    {'theme': 'brand', 'text': n['text'], 'link': n['link']} for n in navigation]
+            page(source, metadata, body.lstrip('\n'))
 
         uncategorized = [n for n in self.notes if not n.category]
         if uncategorized:
@@ -390,8 +395,10 @@ class Exporter:
         return report
 
 
-def export(vault: Path, manifest: Path, output: Path, *, preview: bool = True) -> dict:
-    return Exporter(vault, json.loads(manifest.read_text(encoding='utf-8'))).write(output, preview=preview)
+def export(vault: Path, manifest: Path, output: Path, *, preview: bool = True,
+           site_source: Path | None = None) -> dict:
+    return Exporter(vault, json.loads(manifest.read_text(encoding='utf-8'))).write(
+        output, preview=preview, site_source=site_source)
 
 
 def main():

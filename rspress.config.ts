@@ -6,6 +6,7 @@ import rehypeKatex from 'rehype-katex';
 import { renderLlmsTxt } from './scripts/render_llms.mjs';
 
 const generated = path.resolve('.generated');
+const siteOrigin = process.env.SITE_ORIGIN || '';
 const navigation = JSON.parse(
   fs.readFileSync(path.join(generated, 'theme-config.json'), 'utf-8'),
 );
@@ -46,12 +47,16 @@ export default defineConfig({
   logoHref: '/',
   icon: './theme/brand/sj-favicon.svg',
   base: '/',
-  siteOrigin: process.env.SITE_ORIGIN || '',
+  siteOrigin,
   route: { cleanUrls: true },
   llms: {
     llmsTxt: context => renderLlmsTxt(context, knowledgeIndex),
   },
   builderConfig: {
+    performance: {
+      // 正式域名与本地预览的虚拟页面数据不能复用同一份缓存。
+      buildCache: { cacheDigest: [siteOrigin] },
+    },
     output: {
       copy: [
         {
