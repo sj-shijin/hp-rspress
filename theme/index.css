@@ -1,6 +1,14 @@
 @import './fonts/lxgw-wenkai-mono-gb/font.css';
 
 :root {
+  /* Orange 品牌色：链接、交互状态和选中背景共用同一组色阶。 */
+  --rp-c-brand: #F97316;
+  --rp-c-brand-dark: #ef6606;
+  --rp-c-brand-darker: #d65b06;
+  --rp-c-brand-light: #fa9148;
+  --rp-c-brand-lighter: #fcaf79;
+  --rp-c-brand-tint: rgba(249, 115, 22, 0.15);
+
   --rp-font-family-base: 'LXGW WenKai Mono GB', -apple-system, BlinkMacSystemFont,
     'Segoe UI', sans-serif;
   --rp-font-family-mono: 'LXGW WenKai Mono GB', Menlo, Monaco, Consolas, monospace;
