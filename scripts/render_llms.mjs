@@ -3,7 +3,10 @@ export function renderLlmsTxt(context, index) {
   const { title, description, base, siteOrigin, sections } = context;
   const prefix = base === '/' ? '' : base.replace(/\/$/, '');
   // 原生 page.link 已处理 base 与正式域名，按路径匹配即可兼容两种构建。
-  const pages = sections.flatMap(section => section.pages);
+  const aliases = new Set(index.notes.flatMap(note => note.aliases || [])
+    .map(url => `${prefix}${url}index.md`));
+  const pages = sections.flatMap(section => section.pages)
+    .filter(page => !aliases.has(new URL(page.link, 'https://rspress.local').pathname));
   const byPath = new Map(pages.map(page => [
     new URL(page.link, 'https://rspress.local').pathname, page,
   ]));
@@ -41,7 +44,7 @@ export function renderLlmsTxt(context, index) {
   for (const category of index.categories) {
     lines.push('', `## ${category.title}`, '');
     entry(category.url, category.description);
-    notes(index.notes.filter(note => note.category === category.id));
+    notes(index.notes.filter(note => note.category === category.id && note.url !== category.url));
   }
   const uncategorized = index.notes.filter(note => !note.category);
   if (uncategorized.length) {

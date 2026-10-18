@@ -19,6 +19,10 @@ def finalize(output: Path, site_origin: str = '') -> dict:
         # Rspress 2.0 的 SSG-MD 不执行自定义数学插件，会转义 LaTeX。
         # 此处只使用清单导出得到的副本，网页渲染与正式知识库均保持原状。
         shutil.copyfile(source, target)
+        # 兼容先前公开的 Markdown 链接；AI 索引只收录领域首页一次。
+        for alias in note.get('aliases', []):
+            legacy = output / alias.lstrip('/') / 'index.md'
+            shutil.copyfile(source, legacy)
 
     # 原生 404 页也带 Markdown alternate 链接，但 2.0 不生成对应文件。
     if (output / '404.html').exists():

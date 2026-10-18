@@ -68,7 +68,7 @@ $$
 
     def test_public_boundary_links_backlinks_and_math(self):
         report = self.run_export()
-        rendered = (self.out / 'docs/knowledge/alpha/index.md').read_text()
+        rendered = (self.out / 'docs/knowledge/math/index.md').read_text()
         raw = (self.out / 'docs/public/knowledge/raw/alpha.md').read_text()
         index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
         all_text = '\n'.join(p.read_text() for p in self.out.rglob('*') if p.is_file())
@@ -92,12 +92,38 @@ $$
     def test_native_navigation_and_overview_follow_manifest(self):
         self.run_export()
         config = json.loads((self.out / 'theme-config.json').read_text())
+        overview = (self.out / 'docs/knowledge/math/index.md').read_text()
+        self.assertIn('## 定义', overview)
+        self.assertNotIn('OverviewGroup', overview)
+        self.assertFalse((self.out / 'docs/knowledge/math/index.mdx').exists())
+        self.assertIn('几何基础', json.dumps(config, ensure_ascii=False))
+        self.assertEqual(config['nav'][0]['items'][0]['link'], '/knowledge/math/')
+        self.assertEqual(config['sidebar']['/knowledge/'][0]['items'][0],
+                         {'text': '概览与阅读路线', 'link': '/knowledge/math/'})
+        self.assertNotIn('/knowledge/alpha/', json.dumps(config))
+
+    def test_overview_keeps_identity_and_redirects_old_route(self):
+        self.run_export()
+        index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
+        overview = index['notes'][0]
+        self.assertEqual(overview['id'], 'alpha')
+        self.assertEqual(overview['url'], '/knowledge/math/')
+        self.assertEqual(overview['aliases'], ['/knowledge/alpha/'])
+        self.assertEqual(index['categories'][0]['overview'], 'alpha')
+        other = (self.out / 'docs/knowledge/beta/index.md').read_text()
+        self.assertIn('[前置定义](/knowledge/math/)', other)
+        self.assertNotIn('](/knowledge/alpha/)', other)
+        self.assertFalse((self.out / 'docs/knowledge/alpha/index.md').exists())
+        self.assertTrue((self.out / 'docs/knowledge/alpha/index.mdx').is_file())
+
+    def test_category_without_overview_retains_native_directory(self):
+        del self.spec['categories'][0]['overview']
+        self.run_export()
         overview = (self.out / 'docs/knowledge/math/index.mdx').read_text()
         self.assertIn('OverviewGroup', overview)
         self.assertIn('基础知识 · 几何基础', overview)
-        self.assertIn('/knowledge/alpha/', overview)
-        self.assertIn('几何基础', json.dumps(config, ensure_ascii=False))
-        self.assertEqual(config['nav'][0]['items'][0]['link'], '/knowledge/math/')
+        self.assertTrue((self.out / 'docs/knowledge/alpha/index.md').is_file())
+        self.assertFalse((self.out / 'docs/knowledge/alpha/index.mdx').exists())
 
     def test_manifest_removal_cleans_pages_assets_and_navigation(self):
         self.run_export()
@@ -114,9 +140,15 @@ $$
         index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
         entries = [{'title': '知识库', 'url': '/knowledge/', 'description': '知识库目录。'}]
         entries += index['categories'] + index['notes']
-        # 模拟正式域名构建时原生分组退化为 Others，页面顺序也与清单相反。
+        unique = {}
+        for item in entries:
+            unique.setdefault(item['url'], item)
+        for note in index['notes']:
+            for alias in note.get('aliases', []):
+                unique[alias] = {'title': '旧概览入口', 'url': alias, 'description': '兼容旧地址。'}
+        # 模拟原生 Others 分组及旧地址，验证领域与概览只收录一次。
         pages = [{'title': item['title'], 'link': origin + item['url'] + 'index.md',
-                  'description': item['description']} for item in reversed(entries)]
+                  'description': item['description']} for item in reversed(list(unique.values()))]
         context = {'title': '临时测试站', 'description': '独立临时知识库。', 'base': '/',
                    'siteOrigin': origin, 'sections': [{'title': 'Others', 'pages': pages}]}
         renderer = (Path(__file__).resolve().parents[1] / 'scripts/render_llms.mjs').as_uri()
@@ -136,14 +168,15 @@ $$
                 self.assertNotIn('Others', text)
                 self.assertNotIn('PRIVATE_METADATA_SENTINEL', text)
                 self.assertIn('## 数学领域', text)
-                self.assertIn('### 概览', text)
+                self.assertNotIn('### 概览', text)
+                self.assertNotIn('/knowledge/alpha/', text)
                 self.assertIn('### 基础知识 · 几何基础', text)
                 self.assertIn(f'[关联索引]({origin}/knowledge/index.json)', text)
-                self.assertIn(f'[甲]({origin}/knowledge/alpha/index.md): 甲的定义与公式。', text)
-                self.assertLess(text.index('[甲]'), text.index('[乙]'))
+                self.assertIn(f'[数学领域]({origin}/knowledge/math/index.md): 甲的定义与公式。', text)
+                self.assertLess(text.index('[数学领域]'), text.index('[乙]'))
                 links = re.findall(r'\]\(([^)]+\.md)\)', text)
-                self.assertEqual(len(links), 4)
-                self.assertEqual(len(set(links)), 4)
+                self.assertEqual(len(links), 3)
+                self.assertEqual(len(set(links)), 3)
 
     def test_llms_multiple_categories_and_uncategorized_notes(self):
         self.spec['categories'].append({'id': 'computing', 'title': '计算领域',
@@ -197,12 +230,14 @@ $$
         self.run_export()
         built = self.root / 'built'
         shutil.copytree(self.out / 'docs/public', built)
-        for slug in ['alpha', 'beta']:
-            folder = built / 'knowledge' / slug
-            folder.mkdir()
-            (folder / 'index.md').write_text('DAMAGED_MATH_SENTINEL')
+        index = json.loads((built / 'knowledge/index.json').read_text())
+        for note in index['notes']:
+            for url in [note['url'], *note.get('aliases', [])]:
+                folder = built / url.lstrip('/')
+                folder.mkdir(parents=True)
+                (folder / 'index.md').write_text('DAMAGED_MATH_SENTINEL')
         (built / 'llms.txt').write_text(
-            '# 测试站\n\n- [甲](/knowledge/alpha/index.md)\n- [乙](/knowledge/beta/index.md)\n')
+            '# 测试站\n\n- [数学领域](/knowledge/math/index.md)\n- [乙](/knowledge/beta/index.md)\n')
         report = finalize(built)
         self.assertEqual(report, {'markdown_pages': 2, 'llms_pages': 2})
         self.assertEqual((built / 'knowledge/alpha/index.md').read_bytes(),
@@ -217,10 +252,12 @@ $$
         self.run_export()
         built = self.root / 'built'
         shutil.copytree(self.out / 'docs/public', built)
-        for slug in ['alpha', 'beta']:
-            (built / 'knowledge' / slug).mkdir()
+        index = json.loads((built / 'knowledge/index.json').read_text())
+        for note in index['notes']:
+            for url in [note['url'], *note.get('aliases', [])]:
+                (built / url.lstrip('/')).mkdir(parents=True)
         (built / 'llms.txt').write_text(
-            '- [甲](https://shijin.space/knowledge/alpha/index.md)\n'
+            '- [数学领域](https://shijin.space/knowledge/math/index.md)\n'
             '- [乙](https://shijin.space/knowledge/beta/index.md)\n'
             '- [外部资料](https://example.com/external.md)\n')
         report = finalize(built, 'https://shijin.space')

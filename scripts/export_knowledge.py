@@ -27,11 +27,12 @@ class Note:
     category: str = ''
     group: str = ''
     chapter: str = ''
+    landing: bool = False
     links: set[str] = field(default_factory=set)
 
     @property
     def url(self) -> str:
-        return f"/knowledge/{self.slug}/"
+        return f"/knowledge/{self.category if self.landing else self.slug}/"
 
 
 def inside(root: Path, relative: str) -> Path:
@@ -118,6 +119,29 @@ def headings(text: str) -> str:
     return outside_code(text, lambda part: re.sub(r'^(#{1,6})\s+(.+)$', replace, part, flags=re.M))
 
 
+def redirect_page(target: str) -> str:
+    """旧概览地址保留为组件路由；使用原生运行时保留查询参数与章节锚点。"""
+    return """import { useEffect } from 'react';
+import { useHead, useLocation, useNavigate, withBase, withSiteOrigin } from '@rspress/core/runtime';
+
+export function OverviewRedirect() {
+  const navigate = useNavigate();
+  const { search, hash } = useLocation();
+  const target = withBase(__TARGET__);
+  useHead({
+    link: [{ rel: 'canonical', href: withSiteOrigin(target) }],
+    meta: [{ name: 'robots', content: 'noindex' }],
+  });
+  useEffect(() => {
+    navigate(target + search + hash, { replace: true });
+  }, [navigate, target, search, hash]);
+  return <p>概览已合并至<a href={target}>领域首页</a>。</p>;
+}
+
+<OverviewRedirect />
+""".replace('__TARGET__', json.dumps(target))
+
+
 class Exporter:
     def __init__(self, vault: Path, manifest: dict):
         self.vault = vault.resolve()
@@ -135,9 +159,12 @@ class Exporter:
         if any(n.category and n.category not in self.categories for n in self.notes):
             raise ValueError("笔记引用了未定义的类别")
         for identifier, category in self.categories.items():
-            if category.get('overview') and not any(
-                    n.slug == category['overview'] and n.category == identifier for n in self.notes):
-                raise ValueError("概览必须是同一类别中已列入公开清单的笔记")
+            if category.get('overview'):
+                overview = next((n for n in self.notes if n.slug == category['overview']
+                                 and n.category == identifier), None)
+                if overview is None:
+                    raise ValueError("概览必须是同一类别中已列入公开清单的笔记")
+                overview.landing = True
         self.allowed_assets = {inside(self.vault, path).resolve() for path in manifest.get('attachments', [])}
         self.used_assets = {}
         self.unlinked = 0
@@ -263,17 +290,26 @@ class Exporter:
                              'details': f'{description} 共 {len(notes)} 篇笔记。',
                              'link': url})
             navigation.append({'text': category['title'], 'link': url})
-            sidebar.append({'text': category['title'], 'link': url,
-                            'items': self.sidebar_items(notes)})
+            overview = next((n for n in notes if n.landing), None)
+            if overview:
+                # 领域首页就是概览，侧栏只保留一个概览入口。
+                sidebar.append({'text': category['title'], 'items': [
+                    {'text': '概览与阅读路线', 'link': url},
+                    *self.sidebar_items([n for n in notes if not n.landing]),
+                ]})
+            else:
+                sidebar.append({'text': category['title'], 'link': url,
+                                'items': self.sidebar_items(notes)})
             categories.append({'id': identifier, 'title': category['title'],
-                               'url': url, 'description': description,
+                               'url': url,
+                               'description': overview.description if overview else description,
+                               'overview': overview.slug if overview else '',
                                'notes': [n.slug for n in notes]})
-            # 使用官方组件生成分组文字卡片；普通笔记仍然保持 .md。
+            if overview:
+                continue  # 正文由下方笔记循环直接生成到领域首页。
+            # 未配置概览的领域，仍使用官方组件提供目录入口。
             blocks = ["import { OverviewGroup } from '@rspress/core/theme';", '',
                       f'# {category["title"]}', '', description, '']
-            overview = next((n for n in notes if n.slug == category.get('overview')), None)
-            if overview:
-                blocks += [f'[从概览与阅读路线开始]({overview.url})', '']
             for group in dict.fromkeys(n.group for n in notes):
                 grouped = [n for n in notes if n.group == group]
                 for chapter in dict.fromkeys(n.chapter for n in grouped):
@@ -320,15 +356,23 @@ class Exporter:
             markdown_url = f'/knowledge/raw/{note.slug}.md'
             # .md 使用普通 Markdown 解析；remark-math 在解析期识别公式。
             # 不继承私有 frontmatter，也不把数学改写为 Hugo 简码或 MDX。
-            page(content / note.slug / 'index.md',
-                 {'title': note.title, 'description': note.description}, headings(body))
+            title = self.categories[note.category]['title'] if note.landing else note.title
+            page(content / note.url.removeprefix('/knowledge/') / 'index.md',
+                 {'title': title, 'description': note.description}, headings(body))
             (public / 'raw' / f'{note.slug}.md').write_text(
-                f'# {note.title}\n\n' + body, encoding='utf-8')
+                f'# {title}\n\n' + body, encoding='utf-8')
+            if note.landing:
+                # 保留旧文章路由，使用原生运行时跳转；正文不再生成第二份页面。
+                page(content / note.slug / 'index.mdx',
+                     {'title': '概览入口', 'pageType': 'blank', 'search': False},
+                     redirect_page(note.url))
             records.append({'id': note.slug, 'title': note.title, 'description': note.description,
                             'url': note.url,
                             'markdown': markdown_url, 'category': note.category,
                             'group': note.group, 'chapter': note.chapter,
                             'links': sorted(note.links), 'backlinks': [n.slug for n in incoming]})
+            if note.landing:
+                records[-1]['aliases'] = [f'/knowledge/{note.slug}/']
         for source, name in self.used_assets.items():
             (public / 'attachments').mkdir(exist_ok=True)
             shutil.copyfile(source, public / 'attachments' / name)

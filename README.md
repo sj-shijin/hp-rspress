@@ -40,14 +40,18 @@ npm test        # 使用独立临时知识库检查公开范围、链接、公�
   → .generated/site/（唯一的网站发布产物）
 ```
 
-首页使用官方 Home 布局与领域入口；领域页使用官方 `OverviewGroup` 分组文字卡片。
-侧栏按清单中的 `category`、`group`、`chapter` 和笔记顺序生成。
+首页使用官方 Home 布局与领域入口。清单中的 `categories[].overview` 指定领域概览笔记，
+其正文直接生成到 `/knowledge/<category>/`，作为领域首页；不再额外生成卡片目录和独立概览正文页。
+未指定概览的领域仍使用官方 `OverviewGroup` 目录作为入口。
+侧栏按清单中的 `category`、`group`、`chapter` 和笔记顺序生成，每个领域只显示一个概览入口。
 普通笔记保留 `.md`，双链和章节链接在导出时转换，并生成反向链接。
 公式通过 `remark-math` 与 `rehype-katex` 渲染，不修改知识库原文。
 整篇笔记嵌入、块引用及未获允许的附件会中止导出；未公开笔记链接显示为文字。
 
-现有笔记网址继续使用 `/knowledge/<slug>/`。
-`/knowledge/index.json` 提供类别、链接与反链，`/knowledge/raw/<slug>.md` 提供内容副本。
+普通笔记网址继续使用 `/knowledge/<slug>/`。概览保留原知识库文件、笔记 id 和原始 Markdown 地址，
+网站链接统一指向领域首页；旧概览网页通过原生运行时跳转，并保留查询参数和章节锚点。
+旧 Markdown 链接继续可读，站内搜索和 AI 索引只收录领域首页一次。
+`/knowledge/index.json` 提供类别、链接、反链和旧地址，`/knowledge/raw/<slug>.md` 提供内容副本。
 Rspress 的 SSG-MD 另生成 `llms.txt`、`llms-full.txt` 和每页的 Markdown；均只来自本次导出内容。
 Rspress 2.0 的 SSG-MD 会转义部分 LaTeX；`postbuild` 用已导出的 Markdown 校正笔记副本，
 再按原生 `llms.txt` 索引重建全文，保证公式与链接内容一致。
