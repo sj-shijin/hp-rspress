@@ -85,7 +85,7 @@ npm run check:afdocs -- http://127.0.0.1:1320    # 检测已启动的本地静�
 
 每次在 `.runtime/afdocs/<时间戳>/` 保存 `default.json`、`report.json`、配置快照、命令记录和摘要，不覆盖历史结果。
 仅报告模式的 PASS 不表示差异已修复，分数不能与默认参数直接比较；其他检查失败仍返回非零。
-内容协商与 WebMCP 尚未接入。
+内容协商由 ESA 边缘提供；WebMCP 尚未接入。
 
 ## 部署
 
@@ -93,7 +93,8 @@ npm run check:afdocs -- http://127.0.0.1:1320    # 检测已启动的本地静�
 构建通过只读 `KNOWLEDGE_VAULT_DEPLOY_KEY` 获取私有知识库的固定提交，仅上传 `.generated/site/`。
 知识库仓库保持私有；仅推送知识库不会更新网站，还需提交网站中的子模块版本。
 
-自定义域名在 GitHub Pages 设置中绑定，不依赖 `CNAME` 文件。
+自定义域名继续在 GitHub Pages 设置中绑定；阿里云 DNS 通过 CNAME 指向 ESA，由 ESA 回源 GitHub Pages。
+边缘规则、验收基线和回退方法见 [ESA 运维记录](docs/esa.md)。
 线上设置 `SITE_ORIGIN=https://shijin.space`；本地默认使用本机路径。
 构建缓存随 `SITE_ORIGIN` 切换失效。检查正式域名产物时，构建与检查需使用相同的变量：
 
