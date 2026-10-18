@@ -1,0 +1,56 @@
+{
+  "family": "LXGW WenKai Mono GB",
+  "version": "1.530",
+  "source": "https://github.com/lxgw/LxgwWenkaiGB/releases/tag/v1.530",
+  "source_commit": "603cad835e132872f26831e36b989c574f3d0a5a",
+  "fonts": [
+    {
+      "file": "LXGWWenKaiMonoGB-Regular-latin.woff2",
+      "weight": 400,
+      "group": "latin",
+      "characters": 2583,
+      "bytes": 139792,
+      "source_sha256": "4baa9679b0aae3983a8b03c49f5cccce796b503b95e900120e8e6f3c07a6519c"
+    },
+    {
+      "file": "LXGWWenKaiMonoGB-Regular-common.woff2",
+      "weight": 400,
+      "group": "common",
+      "characters": 7284,
+      "bytes": 1621760,
+      "source_sha256": "4baa9679b0aae3983a8b03c49f5cccce796b503b95e900120e8e6f3c07a6519c"
+    },
+    {
+      "file": "LXGWWenKaiMonoGB-Regular-extended.woff2",
+      "weight": 400,
+      "group": "extended",
+      "characters": 37079,
+      "bytes": 6625772,
+      "source_sha256": "4baa9679b0aae3983a8b03c49f5cccce796b503b95e900120e8e6f3c07a6519c"
+    },
+    {
+      "file": "LXGWWenKaiMonoGB-Medium-latin.woff2",
+      "weight": 500,
+      "group": "latin",
+      "characters": 2583,
+      "bytes": 146628,
+      "source_sha256": "34d96d3858ba2c89732e2517f08b236e56047171e82ba0e18f2db7e2921759bc"
+    },
+    {
+      "file": "LXGWWenKaiMonoGB-Medium-common.woff2",
+      "weight": 500,
+      "group": "common",
+      "characters": 7284,
+      "bytes": 1646732,
+      "source_sha256": "34d96d3858ba2c89732e2517f08b236e56047171e82ba0e18f2db7e2921759bc"
+    },
+    {
+      "file": "LXGWWenKaiMonoGB-Medium-extended.woff2",
+      "weight": 500,
+      "group": "extended",
+      "characters": 37079,
+      "bytes": 7622656,
+      "source_sha256": "34d96d3858ba2c89732e2517f08b236e56047171e82ba0e18f2db7e2921759bc"
+    }
+  ]
+}

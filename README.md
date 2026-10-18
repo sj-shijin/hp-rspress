@@ -62,6 +62,21 @@ git diff --submodule
 npm run dev
 ```
 
+## 网页字体
+
+正文、导航、目录与代码使用 [LXGW WenKai Mono GB v1.530](https://github.com/lxgw/LxgwWenkaiGB/releases/tag/v1.530)。
+Regular 对应 400，Medium 对应 500；标题与强调文字匹配 Medium，公式继续使用 KaTeX 字体。
+网站自托管 WOFF2 字体，按拉丁字符、常用汉字和扩展字符加载，保留原字体的全部 Unicode 字符覆盖。
+来源版本、原始文件 SHA-256 与分片信息记录在 `theme/fonts/lxgw-wenkai-mono-gb/SOURCE.json`。
+字体遵循 OFL-1.1，原许可证随网页一同发布到 `/fonts/lxgw-wenkai-mono-gb/OFL.txt`。
+
+日常构建直接使用已生成的字体文件。需要重新生成时，从上述官方版本下载
+`LXGWWenKaiMonoGB-Regular.ttf`、`LXGWWenKaiMonoGB-Medium.ttf`，并放入同版本的 `OFL.txt`：
+
+```sh
+uv run --no-project --with 'fonttools[woff]==4.61.1' python scripts/prepare_fonts.py /path/to/font-sources
+```
+
 ## 自动发布
 
 推送网站 `main` 分支后，`.github/workflows/pages.yml` 自动执行测试、构建和 GitHub Pages 发布；

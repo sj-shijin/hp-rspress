@@ -1,3 +1,11 @@
+@import './fonts/lxgw-wenkai-mono-gb/font.css';
+
+:root {
+  --rp-font-family-base: 'LXGW WenKai Mono GB', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+  --rp-font-family-mono: 'LXGW WenKai Mono GB', Menlo, Monaco, Consolas, monospace;
+}
+
 /* 超宽公式在自身区域滚动，不挤压正文与右侧目录。 */
 .katex-display {
   max-width: 100%;

@@ -38,6 +38,14 @@ export default defineConfig({
   siteOrigin: process.env.SITE_ORIGIN || '',
   route: { cleanUrls: true },
   llms: true,
+  builderConfig: {
+    output: {
+      copy: [{
+        from: path.resolve('theme/fonts/lxgw-wenkai-mono-gb/OFL.txt'),
+        to: 'fonts/lxgw-wenkai-mono-gb/OFL.txt',
+      }],
+    },
+  },
   markdown: {
     remarkPlugins: [remarkMath, remarkMathBlocks],
     rehypePlugins: [[rehypeKatex, { strict: 'ignore', throwOnError: true }]],
