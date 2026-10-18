@@ -105,6 +105,7 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         require(result['formulasMatch'],
                 f'HTML 与 Markdown 公式不一致：{identifier} '
                 f'({result["htmlFormulas"]}/{result["markdownFormulas"]})')
+        require(result['diagramsMatch'], f'HTML 与 Markdown Mermaid 图或源码不一致：{identifier}')
         require(not result['missing'],
                 f'HTML 正文未出现在 Markdown：{identifier}：{result["missing"][:3]}')
         require(not result['missingHtml'],
@@ -204,6 +205,7 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     return {'notes': len(notes), 'knowledge_html_pages': len(actual_html), 'attachments': len(assets),
             'search_pages': len(search), 'llms_pages': len(links), 'math_pages': math_pages,
             'math_formulas': sum(result['markdownFormulas'] for result in parity),
+            'mermaid_diagrams': sum(result['markdownDiagrams'] for result in parity),
             'markdown_files_checked': len(markdown_files), 'sitemap_pages': len(locations),
             'legacy_routes': len(aliases), 'site_origin': origin}
 

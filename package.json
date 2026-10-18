@@ -9,7 +9,7 @@
     "build": "npm run export && rspress build",
     "postbuild": ".venv/bin/python scripts/finalize_markdown.py && npm run check:build",
     "preview": "rspress preview --host 127.0.0.1 --port 1320",
-    "test": ".venv/bin/python -m unittest discover -s tests -v",
+    "test": ".venv/bin/python -m unittest discover -s tests -v && node --test tests/mermaid.test.mjs",
     "check:build": ".venv/bin/python scripts/check_build.py",
     "check:afdocs": ".venv/bin/python scripts/check_afdocs.py"
   },
@@ -17,6 +17,7 @@
     "@rspress/core": "2.0.23",
     "@rspress/plugin-sitemap": "2.0.23",
     "katex": "^0.16.22",
+    "pele": "1.6.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "rehype-katex": "7.0.1",

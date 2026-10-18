@@ -4,6 +4,7 @@ import { defineConfig } from '@rspress/core';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import remarkMermaid from './scripts/remark_mermaid.mjs';
 import { renderLlmsTxt } from './scripts/render_llms.mjs';
 
 const generated = path.resolve('.generated');
@@ -82,11 +83,12 @@ export default defineConfig({
     },
   },
   markdown: {
+    globalComponents: [path.resolve('theme/Mermaid.tsx')],
     shiki: {
       themes: { light: 'one-light', dark: 'material-theme-darker' },
       defaultColor: false,
     },
-    remarkPlugins: [remarkMath, remarkMathBlocks],
+    remarkPlugins: [remarkMath, remarkMathBlocks, remarkMermaid],
     rehypePlugins: [[rehypeKatex, { strict: 'ignore', throwOnError: true }]],
     link: { checkDeadLinks: true, checkAnchors: true },
   },

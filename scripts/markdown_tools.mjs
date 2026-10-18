@@ -80,12 +80,14 @@ function prepareMarkdown(markdown, route, origin, routes) {
 }
 
 function markdownContent(markdown) {
-  const math = [];
+  const math = [], mermaid = [];
+
   function text(node) {
     if (['math', 'inlineMath'].includes(node.type)) {
       math.push({ tex: normalize(node.value), display: node.type === 'math' });
       return ' MATH ';
     }
+    if (node.type === 'code' && node.lang === 'mermaid') mermaid.push(node.value.trimEnd());
     if (node.type === 'html') return htmlContent(node.value, false).text;
     if (node.type === 'image') return node.alt || '';
     if (node.type === 'definition') return '';
@@ -97,7 +99,7 @@ function markdownContent(markdown) {
     return block.includes(node.type) ? `\n${value}\n` : value;
   }
   const tree = markdownParser.parse(markdown.replace(/^> For AI agents:[^\n]*\n/, ''));
-  return { text: text(tree), math };
+  return { text: text(tree), math, mermaid };
 }
 
 function htmlContent(html, requireDocument = true) {
@@ -105,9 +107,20 @@ function htmlContent(html, requireDocument = true) {
   let document;
   visit(tree, node => { if (classes(node).includes('rspress-doc')) document = node; });
   if (requireDocument && !document) throw new Error('网页缺少 rspress-doc 正文容器');
-  const math = [];
+  const math = [], mermaid = [];
   function text(node, display = false) {
     const names = classes(node);
+    if (names.includes('sj-mermaid')) {
+      const diagrams = [], sources = [];
+      visit(node, child => {
+        if (child.tagName === 'svg' && classes(child).includes('pele')) diagrams.push(child);
+        if (child.tagName === 'code') sources.push(child);
+      });
+      if (diagrams.length !== 1 || sources.length !== 1) throw new Error('Mermaid 图缺少 SVG 或唯一源码');
+      let source = '';
+      visit(sources[0], child => { if (child.type === 'text') source += child.value; });
+      mermaid.push(source.trimEnd());
+    }
     if (names.includes('katex')) {
       let tex;
       visit(node, child => {
@@ -128,7 +141,7 @@ function htmlContent(html, requireDocument = true) {
     const block = /^(?:p|div|h[1-6]|li|tr|td|th|blockquote|pre|section|article|br)$/.test(node.tagName);
     return block ? `\n${value}\n` : value;
   }
-  return { text: text(document || tree), math };
+  return { text: text(document || tree), math, mermaid };
 }
 
 function compareContent(html, markdown) {
@@ -141,7 +154,9 @@ function compareContent(html, markdown) {
   const missingHtml = [...new Set(source.text.split('\n').map(normalize).filter(Boolean))]
     .filter(segment => !htmlPlain.includes(segment));
   return { htmlFormulas: actual.math.length, markdownFormulas: source.math.length,
-    formulasMatch: JSON.stringify(actual.math) === JSON.stringify(source.math), missing, missingHtml };
+    formulasMatch: JSON.stringify(actual.math) === JSON.stringify(source.math),
+    htmlDiagrams: actual.mermaid.length, markdownDiagrams: source.mermaid.length,
+    diagramsMatch: JSON.stringify(actual.mermaid) === JSON.stringify(source.mermaid), missing, missingHtml };
 }
 
 let input = '';

@@ -178,5 +178,23 @@ class BuildArtifactTests(unittest.TestCase):
         self.assertEqual((result['missing'], result['missingHtml']), ([], []))
 
 
+    def test_mermaid_source_remains_part_of_strict_content_checks(self):
+        source = 'flowchart LR\n A[中文知识] --> B[研究增量]'
+        markdown = '```mermaid\n' + source + '\n```'
+        html = ('<div class="rspress-doc"><figure class="sj-mermaid">'
+                '<svg class="pele"><text>中文知识</text></svg>'
+                '<details><summary class="rp-not-doc">查看 Mermaid 源码</summary>'
+                '<pre><code>' + escape(source) + '</code></pre></details></figure></div>')
+        result = markdown_tools('compare', [{'html': html, 'markdown': markdown}])[0]
+        self.assertTrue(result['diagramsMatch'])
+        self.assertEqual((result['htmlDiagrams'], result['markdownDiagrams']), (1, 1))
+        self.assertEqual((result['missing'], result['missingHtml']), ([], []))
+        changed = markdown_tools('compare', [{'html': html, 'markdown': markdown.replace('研究增量', '被修改的内容')}])[0]
+        self.assertFalse(changed['diagramsMatch'])
+        with self.assertRaisesRegex(ValueError, 'Mermaid.*SVG'):
+            markdown_tools('compare', [{'html': html.replace('<svg class="pele"><text>中文知识</text></svg>', ''),
+                                        'markdown': markdown}])
+
+
 if __name__ == '__main__':
     unittest.main()
