@@ -110,3 +110,27 @@ git push origin main
 # 本地检查与线上相同的构建
 SITE_ORIGIN=https://shijin.space npm run build
 ```
+
+## AI 协作与内容读取
+
+项目开发约定见 `AGENTS.md`。两个官方技能保存在本仓库的 `.agents/skills/`，
+通过 `manage-skills` 和 Skills Manager CLI 从共享库导出，供本项目使用。
+共享库保留官方 Git 来源与更新记录；这两个技能不做全局部署。
+
+- [rspress-best-practices](https://github.com/rstackjs/agent-skills/tree/main/skills/rspress-best-practices)
+- [rspress-custom-theme](https://github.com/rstackjs/agent-skills/tree/main/skills/rspress-custom-theme)
+
+首次从已安装的共享库导出时，在仓库根目录执行：
+
+```sh
+"$HOME/.skills-manager/bin/skills-manager-cli" --json skills export rspress-best-practices \
+  --dest .agents/skills/rspress-best-practices
+"$HOME/.skills-manager/bin/skills-manager-cli" --json skills export rspress-custom-theme \
+  --dest .agents/skills/rspress-custom-theme
+```
+
+项目中保留实际文件副本，随仓库版本管理；上游 MIT 许可证保存在
+`.agents/skills/LICENSE-rstack-agent-skills.txt`。
+当前 CLI 的 `deploy/undeploy/status` 面向全局部署，项目目录通过 `export --dest` 写入。
+共享库更新不会自动刷新项目副本；更新前先核对项目中的修改，再重新导出。
+默认导出不会覆盖已有目录。
