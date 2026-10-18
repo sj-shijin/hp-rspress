@@ -23,6 +23,7 @@ class Note:
     title: str
     body: str
     permalink: str
+    description: str
     category: str = ''
     group: str = ''
     chapter: str = ''
@@ -47,6 +48,9 @@ def read_note(vault: Path, item: dict) -> Note:
     slug = item['slug']
     if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', slug):
         raise ValueError("slug 只能使用小写英文、数字和连字符")
+    description = str(item.get('description', '')).strip()
+    if not description:
+        raise ValueError('公开笔记需要在清单中填写 description 摘要')
     text = path.read_text(encoding='utf-8')
     metadata = {}
     if text.startswith('---\n'):
@@ -59,7 +63,8 @@ def read_note(vault: Path, item: dict) -> Note:
     title = str(metadata.get('title', path.stem))
     text = re.sub(r'^\s*# ' + re.escape(title) + r'\s*\n', '', text, count=1)
     return Note(path, slug, title, text.strip() + '\n', str(metadata.get('permalink', '')),
-                category=item.get('category', ''), group=item.get('group', ''),
+                description=description, category=item.get('category', ''),
+                group=item.get('group', ''),
                 chapter=item.get('chapter', ''))
 
 
@@ -261,7 +266,8 @@ class Exporter:
             sidebar.append({'text': category['title'], 'link': url,
                             'items': self.sidebar_items(notes)})
             categories.append({'id': identifier, 'title': category['title'],
-                               'url': url, 'notes': [n.slug for n in notes]})
+                               'url': url, 'description': description,
+                               'notes': [n.slug for n in notes]})
             # 使用官方组件生成分组文字卡片；普通笔记仍然保持 .md。
             blocks = ["import { OverviewGroup } from '@rspress/core/theme';", '',
                       f'# {category["title"]}', '', description, '']
@@ -280,6 +286,7 @@ class Exporter:
                  '\n'.join(blocks))
 
         home = {'pageType': 'home', 'title': 'ShiJin 科研知识库',
+                'description': '整理基础知识，记录研究增量，沿知识关联继续阅读。',
                 'hero': {'name': 'ShiJin', 'text': '科研知识库',
                          'tagline': '整理基础知识，记录研究增量。',
                          'actions': [{'theme': 'brand', 'text': '进入知识库',
@@ -287,6 +294,7 @@ class Exporter:
                 'features': features}
         page(docs / 'index.md', home)
         page(content / 'index.md', {'pageType': 'home', 'title': '知识库',
+             'description': '按领域查阅基础知识、研究增量与阅读路线。',
              'hero': {'name': '知识库', 'text': '按领域阅读',
                       'tagline': '从概览与基础概念出发，沿着知识关联继续阅读。',
                       'actions': [{'theme': 'brand', 'text': n['text'], 'link': n['link']}
@@ -312,10 +320,12 @@ class Exporter:
             markdown_url = f'/knowledge/raw/{note.slug}.md'
             # .md 使用普通 Markdown 解析；remark-math 在解析期识别公式。
             # 不继承私有 frontmatter，也不把数学改写为 Hugo 简码或 MDX。
-            page(content / note.slug / 'index.md', {'title': note.title}, headings(body))
+            page(content / note.slug / 'index.md',
+                 {'title': note.title, 'description': note.description}, headings(body))
             (public / 'raw' / f'{note.slug}.md').write_text(
                 f'# {note.title}\n\n' + body, encoding='utf-8')
-            records.append({'id': note.slug, 'title': note.title, 'url': note.url,
+            records.append({'id': note.slug, 'title': note.title, 'description': note.description,
+                            'url': note.url,
                             'markdown': markdown_url, 'category': note.category,
                             'group': note.group, 'chapter': note.chapter,
                             'links': sorted(note.links), 'backlinks': [n.slug for n in incoming]})

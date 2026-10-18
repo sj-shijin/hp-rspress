@@ -3,10 +3,15 @@ import path from 'node:path';
 import { defineConfig } from '@rspress/core';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import { renderLlmsTxt } from './scripts/render_llms.mjs';
 
 const generated = path.resolve('.generated');
 const navigation = JSON.parse(
   fs.readFileSync(path.join(generated, 'theme-config.json'), 'utf-8'),
+);
+
+const knowledgeIndex = JSON.parse(
+  fs.readFileSync(path.join(generated, 'docs/public/knowledge/index.json'), 'utf-8'),
 );
 
 // Rspress 2.0 的 Shiki 先于自定义 rehype 插件运行。
@@ -43,7 +48,9 @@ export default defineConfig({
   base: '/',
   siteOrigin: process.env.SITE_ORIGIN || '',
   route: { cleanUrls: true },
-  llms: true,
+  llms: {
+    llmsTxt: context => renderLlmsTxt(context, knowledgeIndex),
+  },
   builderConfig: {
     output: {
       copy: [

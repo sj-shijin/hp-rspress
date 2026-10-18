@@ -134,3 +134,16 @@ SITE_ORIGIN=https://shijin.space npm run build
 当前 CLI 的 `deploy/undeploy/status` 面向全局部署，项目目录通过 `export --dest` 写入。
 共享库更新不会自动刷新项目副本；更新前先核对项目中的修改，再重新导出。
 默认导出不会覆盖已有目录。
+
+每篇公开笔记的简短摘要放在 `knowledge/publish.json` 的 `description` 中，
+仅作为网站发布元数据，不修改正式笔记，也不自动继承私有 frontmatter。
+导出时同步生成页面 description 与 `/knowledge/index.json` 中的摘要。
+新增公开笔记必须填写摘要。
+
+`llms.llmsTxt` 使用 Rspress 官方回调，按公开清单的领域、分组、章节与顺序生成索引；
+链接沿用原生 SSG-MD 地址，同时兼容本地相对链接和 `SITE_ORIGIN` 正式域名链接。
+`postbuild` 继续按该索引重建 `llms-full.txt`，保留原始 LaTeX 与公开范围。
+
+AI 阅读时先访问 `/llms.txt`，按需读取单篇 Markdown，再用 `/knowledge/index.json`
+查找正向链接与反向链接；整体梳理时可以读取 `/llms-full.txt`。
+WebMCP 等稳定版发布后另行评估，当前不接入。

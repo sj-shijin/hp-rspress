@@ -1,5 +1,7 @@
 """只在 mkdtemp 创建的独立知识库中验证导出；不启动 Basic Memory。"""
 import json
+import re
+import subprocess
 from pathlib import Path
 import shutil
 import sys
@@ -22,6 +24,7 @@ class KnowledgeExportTests(unittest.TestCase):
         (self.vault / '甲.md').write_text('''---
 title: 甲
 private_metadata: PRIVATE_METADATA_SENTINEL
+description: PRIVATE_METADATA_SENTINEL
 ---
 # 甲
 
@@ -46,10 +49,13 @@ $$
         (self.vault / '未公开.md').write_text('UNPUBLISHED_BODY_SENTINEL\n', encoding='utf-8')
         (self.vault / '图.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
         self.spec = {
-            'categories': [{'id': 'math', 'title': '数学领域', 'overview': 'alpha'}],
-            'notes': [{'path': '甲.md', 'slug': 'alpha', 'category': 'math', 'group': '概览'},
+            'categories': [{'id': 'math', 'title': '数学领域', 'overview': 'alpha',
+                            'description': '数学领域的阅读入口。'}],
+            'notes': [{'path': '甲.md', 'slug': 'alpha', 'category': 'math', 'group': '概览',
+                       'description': '甲的定义与公式。'},
                       {'path': '乙.md', 'slug': 'beta', 'category': 'math',
-                       'group': '基础知识', 'chapter': '几何基础'}],
+                       'group': '基础知识', 'chapter': '几何基础',
+                       'description': '乙的基本区域与前置联系。'}],
             'attachments': ['图.svg'],
         }
 
@@ -79,6 +85,8 @@ $$
                       (self.out / 'docs/knowledge/beta/index.md').read_text())
         self.assertIn('$x^2$', raw)
         self.assertEqual(index['notes'][0]['backlinks'], ['beta'])
+        self.assertEqual(index['notes'][0]['description'], '甲的定义与公式。')
+        self.assertIn('description: 甲的定义与公式。', rendered)
         self.assertEqual((report['notes'], report['attachments'], report['links']), (2, 1, 2))
 
     def test_native_navigation_and_overview_follow_manifest(self):
@@ -93,13 +101,68 @@ $$
 
     def test_manifest_removal_cleans_pages_assets_and_navigation(self):
         self.run_export()
-        self.run_export({'notes': [{'path': '乙.md', 'slug': 'beta'}]})
+        self.run_export({'notes': [{'path': '乙.md', 'slug': 'beta',
+                                  'description': '乙的基本区域。'}]})
         self.assertFalse((self.out / 'docs/knowledge/alpha').exists())
         self.assertFalse((self.out / 'docs/knowledge/math').exists())
         self.assertFalse((self.out / 'docs/public/knowledge/raw/alpha.md').exists())
         self.assertFalse((self.out / 'docs/public/knowledge/attachments').exists())
         index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
         self.assertEqual([n['id'] for n in index['notes']], ['beta'])
+
+    def render_llms(self, origin=''):
+        index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
+        entries = [{'title': '知识库', 'url': '/knowledge/', 'description': '知识库目录。'}]
+        entries += index['categories'] + index['notes']
+        # 模拟正式域名构建时原生分组退化为 Others，页面顺序也与清单相反。
+        pages = [{'title': item['title'], 'link': origin + item['url'] + 'index.md',
+                  'description': item['description']} for item in reversed(entries)]
+        context = {'title': '临时测试站', 'description': '独立临时知识库。', 'base': '/',
+                   'siteOrigin': origin, 'sections': [{'title': 'Others', 'pages': pages}]}
+        renderer = (Path(__file__).resolve().parents[1] / 'scripts/render_llms.mjs').as_uri()
+        script = ("import {readFileSync} from 'node:fs'; "
+                  f"import {{renderLlmsTxt}} from {json.dumps(renderer)}; "
+                  "const {context,index}=JSON.parse(readFileSync(0,'utf8')); "
+                  "process.stdout.write(renderLlmsTxt(context,index));")
+        return subprocess.run(['node', '--input-type=module', '-e', script],
+                              input=json.dumps({'context': context, 'index': index}),
+                              text=True, capture_output=True, check=True).stdout
+
+    def test_llms_groups_summaries_and_order_follow_public_manifest(self):
+        self.run_export()
+        for origin in ['', 'https://shijin.space']:
+            with self.subTest(origin=origin):
+                text = self.render_llms(origin)
+                self.assertNotIn('Others', text)
+                self.assertNotIn('PRIVATE_METADATA_SENTINEL', text)
+                self.assertIn('## 数学领域', text)
+                self.assertIn('### 概览', text)
+                self.assertIn('### 基础知识 · 几何基础', text)
+                self.assertIn(f'[关联索引]({origin}/knowledge/index.json)', text)
+                self.assertIn(f'[甲]({origin}/knowledge/alpha/index.md): 甲的定义与公式。', text)
+                self.assertLess(text.index('[甲]'), text.index('[乙]'))
+                links = re.findall(r'\]\(([^)]+\.md)\)', text)
+                self.assertEqual(len(links), 4)
+                self.assertEqual(len(set(links)), 4)
+
+    def test_llms_multiple_categories_and_uncategorized_notes(self):
+        self.spec['categories'].append({'id': 'computing', 'title': '计算领域',
+                                        'description': '计算领域的阅读入口。'})
+        self.spec['notes'][1].update(category='computing', group='研究增量', chapter='')
+        (self.vault / '丙.md').write_text('# 丙\n\n独立笔记。', encoding='utf-8')
+        self.spec['notes'].append({'path': '丙.md', 'slug': 'gamma', 'description': '独立笔记。'})
+        self.run_export()
+        text = self.render_llms('https://shijin.space')
+        self.assertLess(text.index('## 数学领域'), text.index('## 计算领域'))
+        self.assertIn('### 研究增量', text)
+        self.assertIn('## 其他笔记', text)
+        self.assertEqual(text.count('[丙]'), 1)
+        self.assertNotIn('## 其他页面', text)
+
+    def test_public_note_requires_explicit_summary(self):
+        del self.spec['notes'][0]['description']
+        with self.assertRaisesRegex(ValueError, 'description'):
+            self.run_export()
 
     def test_unapproved_attachment_stops_export(self):
         self.spec['attachments'] = []
