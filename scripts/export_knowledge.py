@@ -327,7 +327,7 @@ class Exporter:
                  {'title': category['title'], 'description': description},
                  '\n'.join(blocks))
 
-        # 固定文案来自 site/；仅把清单派生的卡片与领域按钮注入两个入口。
+        # 固定文案与按钮来自 site/；仅把公开清单派生的领域卡片注入两个入口。
         for relative in ['index.md', 'knowledge/index.md']:
             source = docs / relative
             raw = source.read_text(encoding='utf-8')
@@ -336,9 +336,6 @@ class Exporter:
                 raise ValueError(f'网站入口需要 YAML frontmatter：{relative}')
             metadata = yaml.safe_load(metadata)
             metadata['features'] = features
-            if relative == 'knowledge/index.md':
-                metadata['hero']['actions'] = [
-                    {'theme': 'brand', 'text': n['text'], 'link': n['link']} for n in navigation]
             page(source, metadata, body.lstrip('\n'))
 
         uncategorized = [n for n in self.notes if not n.category]
