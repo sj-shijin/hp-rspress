@@ -1,0 +1,3 @@
+[submodule "knowledge-vault"]
+	path = knowledge-vault
+	url = git@github.com:sj-shijin/personal-knowledge-vault.git

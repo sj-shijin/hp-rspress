@@ -1,0 +1,7 @@
+/* 超宽公式在自身区域滚动，不挤压正文与右侧目录。 */
+.katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.25rem;
+}
