@@ -72,9 +72,9 @@ git diff --submodule
 - `/knowledge/index.json`：单独标识的 JSON 辅助资源，提供链接、反链与旧地址。
 - `/sitemap.xml`：官方插件生成的公开页面索引，排除旧概览跳转页和 404。
 
-使用标准的 `mermaid` 围栏代码块编写图表：Pele 1.6.0 在构建时生成 SVG，页面保留可展开的源码，Markdown／AI 接口保留原始 Mermaid。
-配色随网站亮暗主题切换，字体继承文楷；手写固定颜色会覆盖主题配色。
-语法错误会中止构建。
+使用标准的 `mermaid` 围栏代码块编写图表：Pele 1.6.0 在构建时生成首屏 SVG，含图页面在浏览器中按需使用 `mountAsync()` 接管，随容器宽度自动重排。
+配色随网站亮暗主题切换，字体继承文楷；页面保留可展开的源码，Markdown／AI 接口保留原始 Mermaid。
+手写固定颜色会覆盖主题配色，语法错误会中止构建；离开图表页面时清理监听，渲染器加载失败时保留静态 SVG。
 
 `postbuild` 校正 Rspress 2.0 SSG-MD 的 LaTeX 转义，恢复 AI 导航提示，并按 `SITE_ORIGIN` 补全链接。
 构建检查核对公开范围、搜索、链接、提示及 sitemap，逐个比较公式并双向核验正文。

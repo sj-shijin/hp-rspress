@@ -3,6 +3,7 @@ import test from 'node:test';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMermaid from '../scripts/remark_mermaid.mjs';
+import { enhanceMermaid } from '../theme/mermaid_lifecycle.mjs';
 
 async function compile(source) {
   const processor = unified().use(remarkParse).use(remarkMermaid);
@@ -55,4 +56,59 @@ test('错误图在编译时失败并带出文件与行号', async () => {
     assert.equal(error.line, 3);
     return true;
   });
+});
+
+const turn = () => new Promise(resolve => setImmediate(resolve));
+
+test('客户端接管使用容器宽度，卸载时销毁监听', async () => {
+  const container = {};
+  let destroyed = 0, received;
+  const dispose = enhanceMermaid(container, 'flowchart LR\n A --> B', async () => ({
+    mountAsync: async (...args) => {
+      received = args;
+      return { destroy() { destroyed++; } };
+    },
+  }));
+  await turn();
+  assert.equal(received[0], container);
+  assert.equal(received[2].autoDirection, true);
+  assert.equal(received[2].directionBreakpoint, 640);
+  assert.equal(received[2].maxWidth, undefined);
+  dispose();
+  assert.equal(destroyed, 1);
+});
+
+test('页面在懒加载完成前离开，不再创建图表监听', async () => {
+  let resolveLoad, mounted = 0;
+  const loading = new Promise(resolve => { resolveLoad = resolve; });
+  const dispose = enhanceMermaid({}, 'flowchart LR\n A --> B', () => loading);
+  dispose();
+  resolveLoad({ mountAsync: async () => { mounted++; } });
+  await turn();
+  assert.equal(mounted, 0);
+});
+
+test('页面在异步挂载期间离开，迟到的图表立即销毁', async () => {
+  let resolveMount, destroyed = 0;
+  const mounting = new Promise(resolve => { resolveMount = resolve; });
+  const dispose = enhanceMermaid({}, 'flowchart LR\n A --> B', async () => ({
+    mountAsync: () => mounting,
+  }));
+  await turn();
+  dispose();
+  resolveMount({ destroy() { destroyed++; } });
+  await turn();
+  assert.equal(destroyed, 1);
+});
+
+test('渲染器加载失败时保留原有静态 SVG', async context => {
+  context.mock.method(console, 'warn', () => {});
+  const container = { innerHTML: '<svg>预生成图表</svg>' };
+  const dispose = enhanceMermaid(container, 'flowchart LR\n A --> B', async () => {
+    throw new Error('模拟图表模块下载失败');
+  });
+  await turn();
+  assert.equal(container.innerHTML, '<svg>预生成图表</svg>');
+  assert.equal(console.warn.mock.callCount(), 1);
+  dispose();
 });

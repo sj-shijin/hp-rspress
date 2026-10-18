@@ -68,6 +68,11 @@ export default defineConfig({
     llmsTxt: context => renderLlmsTxt(context, knowledgeIndex),
   },
   builderConfig: {
+    dev: {
+      // 预编译开发模块，避免 Pele 多层动态导入的懒编译兼容问题。
+      // 浏览器仍按需下载图表模块，生产构建不受影响。
+      lazyCompilation: false,
+    },
     performance: {
       // 正式域名与本地预览的虚拟页面数据不能复用同一份缓存。
       buildCache: { cacheDigest: [siteOrigin] },
