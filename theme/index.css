@@ -4,6 +4,9 @@
   --rp-font-family-base: 'LXGW WenKai Mono GB', -apple-system, BlinkMacSystemFont,
     'Segoe UI', sans-serif;
   --rp-font-family-mono: 'LXGW WenKai Mono GB', Menlo, Monaco, Consolas, monospace;
+
+  /* 首页标题使用正文色，随亮暗主题切换，不使用渐变。 */
+  --rp-home-hero-title-bg: var(--rp-c-text-1);
 }
 
 /* 标识使用原生亮暗主题切换；正文继续沿用文楷等宽字体。 */
