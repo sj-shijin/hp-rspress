@@ -44,11 +44,14 @@ site/（网站专属正文） + 私有知识库子模块的固定提交
 
 网站专属内容维护在 `site/`，使用普通 Markdown、MDX 和 Rspress frontmatter。
 `site/index.md` 对应首页，`site/knowledge/index.md` 对应知识库入口；文案直接在这两个文件中修改。
-两个入口的领域卡片，以及知识库入口的领域按钮，仍由公开清单自动注入。
+个人首页独立维护；仅知识库入口的领域卡片由公开清单自动注入。
 以后新增网站专属页面可放在 `site/` 下；导出时复制到同一文档根目录，原文件不会被改写。
 `site/knowledge/` 只允许维护入口 `index.md`，`public/knowledge/` 由导出器生成，避免覆盖知识库公开边界。
 
-首页使用官方 Home 布局与领域入口。清单中的 `categories[].overview` 指定领域概览笔记，
+首页使用原生 `pageType: custom` 展示单栏名片，并提供知识库入口；
+`/knowledge/` 保留官方 Home 布局与领域卡片。两页均使用与正文一致的亮暗主题纯色背景。
+
+清单中的 `categories[].overview` 指定领域概览笔记，
 其正文直接生成到 `/knowledge/<category>/`，作为领域首页；不再额外生成卡片目录和独立概览正文页。
 未指定概览的领域仍使用官方 `OverviewGroup` 目录作为入口。
 侧栏按清单中的 `category`、`group`、`chapter` 和笔记顺序生成，每个领域只显示一个概览入口。

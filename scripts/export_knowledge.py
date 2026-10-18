@@ -327,16 +327,15 @@ class Exporter:
                  {'title': category['title'], 'description': description},
                  '\n'.join(blocks))
 
-        # 固定文案与按钮来自 site/；仅把公开清单派生的领域卡片注入两个入口。
-        for relative in ['index.md', 'knowledge/index.md']:
-            source = docs / relative
-            raw = source.read_text(encoding='utf-8')
-            metadata, separator, body = raw[4:].partition('\n---\n')
-            if not raw.startswith('---\n') or not separator:
-                raise ValueError(f'网站入口需要 YAML frontmatter：{relative}')
-            metadata = yaml.safe_load(metadata)
-            metadata['features'] = features
-            page(source, metadata, body.lstrip('\n'))
+        # 领域卡片只出现在知识库入口；个人首页独立维护于 site/index.md。
+        source = docs / 'knowledge/index.md'
+        raw = source.read_text(encoding='utf-8')
+        metadata, separator, body = raw[4:].partition('\n---\n')
+        if not raw.startswith('---\n') or not separator:
+            raise ValueError('知识库入口需要 YAML frontmatter：knowledge/index.md')
+        metadata = yaml.safe_load(metadata)
+        metadata['features'] = features
+        page(source, metadata, body.lstrip('\n'))
 
         uncategorized = [n for n in self.notes if not n.category]
         if uncategorized:

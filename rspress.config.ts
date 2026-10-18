@@ -36,8 +36,8 @@ function remarkMathBlocks() {
 export default defineConfig({
   root: path.join(generated, 'docs'),
   outDir: path.join(generated, 'site'),
-  title: 'ShiJin 科研知识库',
-  description: '基础知识、研究增量与它们之间的关联。',
+  title: 'ShiJin',
+  description: '记录思考，整理知识。从问题出发，在阅读与实践中积累理解。',
   lang: 'zh',
   logo: {
     light: '/brand/sj-light.svg',

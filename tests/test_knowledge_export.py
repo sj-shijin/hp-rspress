@@ -201,7 +201,11 @@ $$
         (self.site / 'about.md').write_text('# 临时介绍\n\n独立网站正文。\n')
         self.run_export()
         self.assertIn('临时网站介绍。', (self.out / 'docs/index.md').read_text())
-        self.assertIn('数学领域', (self.out / 'docs/index.md').read_text())
+        # 公开清单只扩充知识库卡片，不改写独立的个人首页。
+        self.assertEqual((self.out / 'docs/index.md').read_bytes(), original)
+        knowledge = (self.out / 'docs/knowledge/index.md').read_text()
+        self.assertIn('数学领域', knowledge)
+        self.assertIn('/knowledge/math/', knowledge)
         self.assertEqual((self.out / 'docs/about.md').read_bytes(), (self.site / 'about.md').read_bytes())
         self.assertEqual(home.read_bytes(), original)
         home.write_text(home.read_text().replace('临时网站介绍。', '更新后的临时介绍。'))
