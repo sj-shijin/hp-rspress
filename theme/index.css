@@ -198,3 +198,53 @@ html.rp-dark .rp-codeblock .shiki span {
     padding-inline: 24px;
   }
 }
+
+/* Pele 在构建时生成 SVG，颜色继承网站主题，切换亮暗无需重新渲染。 */
+.sj-mermaid {
+  --pele-bg: var(--rp-c-bg);
+  --pele-fg: var(--rp-c-text-1);
+  --pele-muted: var(--rp-c-text-2);
+  --pele-line: var(--rp-c-text-2);
+  --pele-surface: var(--rp-c-bg-soft);
+  --pele-surface-alt: var(--rp-c-bg-mute);
+  --pele-border: var(--rp-c-divider);
+  --pele-accent: var(--rp-c-link);
+  --pele-critical: color-mix(in srgb, #ef4444 80%, var(--rp-c-text-1));
+  --pele-error: var(--pele-critical);
+  --pele-font: var(--rp-font-family-base);
+  --pele-font-mono: var(--rp-font-family-mono);
+  --pele-series-1: var(--rp-c-link);
+  --pele-series-2: color-mix(in srgb, #3b82f6 80%, var(--rp-c-text-1));
+  --pele-series-3: color-mix(in srgb, #22c55e 80%, var(--rp-c-text-1));
+  --pele-series-4: color-mix(in srgb, #ef4444 80%, var(--rp-c-text-1));
+  --pele-series-5: color-mix(in srgb, #14b8a6 80%, var(--rp-c-text-1));
+  --pele-series-6: color-mix(in srgb, #eab308 80%, var(--rp-c-text-1));
+  --pele-series-7: color-mix(in srgb, #a855f7 80%, var(--rp-c-text-1));
+  --pele-series-8: color-mix(in srgb, #a16207 80%, var(--rp-c-text-1));
+
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--rp-c-divider-light);
+  border-radius: 0.5rem;
+  background: var(--rp-c-bg);
+}
+
+.sj-mermaid__diagram {
+  overflow-x: auto;
+}
+
+.sj-mermaid__diagram > svg {
+  display: block;
+  margin-inline: auto;
+}
+
+.sj-mermaid__source {
+  margin-top: 0.75rem;
+}
+
+.sj-mermaid__source > summary {
+  width: fit-content;
+  color: var(--rp-c-text-2);
+  font-size: 0.875rem;
+  cursor: pointer;
+}

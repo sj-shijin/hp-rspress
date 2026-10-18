@@ -24,6 +24,8 @@ export default function remarkMermaid() {
         try {
           svg = render(node.value, {
             idPrefix: `mermaid-${id}`,
+            fontFamily: 'LXGW WenKai Mono GB, sans-serif',
+            fontFamilyMono: 'LXGW WenKai Mono GB, monospace',
           }).svg;
         } catch (error) {
           file.fail(`Mermaid / Pele: ${error.message}`, node);
