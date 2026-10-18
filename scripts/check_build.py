@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 from urllib.parse import unquote, urlsplit
+import xml.etree.ElementTree as ET
 
 from export_knowledge import inside, outside_code
 from finalize_markdown import markdown_tools
@@ -180,13 +181,30 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
                 target = target / 'index.html'
             require(target.is_file(), f'Markdown 本地链接失效：{path}：{destination}')
 
+    sitemap = ET.parse(output / 'sitemap.xml')
+    locations = [node.text for node in sitemap.findall('.//{*}loc')]
+    sitemap_origin = origin or 'http://127.0.0.1:1320'
+    sitemap_routes = set()
+    for location in locations:
+        parsed = urlsplit(location)
+        require(f'{parsed.scheme}://{parsed.netloc}' == sitemap_origin, 'sitemap 的 SITE_ORIGIN 不一致')
+        require(not parsed.query and not parsed.fragment, 'sitemap 不应包含查询参数或章节锚点')
+        sitemap_routes.add(parsed.path)
+    public_routes = set()
+    for path in output.rglob('*.html'):
+        relative = path.relative_to(output).as_posix()
+        route = '/' + relative.removesuffix('index.html')
+        if relative != '404.html' and route not in aliases:
+            public_routes.add(route)
+    require(len(locations) == len(sitemap_routes) and sitemap_routes == public_routes,
+            'sitemap 页面范围不一致，或包含旧入口、404、JSON 等非正文资源')
     bundle = '\n\n---\n\n'.join(path.read_text(encoding='utf-8').strip() for path in paths) + '\n'
     require((output / 'llms-full.txt').read_text(encoding='utf-8') == bundle,
             'llms-full.txt 与单篇 Markdown 不一致')
     return {'notes': len(notes), 'knowledge_html_pages': len(actual_html), 'attachments': len(assets),
             'search_pages': len(search), 'llms_pages': len(links), 'math_pages': math_pages,
             'math_formulas': sum(result['markdownFormulas'] for result in parity),
-            'markdown_files_checked': len(markdown_files),
+            'markdown_files_checked': len(markdown_files), 'sitemap_pages': len(locations),
             'legacy_routes': len(aliases), 'site_origin': origin}
 
 

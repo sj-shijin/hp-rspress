@@ -70,6 +70,10 @@ class BuildArtifactTests(unittest.TestCase):
         (self.output / 'static').mkdir()
         (self.output / 'static/search_index.zh.test.json').write_text(json.dumps(search))
         (self.output / 'llms.txt').write_text('\n'.join(links) + '\n')
+        routes = ['/knowledge/', *[note['url'] for note in index['notes']]]
+        (self.output / 'sitemap.xml').write_text(
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
+            ''.join(f'<url><loc>http://127.0.0.1:1320{route}</loc></url>' for route in routes) + '</urlset>')
         finalize(self.output)
 
     def tearDown(self):
@@ -82,6 +86,7 @@ class BuildArtifactTests(unittest.TestCase):
         report = self.check()
         self.assertEqual((report['notes'], report['math_pages'], report['legacy_routes']), (2, 1, 1))
         self.assertEqual(report['math_formulas'], 2)
+        self.assertEqual(report['sitemap_pages'], 3)
 
     def test_production_build_contract(self):
         origin = 'https://shijin.space'
@@ -90,6 +95,8 @@ class BuildArtifactTests(unittest.TestCase):
         path = self.output / 'llms.txt'
         path.write_text(path.read_text().replace('](/', f']({origin}/')
                         .replace('：/knowledge/index.json', f'：{origin}/knowledge/index.json'))
+        path = self.output / 'sitemap.xml'
+        path.write_text(path.read_text().replace('http://127.0.0.1:1320', origin))
         finalize(self.output, origin)
         self.assertEqual(self.check(origin)['site_origin'], origin)
 
@@ -110,6 +117,8 @@ class BuildArtifactTests(unittest.TestCase):
             ('knowledge/index.md', '# 缺少提示\n', 'AI 导航提示'),
             ('llms.txt', (self.output / 'llms.txt').read_text() +
              '\n[错误的文档入口](/knowledge/index.json)\n', 'JSON 辅助资源'),
+            ('sitemap.xml', (self.output / 'sitemap.xml').read_text().replace('</urlset>',
+             '<url><loc>http://127.0.0.1:1320/knowledge/overview/</loc></url></urlset>'), 'sitemap 页面范围'),
             ('static/search_index.zh.test.json',
              json.dumps([{'routePath': '/knowledge/math/'}, {'routePath': '/knowledge/definition/'},
                          {'routePath': '/knowledge/overview/'}]), '搜索索引重复'),
