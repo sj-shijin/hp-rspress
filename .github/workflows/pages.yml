@@ -1,0 +1,86 @@
+name: 构建并发布网站
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: 获取网站代码
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: 读取知识库子模块的固定版本
+        id: vault
+        run: echo "ref=$(git rev-parse HEAD:knowledge-vault)" >> "$GITHUB_OUTPUT"
+
+      - name: 使用专用只读密钥获取私有知识库
+        uses: actions/checkout@v7
+        with:
+          repository: sj-shijin/personal-knowledge-vault
+          ref: ${{ steps.vault.outputs.ref }}
+          path: knowledge-vault
+          ssh-key: ${{ secrets.KNOWLEDGE_VAULT_DEPLOY_KEY }}
+          persist-credentials: false
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: 配置 Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+
+      - name: 安装锁定的依赖
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+          npm ci --no-audit --no-fund
+
+      - name: 验证导出范围、关联与公式
+        run: npm test
+
+      - name: 按公开清单构建网站
+        run: npm run build
+        env:
+          SITE_ORIGIN: https://shijin.space
+
+      - name: 配置 GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: 仅上传网站构建结果
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: .generated/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

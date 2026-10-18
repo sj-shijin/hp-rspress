@@ -35,6 +35,7 @@ export default defineConfig({
   lang: 'zh',
   logoText: 'ShiJin',
   base: '/',
+  siteOrigin: process.env.SITE_ORIGIN || '',
   route: { cleanUrls: true },
   llms: true,
   markdown: {

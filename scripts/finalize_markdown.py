@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """用已批准的 Markdown 校正 SSG-MD，保留 LaTeX 并同步全文入口。"""
 import json
+import os
 from pathlib import Path
 import re
 import shutil
 from urllib.parse import unquote, urlsplit
 
 
-def finalize(output: Path) -> dict:
+def finalize(output: Path, site_origin: str = '') -> dict:
     output = output.resolve()
     index = json.loads((output / 'knowledge/index.json').read_text(encoding='utf-8'))
     for note in index['notes']:
@@ -27,7 +28,9 @@ def finalize(output: Path) -> dict:
     paths = []
     for href in re.findall(r'\]\(([^)]+)\)', (output / 'llms.txt').read_text(encoding='utf-8')):
         url = urlsplit(href)
-        if url.scheme or not url.path.endswith('.md'):
+        if url.netloc and url.netloc != urlsplit(site_origin).netloc:
+            continue
+        if url.scheme not in ('', 'http', 'https') or not url.path.endswith('.md'):
             continue
         path = (output / unquote(url.path).lstrip('/')).resolve()
         if not path.is_relative_to(output):
@@ -45,4 +48,5 @@ def finalize(output: Path) -> dict:
 
 if __name__ == '__main__':
     site = Path(__file__).resolve().parents[1]
-    print(json.dumps(finalize(site / '.generated/site'), ensure_ascii=False))
+    print(json.dumps(finalize(site / '.generated/site', os.environ.get('SITE_ORIGIN', '')),
+                     ensure_ascii=False))

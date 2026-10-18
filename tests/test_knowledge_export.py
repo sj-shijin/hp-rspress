@@ -150,6 +150,22 @@ $$
         self.assertNotIn('DAMAGED_MATH_SENTINEL', full)
         self.assertNotIn('PRIVATE_METADATA_SENTINEL', full)
 
+    def test_published_markdown_index_uses_same_origin_absolute_links(self):
+        self.run_export()
+        built = self.root / 'built'
+        shutil.copytree(self.out / 'docs/public', built)
+        for slug in ['alpha', 'beta']:
+            (built / 'knowledge' / slug).mkdir()
+        (built / 'llms.txt').write_text(
+            '- [甲](https://shijin.space/knowledge/alpha/index.md)\n'
+            '- [乙](https://shijin.space/knowledge/beta/index.md)\n'
+            '- [外部资料](https://example.com/external.md)\n')
+        report = finalize(built, 'https://shijin.space')
+        self.assertEqual(report['llms_pages'], 2)
+        full = (built / 'llms-full.txt').read_text()
+        self.assertIn('$$\nx\n=\ny\n$$', full)
+        self.assertIn('$x^2$', full)
+
 
 if __name__ == '__main__':
     unittest.main()

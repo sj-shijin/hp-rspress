@@ -1,6 +1,9 @@
 # hp-rspress
 
-ShiJin 的科研知识网站，使用 Rspress 2。当前只做本地预览，未绑定域名、未发布到线上。
+ShiJin 的科研知识网站，使用 Rspress 2。
+
+- 网站：<https://shijin.space/>
+- 网站代码：<https://github.com/sj-shijin/hp-rspress>
 
 ## 安装与预览
 
@@ -59,5 +62,25 @@ git diff --submodule
 npm run dev
 ```
 
-当前未创建 GitHub 远程仓库或自动发布工作流。
-后续上线时，私有库仍保持私有，构建固定到网站记录的提交，并仅上传 `.generated/site/`。
+## 自动发布
+
+推送网站 `main` 分支后，`.github/workflows/pages.yml` 自动执行测试、构建和 GitHub Pages 发布；
+也可以在 GitHub Actions 中手动运行。仅推送知识库不会自动更新网站，需要更新并提交网站的子模块版本。
+
+构建使用网站记录的子模块提交，通过 `KNOWLEDGE_VAULT_DEPLOY_KEY` 读取私有知识库。
+该密钥是知识库仓库的专用只读 Deploy Key，私钥仅保存在网站仓库的 Actions Secret 中。
+网站仓库公开，知识库仓库保持私有；公开范围始终由 `knowledge/publish.json` 控制。
+只有 `.generated/site/` 被上传为 Pages 发布产物。
+
+GitHub Pages 使用 Actions 作为发布来源，自定义域名在仓库 Pages 设置中绑定。
+DNS 指向 GitHub Pages，网站根路径为 `/`。Actions 发布不依赖仓库中的 `CNAME` 文件。
+线上构建设置 `SITE_ORIGIN=https://shijin.space`，生成带正式域名的 Markdown 索引；
+本地预览不设置该变量，继续使用本机链接。
+
+```sh
+# 修改网站代码或更新子模块版本后，推送网站触发部署
+git push origin main
+
+# 本地检查与线上相同的构建
+SITE_ORIGIN=https://shijin.space npm run build
+```
