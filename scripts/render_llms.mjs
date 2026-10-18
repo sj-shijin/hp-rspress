@@ -15,7 +15,9 @@ export function renderLlmsTxt(context, index) {
   const indexLink = siteOrigin ? new URL(indexPath, siteOrigin).href : indexPath;
   const lines = [
     `# ${title}`, '', `> ${description}`, '',
-    `先读领域概览与阅读路线，再按需读取单篇 Markdown。笔记之间的链接与反向链接见[关联索引](${indexLink})。`, '',
+    '先读领域概览与阅读路线，再按需读取单篇 Markdown。', '',
+    // JSON 是关联数据资源；使用明文地址，避免文档发现器将其当成文章页。
+    `关联数据（JSON 辅助资源，非文档页面）：${indexLink}`, '',
   ];
 
   function entry(url, summary) {

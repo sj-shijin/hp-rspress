@@ -11,6 +11,7 @@ import re
 from urllib.parse import unquote, urlsplit
 
 from export_knowledge import inside, outside_code
+from finalize_markdown import markdown_tools
 
 
 def require(condition, message):
@@ -54,7 +55,7 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     active_categories = {n.get('category') for n in expected.values()} - {None, ''}
     expected_html = {'knowledge/index.html'} | {
         f'knowledge/{identifier}/index.html' for identifier in active_categories}
-    aliases, math_pages = set(), 0
+    aliases, math_pages, comparisons = set(), 0, []
 
     for identifier, note in notes.items():
         item = expected[identifier]
@@ -81,9 +82,12 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
                 f'网页 AI 索引链接或 SITE_ORIGIN 不一致：{identifier}')
         classes = {token for _, attrs in page.tags for token in attrs.get('class', '').split()}
         require('katex-error' not in classes, f'公式渲染失败：{identifier}')
+        require('rp-llms-hint' in classes, f'网页缺少 AI 导航提示：{identifier}')
         if has_math(raw.read_text(encoding='utf-8')):
             require('katex' in classes, f'公式未渲染：{identifier}')
             math_pages += 1
+        comparisons.append({'html': (output / url.lstrip('/') / 'index.html').read_text(encoding='utf-8'),
+                            'markdown': canonical.read_text(encoding='utf-8')})
         expected_html.add(url.lstrip('/') + 'index.html')
         for alias in old_urls:
             aliases.add(alias)
@@ -94,6 +98,16 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
                     f'旧网址兼容页未正确生成：{alias}')
             require((output / alias.lstrip('/') / 'index.md').read_bytes() == raw.read_bytes(),
                     f'旧 Markdown 网址失效：{alias}')
+
+    parity = markdown_tools('compare', comparisons)
+    for identifier, result in zip(notes, parity):
+        require(result['formulasMatch'],
+                f'HTML 与 Markdown 公式不一致：{identifier} '
+                f'({result["htmlFormulas"]}/{result["markdownFormulas"]})')
+        require(not result['missing'],
+                f'HTML 正文未出现在 Markdown：{identifier}：{result["missing"][:3]}')
+        require(not result['missingHtml'],
+                f'Markdown 正文未出现在 HTML：{identifier}：{result["missingHtml"][:3]}')
 
     actual_html = {p.relative_to(output).as_posix() for p in (output / 'knowledge').rglob('*.html')}
     require(actual_html == expected_html, '知识库网页范围与公开清单不一致')
@@ -124,6 +138,9 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
             '搜索索引包含未公开知识库页面')
 
     llms = (output / 'llms.txt').read_text(encoding='utf-8')
+    require(origin + '/knowledge/index.json' in llms, 'llms.txt 缺少 JSON 关联资源地址')
+    require(not re.search(r'\]\([^)]*index\.json\)', llms),
+            'JSON 辅助资源不应作为文档页面参与发现和检查')
     links = re.findall(r'\]\(([^)]+\.md)\)', llms)
     require(len(links) == len(set(links)) and bool(links), 'llms.txt 入口重复或为空')
     paths = []
@@ -140,11 +157,36 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     require(required <= listed, 'llms.txt 缺少公开笔记或领域入口')
     require(not {alias + 'index.md' for alias in aliases}.intersection(listed), 'llms.txt 重复收录旧入口')
     require(all(n['description'] in llms for n in notes.values()), 'llms.txt 缺少笔记摘要')
+
+    # JSON 单独核对其清单和关联结构；Markdown/HTML 提示及正文检查只应用于文档。
+    markdown_files = sorted(output.rglob('*.md'))
+    markdown_pages = [{'markdown': path.read_text(encoding='utf-8')} for path in markdown_files]
+    hint = (f'> For AI agents: the complete documentation index is available at {origin}/llms.txt, '
+            f'the full documentation bundle is available at {origin}/llms-full.txt.')
+    markdown_links = markdown_tools('links', markdown_pages)
+    for path, page, destinations in zip(markdown_files, markdown_pages, markdown_links):
+        require(page['markdown'].startswith(hint + '\n\n'), f'Markdown 缺少 AI 导航提示或 SITE_ORIGIN 不一致：{path}')
+        for destination in destinations:
+            parsed = urlsplit(destination)
+            if origin:
+                require(bool(parsed.scheme), f'Markdown 链接不是完整网址：{path}：{destination}')
+            if parsed.netloc and parsed.netloc != urlsplit(origin).netloc:
+                continue
+            if parsed.scheme not in ('', 'http', 'https') or not parsed.path:
+                continue
+            target = (output / unquote(parsed.path).lstrip('/')).resolve()
+            require(target.is_relative_to(output), f'Markdown 链接超出构建目录：{destination}')
+            if target.is_dir():
+                target = target / 'index.html'
+            require(target.is_file(), f'Markdown 本地链接失效：{path}：{destination}')
+
     bundle = '\n\n---\n\n'.join(path.read_text(encoding='utf-8').strip() for path in paths) + '\n'
     require((output / 'llms-full.txt').read_text(encoding='utf-8') == bundle,
             'llms-full.txt 与单篇 Markdown 不一致')
     return {'notes': len(notes), 'knowledge_html_pages': len(actual_html), 'attachments': len(assets),
             'search_pages': len(search), 'llms_pages': len(links), 'math_pages': math_pages,
+            'math_formulas': sum(result['markdownFormulas'] for result in parity),
+            'markdown_files_checked': len(markdown_files),
             'legacy_routes': len(aliases), 'site_origin': origin}
 
 

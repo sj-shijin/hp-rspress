@@ -10,7 +10,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from check_build import check_build
 from export_knowledge import export
-from finalize_markdown import finalize
+from finalize_markdown import finalize, markdown_tools
 
 
 class BuildArtifactTests(unittest.TestCase):
@@ -34,18 +34,30 @@ class BuildArtifactTests(unittest.TestCase):
         self.output = self.root / 'built'
         shutil.copytree(generated / 'docs/public', self.output)
         index = json.loads((self.output / 'knowledge/index.json').read_text())
-        links, search = ['- [目录](/knowledge/index.md)'], []
+        links, search = ['关联数据（JSON 辅助资源，非文档页面）：/knowledge/index.json',
+                         '- [目录](/knowledge/index.md)'], []
         folder = self.output / 'knowledge'
         (folder / 'index.html').write_text('<h1>目录</h1>')
         (folder / 'index.md').write_text('# 目录\n')
         for note in index['notes']:
             folder = self.output / note['url'].lstrip('/')
             folder.mkdir(parents=True)
+            def formula(tex, display=False):
+                expression = ('<span class="katex"><math><semantics>'
+                              f'<annotation encoding="application/x-tex">{escape(tex)}</annotation>'
+                              '</semantics></math></span>')
+                return f'<span class="katex-display">{expression}</span>' if display else expression
+            content = ('<p>临时概览。<a href="/knowledge/definition/">定义</a></p>'
+                       if note['id'] == 'overview' else
+                       f'<p>公式 {formula("x^2")}。</p>{formula("x=y", True)}'
+                       '<h2>引用此笔记</h2><ul><li><a href="/knowledge/math/">概览</a></li></ul>')
+            title = '临时数学' if note['id'] == 'overview' else note['title']
             (folder / 'index.html').write_text(
                 f'<meta name="description" content="{escape(note["description"])}">'
                 f'<link rel="alternate" type="text/markdown" href="{note["url"]}index.md">'
                 '<link rel="describedby" href="/llms.txt">'
-                f'<h1>{escape(note["title"])}</h1><span class="katex">x</span>')
+                '<div class="rp-llms-hint">For AI agents:</div>'
+                f'<div class="rp-doc rspress-doc"><h1>{escape(title)}</h1>{content}</div>')
             (folder / 'index.md').write_text('待校正')
             links.append(f'- [{note["title"]}]({note["url"]}index.md): {note["description"]}')
             search.append({'routePath': note['url']})
@@ -69,13 +81,15 @@ class BuildArtifactTests(unittest.TestCase):
     def test_local_build_contract(self):
         report = self.check()
         self.assertEqual((report['notes'], report['math_pages'], report['legacy_routes']), (2, 1, 1))
+        self.assertEqual(report['math_formulas'], 2)
 
     def test_production_build_contract(self):
         origin = 'https://shijin.space'
         for path in self.output.rglob('*.html'):
             path.write_text(path.read_text().replace('href="/', f'href="{origin}/'))
         path = self.output / 'llms.txt'
-        path.write_text(path.read_text().replace('](/', f']({origin}/'))
+        path.write_text(path.read_text().replace('](/', f']({origin}/')
+                        .replace('：/knowledge/index.json', f'：{origin}/knowledge/index.json'))
         finalize(self.output, origin)
         self.assertEqual(self.check(origin)['site_origin'], origin)
 
@@ -87,6 +101,15 @@ class BuildArtifactTests(unittest.TestCase):
                  'href="/llms.txt"', 'href="https://shijin.space/llms.txt"'), 'SITE_ORIGIN'),
             ('knowledge/definition/index.html',
              (self.output / 'knowledge/definition/index.html').read_text().replace('class="katex"', 'class="missing"'), '公式未渲染'),
+            ('knowledge/definition/index.html',
+             (self.output / 'knowledge/definition/index.html').read_text().replace('x^2', 'x^3'), '公式不一致'),
+            ('knowledge/definition/index.html',
+             (self.output / 'knowledge/definition/index.html').read_text().replace('公式 ', '网页独有的错误正文'), 'HTML 正文'),
+            ('knowledge/math/index.html',
+             (self.output / 'knowledge/math/index.html').read_text().replace('临时概览。', ''), 'Markdown 正文'),
+            ('knowledge/index.md', '# 缺少提示\n', 'AI 导航提示'),
+            ('llms.txt', (self.output / 'llms.txt').read_text() +
+             '\n[错误的文档入口](/knowledge/index.json)\n', 'JSON 辅助资源'),
             ('static/search_index.zh.test.json',
              json.dumps([{'routePath': '/knowledge/math/'}, {'routePath': '/knowledge/definition/'},
                          {'routePath': '/knowledge/overview/'}]), '搜索索引重复'),
@@ -109,6 +132,41 @@ class BuildArtifactTests(unittest.TestCase):
                         path.unlink()
                     else:
                         path.write_bytes(original)
+
+    def test_markdown_links_keep_code_math_fragments_and_resource_types(self):
+        source = ('# 临时测试\n\n[页面](/knowledge/definition/#基本定义)\n'
+                  '![图](/knowledge/attachments/plot(1).svg)\n'
+                  '[引用][ref]\n\n[ref]: /knowledge/math/ "概览"\n'
+                  '<a href="/knowledge/definition/">HTML 链接</a>\n'
+                  '[外部](https://example.com/paper.pdf)\n'
+                  '`[代码](/keep)`\n\n```text\n[代码](/keep)\n$x$\n```\n'
+                  '\n$x_1$\n\n$$\na_1 = b_2\n$$\n')
+        result = markdown_tools('prepare', [{'route': '/knowledge/definition/', 'markdown': source}],
+                                origin='https://shijin.space',
+                                routes={'/knowledge/definition/': '/knowledge/definition/index.md',
+                                        '/knowledge/math/': '/knowledge/math/index.md'})[0]
+        self.assertIn('https://shijin.space/knowledge/definition/index.md#%E5%9F%BA%E6%9C%AC%E5%AE%9A%E4%B9%89', result)
+        self.assertIn('![图](https://shijin.space/knowledge/attachments/plot(1).svg)', result)
+        self.assertIn('[ref]: https://shijin.space/knowledge/math/index.md "概览"', result)
+        self.assertIn('href="https://shijin.space/knowledge/definition/index.md"', result)
+        self.assertIn('[外部](https://example.com/paper.pdf)', result)
+        self.assertIn('`[代码](/keep)`', result)
+        self.assertIn('```text\n[代码](/keep)\n$x$\n```', result)
+        self.assertIn('$x_1$\n\n$$\na_1 = b_2\n$$', result)
+        again = markdown_tools('prepare', [{'route': '/knowledge/definition/', 'markdown': result}],
+                               origin='https://shijin.space', routes={})[0]
+        self.assertEqual(result, again)
+
+    def test_chinese_emphasis_and_formula_use_rspress_parsing_rules(self):
+        markdown = '# 临时定义\n\n因此，**用 $y$ 缩短指定向量 $x$**的条件是。\n'
+        html = ('<div class="rspress-doc"><h1>临时定义</h1><p>因此，<strong>用 '
+                '<span class="katex"><annotation encoding="application/x-tex">y</annotation></span>'
+                ' 缩短指定向量 '
+                '<span class="katex"><annotation encoding="application/x-tex">x</annotation></span>'
+                '</strong>的条件是。</p></div>')
+        result = markdown_tools('compare', [{'html': html, 'markdown': markdown}])[0]
+        self.assertTrue(result['formulasMatch'])
+        self.assertEqual((result['missing'], result['missingHtml']), ([], []))
 
 
 if __name__ == '__main__':

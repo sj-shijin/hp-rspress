@@ -173,7 +173,8 @@ $$
                 self.assertNotIn('### 概览', text)
                 self.assertNotIn('/knowledge/alpha/', text)
                 self.assertIn('### 基础知识 · 几何基础', text)
-                self.assertIn(f'[关联索引]({origin}/knowledge/index.json)', text)
+                self.assertIn(f'关联数据（JSON 辅助资源，非文档页面）：{origin}/knowledge/index.json', text)
+                self.assertNotIn('[关联索引](', text)
                 self.assertIn(f'[数学领域]({origin}/knowledge/math/index.md): 甲的定义与公式。', text)
                 self.assertLess(text.index('[数学领域]'), text.index('[乙]'))
                 links = re.findall(r'\]\(([^)]+\.md)\)', text)
@@ -272,6 +273,7 @@ $$
         self.assertEqual(report, {'markdown_pages': 2, 'llms_pages': 2})
         self.assertEqual((built / 'knowledge/alpha/index.md').read_bytes(),
                          (built / 'knowledge/raw/alpha.md').read_bytes())
+        self.assertTrue((built / 'knowledge/alpha/index.md').read_text().startswith('> For AI agents:'))
         full = (built / 'llms-full.txt').read_text()
         self.assertIn('$$\nx\n=\ny\n$$', full)
         self.assertIn('$x^2$', full)
