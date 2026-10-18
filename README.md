@@ -75,7 +75,16 @@ git diff --submodule
 `postbuild` 校正 Rspress 2.0 SSG-MD 的 LaTeX 转义，恢复 AI 导航提示，并按 `SITE_ORIGIN` 补全链接。
 构建检查核对公开范围、搜索、链接、提示及 sitemap，逐个比较公式并双向核验正文。
 检查失败会中止构建，报告见 `.generated/build-check.json`。
-AFDocs 的通用正文比较可能误报 KaTeX，公式一致性由构建检查验证。
+AFDocs 固定使用 0.22.2（需要 Node.js 22+）；通用正文比较可能误报 KaTeX，公式与正文一致性继续由上述严格构建检查验证。
+`agent-docs.config.yml` 仅将该项设为仅报告，保留差异数据；`agent-docs.defaults.yml` 不覆盖任何检查参数，保留原始对照口径。
+
+```sh
+npm run check:afdocs                            # 读取线上网站，同时保存两套检测结果
+npm run check:afdocs -- http://127.0.0.1:1320    # 检测已启动的本地静态预览
+```
+
+每次在 `.runtime/afdocs/<时间戳>/` 保存 `default.json`、`report.json`、配置快照、命令记录和摘要，不覆盖历史结果。
+仅报告模式的 PASS 不表示差异已修复，分数不能与默认参数直接比较；其他检查失败仍返回非零。
 内容协商与 WebMCP 尚未接入。
 
 ## 部署
