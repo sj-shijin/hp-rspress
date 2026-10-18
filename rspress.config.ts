@@ -75,6 +75,12 @@ export default defineConfig({
   themeConfig: {
     ...navigation,
     lastUpdated: false,
-    footer: { message: 'ShiJin · 科研知识库' },
+    socialLinks: [
+      {
+        icon: 'github',
+        mode: 'link',
+        content: 'https://github.com/sj-shijin/hp-rspress',
+      },
+    ],
   },
 });

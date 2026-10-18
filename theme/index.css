@@ -29,3 +29,45 @@
   overflow-y: hidden;
   padding-block: 0.25rem;
 }
+
+/* 桌面导航依次显示知识库、GitHub、主题和搜索；手机保留原生折叠菜单。 */
+@media (min-width: 769px) {
+  .rp-nav__right > .rp-search-button {
+    order: 1;
+  }
+
+  .rp-nav__right > .rp-nav__others {
+    display: flex;
+  }
+
+  .rp-nav__others > .rp-switch-appearance {
+    order: 1;
+  }
+
+  .rp-nav__right > .rp-nav-hamburger__md {
+    display: none;
+  }
+}
+
+/* 竖屏菜单将 GitHub 与亮暗切换并排显示，保留原生菜单行为。 */
+@media (max-width: 768px) {
+  .rp-nav-screen .rp-nav-screen__container {
+    flex-flow: row wrap;
+    justify-content: center;
+    column-gap: 24px;
+  }
+
+  .rp-nav-screen__container > .rp-nav-screen-appearance {
+    width: auto;
+    padding-inline: 0;
+    order: 1;
+  }
+
+  .rp-nav-screen .rp-nav-screen-appearance__left {
+    display: none;
+  }
+
+  .rp-nav-screen__container > .rp-nav-screen-appearance ~ .rp-nav-screen-divider {
+    display: none;
+  }
+}
