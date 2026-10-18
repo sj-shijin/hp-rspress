@@ -33,6 +33,43 @@
   height: 2rem;
 }
 
+/* 代码区域随网站主题切换：One Light / Material Theme Darker。 */
+.rp-codeblock {
+  --rp-code-block-bg: #fafafa;
+  --rp-code-block-color: #383a42;
+  --rp-code-title-bg: #fafafa;
+  --rp-c-text-1: #383a42;
+  --rp-c-text-2: #696c77;
+  --rp-c-text-3: #90939c;
+}
+
+html.rp-dark .rp-codeblock {
+  --rp-code-block-bg: #212121;
+  --rp-code-block-color: #eeffff;
+  --rp-code-title-bg: #212121;
+  --rp-code-block-border: 1px solid #ffffff1a;
+  --rp-c-text-1: #eeffff;
+  --rp-c-text-2: #b0bec5;
+  --rp-c-text-3: #90a4ae;
+}
+
+/* Shiki 同时生成两套颜色；用页面主题选择，保留各自的字形样式。 */
+.rp-codeblock .shiki,
+.rp-codeblock .shiki span {
+  color: var(--shiki-light);
+  font-style: var(--shiki-light-font-style, normal);
+  font-weight: var(--shiki-light-font-weight, normal);
+  text-decoration: var(--shiki-light-text-decoration, none);
+}
+
+html.rp-dark .rp-codeblock .shiki,
+html.rp-dark .rp-codeblock .shiki span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style, normal);
+  font-weight: var(--shiki-dark-font-weight, normal);
+  text-decoration: var(--shiki-dark-text-decoration, none);
+}
+
 /* 超宽公式在自身区域滚动，不挤压正文与右侧目录。 */
 .katex-display {
   max-width: 100%;

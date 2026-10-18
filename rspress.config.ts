@@ -68,6 +68,10 @@ export default defineConfig({
     },
   },
   markdown: {
+    shiki: {
+      themes: { light: 'one-light', dark: 'material-theme-darker' },
+      defaultColor: false,
+    },
     remarkPlugins: [remarkMath, remarkMathBlocks],
     rehypePlugins: [[rehypeKatex, { strict: 'ignore', throwOnError: true }]],
     link: { checkDeadLinks: true, checkAnchors: true },
