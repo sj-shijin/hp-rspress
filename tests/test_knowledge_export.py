@@ -89,7 +89,7 @@ $$
         self.assertIn('基础知识 · 几何基础', overview)
         self.assertIn('/knowledge/alpha/', overview)
         self.assertIn('几何基础', json.dumps(config, ensure_ascii=False))
-        self.assertEqual(config['nav'][1]['items'][0]['link'], '/knowledge/math/')
+        self.assertEqual(config['nav'][0]['items'][0]['link'], '/knowledge/math/')
 
     def test_manifest_removal_cleans_pages_assets_and_navigation(self):
         self.run_export()

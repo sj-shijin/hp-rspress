@@ -77,6 +77,17 @@ Regular 对应 400，Medium 对应 500；标题与强调文字匹配 Medium，�
 uv run --no-project --with 'fonttools[woff]==4.61.1' python scripts/prepare_fonts.py /path/to/font-sources
 ```
 
+## 网站标识与导航
+
+左上角采用 M2 柔方 SJ 徽章与 ShiJin 全名，整体链接到首页；顶部菜单仅保留知识库入口。
+外轮廓为指数 n = 3 的超椭圆，参考[小米官网图标](https://www.mi.com/global/)的方圆形态。
+内部字形基于 [IBM Plex Mono](https://www.ibm.com/plex/) 600，已转为 SVG 轮廓，不额外加载该字体。
+
+SVG 文件位于 `theme/brand/`，通过原生 `logo.light`、`logo.dark` 配置切换墨绿／米白版本；
+网站标签页图标使用同一 M2 图形 `sj-favicon.svg`。资源由构建复制到 `/brand/`。
+设计参数、字体来源和原始文件 SHA-256 记录在 `theme/brand/SOURCE.json`，
+IBM Plex 的原始 OFL-1.1 许可证保存在同目录的 `OFL-IBM-Plex.txt`。
+
 ## 自动发布
 
 推送网站 `main` 分支后，`.github/workflows/pages.yml` 自动执行测试、构建和 GitHub Pages 发布；

@@ -33,17 +33,26 @@ export default defineConfig({
   title: 'ShiJin 科研知识库',
   description: '基础知识、研究增量与它们之间的关联。',
   lang: 'zh',
+  logo: {
+    light: '/brand/sj-light.svg',
+    dark: '/brand/sj-dark.svg',
+  },
   logoText: 'ShiJin',
+  logoHref: '/',
+  icon: './theme/brand/sj-favicon.svg',
   base: '/',
   siteOrigin: process.env.SITE_ORIGIN || '',
   route: { cleanUrls: true },
   llms: true,
   builderConfig: {
     output: {
-      copy: [{
-        from: path.resolve('theme/fonts/lxgw-wenkai-mono-gb/OFL.txt'),
-        to: 'fonts/lxgw-wenkai-mono-gb/OFL.txt',
-      }],
+      copy: [
+        {
+          from: path.resolve('theme/fonts/lxgw-wenkai-mono-gb/OFL.txt'),
+          to: 'fonts/lxgw-wenkai-mono-gb/OFL.txt',
+        },
+        { from: path.resolve('theme/brand'), to: 'brand' },
+      ],
     },
   },
   markdown: {

@@ -6,6 +6,22 @@
   --rp-font-family-mono: 'LXGW WenKai Mono GB', Menlo, Monaco, Consolas, monospace;
 }
 
+/* 标识使用原生亮暗主题切换；正文继续沿用文楷等宽字体。 */
+.rp-nav__title__link {
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.rp-nav__title__logo {
+  margin-right: 0.625rem;
+}
+
+/* 优先于原生 .rspress-logo 高度，保持徽章为正方形。 */
+.rp-nav__title .rp-nav__title__logo-image {
+  width: 2rem;
+  height: 2rem;
+}
+
 /* 超宽公式在自身区域滚动，不挤压正文与右侧目录。 */
 .katex-display {
   max-width: 100%;

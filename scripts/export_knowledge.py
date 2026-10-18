@@ -296,8 +296,7 @@ class Exporter:
         if uncategorized:
             sidebar.append({'text': '其他笔记', 'items': self.sidebar_items(uncategorized)})
         theme_config = {
-            'nav': [{'text': '首页', 'link': '/'},
-                    {'text': '知识库', 'link': '/knowledge/', 'items': navigation}],
+            'nav': [{'text': '知识库', 'link': '/knowledge/', 'items': navigation}],
             'sidebar': {'/knowledge/': sidebar},
         }
         (output / 'theme-config.json').write_text(
