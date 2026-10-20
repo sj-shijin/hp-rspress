@@ -125,6 +125,8 @@ class BuildArtifactTests(unittest.TestCase):
             ('knowledge/overview/index.html', '<p>失效的旧入口</p>', '旧网址'),
             ('knowledge/unapproved/index.html', '<h1>未允许公开</h1>', '网页范围'),
             ('knowledge/unapproved.md', '未允许的下载文件', '文件范围'),
+            ('projects/unapproved/index.html', '<h1>未允许项目</h1>', '网页范围'),
+            ('projects/raw/unapproved.md', '未允许的项目下载文件', '原始 Markdown'),
             ('llms-full.txt', '遗漏正文', 'llms-full'),
         ]
         for relative, content, error in regressions:

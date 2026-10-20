@@ -1,6 +1,6 @@
 # hp-rspress
 
-ShiJin 的个人网站，使用 Rspress 2 构建，包含个人主页与知识库。
+ShiJin 的个人网站，使用 Rspress 2 构建，包含个人主页、知识库与项目记录。
 
 - 网站：<https://shijin.space/>
 - 代码：<https://github.com/sj-shijin/hp-rspress>
@@ -23,9 +23,10 @@ npm run check:build   # 单独检查现有构建产物
 ## 项目目录
 
 ```text
-site/                   # 个人主页、知识库入口等网站专属正文
+site/                   # 个人主页、知识库与项目入口等网站专属正文
   index.md              # /
   knowledge/index.md    # /knowledge/
+  projects/index.md     # /projects/
 theme/                  # 样式、字体与标识资源
 knowledge/publish.json  # 知识库笔记与附件的唯一公开清单
 knowledge-vault/        # 私有知识库的固定版本子模块
@@ -42,11 +43,11 @@ scripts/                # 内容导出、Markdown 校正与产物检查
 ## 知识库内容
 
 正式笔记在 Obsidian 知识库维护，不在子模块副本中编辑。
-公开清单维护笔记摘要、领域、分组、章节和顺序；导出不继承私有 frontmatter，也不沿链接扩大公开范围。
-`site/knowledge/` 仅维护入口 `index.md`，领域页面和附件由清单生成。
+公开清单维护笔记摘要、类别、分组、章节和顺序；导出不继承私有 frontmatter，也不沿链接扩大公开范围。
+`site/knowledge/` 与 `site/projects/` 仅维护入口 `index.md`，正文和附件由清单生成。
 
-`categories[].overview` 指定的概览正文作为 `/knowledge/<category>/` 领域首页，
-普通笔记使用 `/knowledge/<slug>/`。旧概览网页与 Markdown 地址继续兼容，搜索和 AI 索引不重复收录。
+`categories[].overview` 指定的概览正文作为类别首页，默认位于 `/knowledge/<category>/`，
+普通笔记使用 `/knowledge/<slug>/`。类别指定 `section: projects` 时，使用独立的 `/projects/` 导航、侧栏和卡片入口。旧概览网页与 Markdown 地址继续兼容，搜索和 AI 索引不重复收录。
 双链在导出时转换并生成反链；未公开笔记链接显示为文字，整篇嵌入、块引用及未获允许的附件会中止导出。
 
 预览使用子模块的固定提交，不读取正式库中尚未提交的修改。

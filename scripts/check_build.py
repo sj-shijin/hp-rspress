@@ -11,7 +11,7 @@ import re
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
 
-from export_knowledge import inside, outside_code
+from export_knowledge import SECTIONS, inside, outside_code
 from finalize_markdown import markdown_tools
 
 
@@ -54,16 +54,26 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
             '关联索引中的笔记与公开清单不一致')
     categories = {c['id']: c for c in spec.get('categories', [])}
     active_categories = {n.get('category') for n in expected.values()} - {None, ''}
-    expected_html = {'knowledge/index.html'} | {
-        f'knowledge/{identifier}/index.html' for identifier in active_categories}
+    def section(item):
+        return categories.get(item.get('category'), {}).get('section', 'knowledge')
+    sections = {'knowledge'} | {section(item) for item in expected.values()}
+    category_urls = {identifier: f"/{category.get('section', 'knowledge')}/{identifier}/"
+                     for identifier, category in categories.items()}
+    expected_html = {f'{key}/index.html' for key in sections} | {
+        category_urls[identifier].lstrip('/') + 'index.html' for identifier in active_categories}
+    require({c['id'] for c in index['categories']} == active_categories, '类别范围与公开清单不一致')
+    for category in index['categories']:
+        require(category['url'] == category_urls[category['id']]
+                and category.get('section', 'knowledge') == categories[category['id']].get('section', 'knowledge'),
+                '类别网址或导航分类与公开清单不一致')
     aliases, math_pages, comparisons = set(), 0, []
 
     for identifier, note in notes.items():
         item = expected[identifier]
         category = categories.get(item.get('category'), {})
         landing = category.get('overview') == identifier
-        url = f"/knowledge/{item['category'] if landing else identifier}/"
-        old_urls = [f'/knowledge/{identifier}/'] if landing else []
+        url = f"/{section(item)}/{item['category'] if landing else identifier}/"
+        old_urls = [f'/{section(item)}/{identifier}/'] if landing else []
         require(note['url'] == url and note.get('aliases', []) == old_urls,
                 f'笔记网址与清单不一致：{identifier}')
         require(note['description'] == item['description'], f'笔记摘要不一致：{identifier}')
@@ -71,7 +81,10 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         incoming = {n['id'] for n in notes.values() if identifier in n['links'] and n['id'] != identifier}
         require(set(note['backlinks']) == incoming, f'反向链接不一致：{identifier}')
         canonical = output / url.lstrip('/') / 'index.md'
-        raw = output / 'knowledge/raw' / f'{identifier}.md'
+        markdown_url = f'/{section(item)}/raw/{identifier}.md'
+        require(note['markdown'] == markdown_url and note.get('section', 'knowledge') == section(item),
+                f'笔记下载路径或导航分类与清单不一致：{identifier}')
+        raw = output / markdown_url.lstrip('/')
         require(canonical.read_bytes() == raw.read_bytes(), f'Markdown 公式或正文不一致：{identifier}')
         page = Page(output / url.lstrip('/') / 'index.html')
         require(page.has('h1'), f'正文未生成：{identifier}')
@@ -111,11 +124,13 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         require(not result['missingHtml'],
                 f'Markdown 正文未出现在 HTML：{identifier}：{result["missingHtml"][:3]}')
 
-    actual_html = {p.relative_to(output).as_posix() for p in (output / 'knowledge').rglob('*.html')}
+    actual_html = {p.relative_to(output).as_posix()
+                   for key in SECTIONS for p in (output / key).rglob('*.html')}
     require(actual_html == expected_html, '知识库网页范围与公开清单不一致')
-    actual_raw = {p.relative_to(output / 'knowledge/raw').as_posix()
-                  for p in (output / 'knowledge/raw').rglob('*') if p.is_file()}
-    require(actual_raw == {f'{identifier}.md' for identifier in notes}, '原始 Markdown 公开范围不一致')
+    expected_raw = {f"{section(item)}/raw/{identifier}.md" for identifier, item in expected.items()}
+    actual_raw = {p.relative_to(output).as_posix()
+                  for key in SECTIONS for p in (output / key / 'raw').rglob('*') if p.is_file()}
+    require(actual_raw == expected_raw, '原始 Markdown 公开范围不一致')
     allowed_assets = set()
     for relative in spec.get('attachments', []):
         asset = inside(vault, relative)
@@ -124,9 +139,10 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
               for p in (output / 'knowledge/attachments').rglob('*') if p.is_file()}
     require(assets <= allowed_assets, '构建产物包含未允许的知识库附件')
     expected_files = expected_html | {path.removesuffix('.html') + '.md' for path in expected_html}
-    expected_files |= {'knowledge/index.json'} | {f'knowledge/raw/{identifier}.md' for identifier in notes}
+    expected_files |= {'knowledge/index.json'} | expected_raw
     expected_files |= {f'knowledge/attachments/{name}' for name in assets}
-    actual_files = {p.relative_to(output).as_posix() for p in (output / 'knowledge').rglob('*') if p.is_file()}
+    actual_files = {p.relative_to(output).as_posix()
+                    for key in SECTIONS for p in (output / key).rglob('*') if p.is_file()}
     require(actual_files == expected_files, '知识库文件范围与公开清单不一致')
 
     search_files = list((output / 'static').glob('search_index*.json'))
@@ -136,7 +152,8 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     require(all(counts[n['url']] == 1 for n in notes.values()), '搜索索引缺少或重复收录笔记')
     require(not aliases.intersection(counts), '搜索索引重复收录旧概览入口')
     allowed_search = {'/' + path.removesuffix('index.html') for path in expected_html}
-    require(all(not url.startswith('/knowledge/') or url in allowed_search for url in counts),
+    require(all(not any(url.startswith(f'/{key}/') for key in SECTIONS)
+                or url in allowed_search for url in counts),
             '搜索索引包含未公开知识库页面')
 
     llms = (output / 'llms.txt').read_text(encoding='utf-8')
@@ -154,8 +171,9 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         require(path.is_relative_to(output) and path.is_file(), f'llms.txt 链接失效：{link}')
         paths.append(path)
     listed = {urlsplit(link).path for link in links}
-    required = {n['url'] + 'index.md' for n in notes.values()} | {'/knowledge/index.md'} | {
-        f'/knowledge/{identifier}/index.md' for identifier in active_categories}
+    required = {n['url'] + 'index.md' for n in notes.values()} | {
+        f'/{key}/index.md' for key in sections} | {
+        category_urls[identifier] + 'index.md' for identifier in active_categories}
     require(required <= listed, 'llms.txt 缺少公开笔记或领域入口')
     require(not {alias + 'index.md' for alias in aliases}.intersection(listed), 'llms.txt 重复收录旧入口')
     require(all(n['description'] in llms for n in notes.values()), 'llms.txt 缺少笔记摘要')
@@ -202,7 +220,10 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     bundle = '\n\n---\n\n'.join(path.read_text(encoding='utf-8').strip() for path in paths) + '\n'
     require((output / 'llms-full.txt').read_text(encoding='utf-8') == bundle,
             'llms-full.txt 与单篇 Markdown 不一致')
-    return {'notes': len(notes), 'knowledge_html_pages': len(actual_html), 'attachments': len(assets),
+    return {'notes': len(notes),
+            'knowledge_html_pages': sum(p.startswith('knowledge/') for p in actual_html),
+            'project_html_pages': sum(p.startswith('projects/') for p in actual_html),
+            'attachments': len(assets),
             'search_pages': len(search), 'llms_pages': len(links), 'math_pages': math_pages,
             'math_formulas': sum(result['markdownFormulas'] for result in parity),
             'mermaid_diagrams': sum(result['markdownDiagrams'] for result in parity),

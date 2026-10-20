@@ -5,6 +5,13 @@
       "title": "格问题与格密码",
       "description": "从格的基本概念出发，按主题查阅计算问题、格密码与筛法。",
       "overview": "lattices-overview"
+    },
+    {
+      "id": "mosaic-sieve",
+      "title": "MOSAIC-Sieve",
+      "section": "projects",
+      "description": "面向格筛法的模块化外存计算框架，涵盖架构、并行后端与 CUDA 优化。",
+      "overview": "mosaic-sieve-overview"
     }
   ],
   "notes": [
@@ -237,9 +244,31 @@
       "category": "lattices",
       "group": "研究增量",
       "description": "梳理流式访存相对多层 BGJ 基线的增量：父桶批量扫描、数据复用与访存成本。"
+    },
+    {
+      "path": "项目/Mosaic Sieve/项目概览.md",
+      "slug": "mosaic-sieve-overview",
+      "category": "mosaic-sieve",
+      "description": "模块化、外存、并行扩展与加速器集成的项目定位，以及各篇项目笔记的阅读入口。"
+    },
+    {
+      "path": "项目/Mosaic Sieve/架构设计.md",
+      "slug": "mosaic-sieve-architecture",
+      "category": "mosaic-sieve",
+      "description": "工作流、算法、数据池与计算后端的职责，存储与计算解耦，以及完整 Pump 流程。"
+    },
+    {
+      "path": "项目/Mosaic Sieve/实践经验.md",
+      "slug": "mosaic-sieve-practical-experience",
+      "category": "mosaic-sieve",
+      "description": "异步批次流水线、缓冲复用与瓶颈定位，以及批次大小和在途批次数的调节。"
+    },
+    {
+      "path": "项目/Mosaic Sieve/CUDA 与 Tensor Core 编程.md",
+      "slug": "mosaic-sieve-cuda-tensor-cores",
+      "category": "mosaic-sieve",
+      "description": "短归约点积的 INT8 Tensor Core 实现、MMA 与 WMMA 取舍、融合筛选与稀疏输出。"
     }
   ],
-  "attachments": [
-    "格问题与格密码/附件/02-gram-schmidt.png"
-  ]
+  "attachments": []
 }

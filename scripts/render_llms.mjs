@@ -15,7 +15,7 @@ export function renderLlmsTxt(context, index) {
   const indexLink = siteOrigin ? new URL(indexPath, siteOrigin).href : indexPath;
   const lines = [
     `# ${title}`, '', `> ${description}`, '',
-    '先读领域概览与阅读路线，再按需读取单篇 Markdown。', '',
+    '先读领域概览或项目介绍，再按需读取单篇 Markdown。', '',
     // JSON 是关联数据资源；使用明文地址，避免文档发现器将其当成文章页。
     `关联数据（JSON 辅助资源，非文档页面）：${indexLink}`, '',
   ];
@@ -41,8 +41,11 @@ export function renderLlmsTxt(context, index) {
     }
   }
 
-  lines.push('## 知识库导航', '');
+  lines.push('## 内容导航', '');
   entry('/knowledge/', '按领域查阅基础知识、研究增量与阅读路线。');
+  if (index.categories.some(category => category.section === 'projects')) {
+    entry('/projects/', '项目的设计、实现与实践记录。');
+  }
   for (const category of index.categories) {
     lines.push('', `## ${category.title}`, '');
     entry(category.url, category.description);

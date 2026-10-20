@@ -16,6 +16,9 @@ from urllib.parse import quote, unquote, urlsplit
 import yaml
 
 
+SECTIONS = {'projects': '项目', 'knowledge': '知识库'}
+
+
 @dataclass
 class Note:
     path: Path
@@ -27,12 +30,13 @@ class Note:
     category: str = ''
     group: str = ''
     chapter: str = ''
+    section: str = 'knowledge'
     landing: bool = False
     links: set[str] = field(default_factory=set)
 
     @property
     def url(self) -> str:
-        return f"/knowledge/{self.category if self.landing else self.slug}/"
+        return f"/{self.section}/{self.category if self.landing else self.slug}/"
 
 
 def inside(root: Path, relative: str) -> Path:
@@ -155,9 +159,13 @@ class Exporter:
                 raise ValueError("类别 id 必须是唯一的小写英文、数字和连字符组合")
             if identifier in {n.slug for n in self.notes}:
                 raise ValueError("类别 id 与笔记 slug 冲突，会生成重复网址")
+            if category.get('section', 'knowledge') not in SECTIONS:
+                raise ValueError('类别 section 只能为 knowledge 或 projects')
             self.categories[identifier] = category
         if any(n.category and n.category not in self.categories for n in self.notes):
             raise ValueError("笔记引用了未定义的类别")
+        for note in self.notes:
+            note.section = self.categories.get(note.category, {}).get('section', 'knowledge')
         for identifier, category in self.categories.items():
             if category.get('overview'):
                 overview = next((n for n in self.notes if n.slug == category['overview']
@@ -259,10 +267,11 @@ class Exporter:
     def write(self, output: Path, *, preview: bool = True, site_source: Path | None = None) -> dict:
         site_source = site_source or Path(__file__).resolve().parents[1] / 'site'
         # 网站入口与知识笔记分开维护，知识页面与附件始终只能由公开清单导出。
-        if (site_source / 'public/knowledge').exists() or any(
-                p.is_file() and p.relative_to(site_source / 'knowledge').as_posix() != 'index.md'
-                for p in (site_source / 'knowledge').rglob('*')):
-            raise ValueError('site/knowledge/ 仅允许入口 index.md，知识内容请使用公开清单')
+        for section in SECTIONS:
+            if (site_source / 'public' / section).exists() or any(
+                    p.is_file() and p.relative_to(site_source / section).as_posix() != 'index.md'
+                    for p in (site_source / section).rglob('*')):
+                raise ValueError(f'site/{section}/ 仅允许入口 index.md，知识内容请使用公开清单')
         converted = {note.slug: self.convert(note) for note in self.notes}
         marker = output / '.knowledge-export'
         if output.exists() and any(output.iterdir()) and not marker.exists():
@@ -276,44 +285,56 @@ class Exporter:
             shutil.rmtree(docs)
         shutil.copytree(site_source, docs)
         public = docs / 'public/knowledge'
-        (public / 'raw').mkdir(parents=True)
-        content = docs / 'knowledge'
-        content.mkdir(exist_ok=True)
+        public.mkdir(parents=True, exist_ok=True)
+        sections = [key for key in SECTIONS
+                    if key == 'knowledge' or any(n.section == key for n in self.notes)]
+        for section in SECTIONS:
+            if section not in sections:
+                # 未选入内容的项目入口不生成空页面，也不进入搜索。
+                if (docs / section).exists():
+                    shutil.rmtree(docs / section)
+                continue
+            (docs / section).mkdir(exist_ok=True)
+            (docs / 'public' / section / 'raw').mkdir(parents=True, exist_ok=True)
 
         def page(path: Path, metadata: dict, body: str = ''):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('---\n' + yaml.safe_dump(metadata, allow_unicode=True,
                             sort_keys=False) + '---\n\n' + body, encoding='utf-8')
 
-        features, navigation, sidebar, categories = [], [], [], []
+        features = {key: [] for key in sections}
+        navigation = {key: [] for key in sections}
+        sidebar = {key: [] for key in sections}
+        categories = []
         for identifier, category in self.categories.items():
             notes = [n for n in self.notes if n.category == identifier]
             if not notes:
                 continue
-            url = f'/knowledge/{identifier}/'
+            section = category.get('section', 'knowledge')
+            url = f'/{section}/{identifier}/'
             description = category.get('description', '')
-            features.append({'title': category['title'],
-                             'details': f'{description} 共 {len(notes)} 篇笔记。',
-                             'link': url})
-            navigation.append({'text': category['title'], 'link': url})
+            features[section].append({'title': category['title'],
+                                      'details': f'{description} 共 {len(notes)} 篇笔记。',
+                                      'link': url})
+            navigation[section].append({'text': category['title'], 'link': url})
             overview = next((n for n in notes if n.landing), None)
             if overview:
-                # 领域首页就是概览，侧栏只保留一个概览入口。
-                sidebar.append({'text': category['title'], 'items': [
-                    {'text': '概览与阅读路线', 'link': url},
+                label = '项目概览' if section == 'projects' else '概览与阅读路线'
+                sidebar[section].append({'text': category['title'], 'items': [
+                    {'text': label, 'link': url},
                     *self.sidebar_items([n for n in notes if not n.landing]),
                 ]})
             else:
-                sidebar.append({'text': category['title'], 'link': url,
-                                'items': self.sidebar_items(notes)})
+                sidebar[section].append({'text': category['title'], 'link': url,
+                                         'items': self.sidebar_items(notes)})
             categories.append({'id': identifier, 'title': category['title'],
-                               'url': url,
+                               'url': url, 'section': section,
                                'description': overview.description if overview else description,
                                'overview': overview.slug if overview else '',
                                'notes': [n.slug for n in notes]})
             if overview:
-                continue  # 正文由下方笔记循环直接生成到领域首页。
-            # 未配置概览的领域，仍使用官方组件提供目录入口。
+                continue
+            # 未配置概览的类别仍用官方组件提供目录入口。
             blocks = ["import { OverviewGroup } from '@rspress/core/theme';", '',
                       f'# {category["title"]}', '', description, '']
             for group in dict.fromkeys(n.group for n in notes):
@@ -323,26 +344,35 @@ class Exporter:
                     items = [{'text': n.title, 'link': n.url} for n in grouped if n.chapter == chapter]
                     data = json.dumps({'name': name, 'items': items}, ensure_ascii=False)
                     blocks += [f'<OverviewGroup group={{{data}}} />', '']
-            page(content / identifier / 'index.mdx',
+            page(docs / section / identifier / 'index.mdx',
                  {'title': category['title'], 'description': description},
                  '\n'.join(blocks))
 
-        # 领域卡片只出现在知识库入口；个人首页独立维护于 site/index.md。
-        source = docs / 'knowledge/index.md'
-        raw = source.read_text(encoding='utf-8')
-        metadata, separator, body = raw[4:].partition('\n---\n')
-        if not raw.startswith('---\n') or not separator:
-            raise ValueError('知识库入口需要 YAML frontmatter：knowledge/index.md')
-        metadata = yaml.safe_load(metadata)
-        metadata['features'] = features
-        page(source, metadata, body.lstrip('\n'))
+        # 两个入口各自展示卡片；个人首页继续独立维护。
+        for section in sections:
+            source = docs / section / 'index.md'
+            raw = source.read_text(encoding='utf-8')
+            metadata, separator, body = raw[4:].partition('\n---\n')
+            if not raw.startswith('---\n') or not separator:
+                raise ValueError(f'入口需要 YAML frontmatter：{section}/index.md')
+            metadata = yaml.safe_load(metadata)
+            metadata['features'] = features[section]
+            page(source, metadata, body.lstrip('\n'))
 
         uncategorized = [n for n in self.notes if not n.category]
         if uncategorized:
-            sidebar.append({'text': '其他笔记', 'items': self.sidebar_items(uncategorized)})
+            sidebar['knowledge'].append({'text': '其他笔记', 'items': self.sidebar_items(uncategorized)})
+        nav = []
+        for key in sections:
+            if key == 'projects' and len(navigation[key]) == 1:
+                # 只有一个项目时直接打开文章概览，不显示下拉菜单。
+                nav.append({'text': SECTIONS[key], 'link': navigation[key][0]['link'],
+                            'activeMatch': '/projects/'})
+            else:
+                nav.append({'text': SECTIONS[key], 'link': f'/{key}/', 'items': navigation[key]})
         theme_config = {
-            'nav': [{'text': '知识库', 'link': '/knowledge/', 'items': navigation}],
-            'sidebar': {'/knowledge/': sidebar},
+            'nav': nav,
+            'sidebar': {f'/{key}/': sidebar[key] for key in sections},
         }
         (output / 'theme-config.json').write_text(
             json.dumps(theme_config, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -354,26 +384,26 @@ class Exporter:
             if incoming:
                 body += '\n## 引用此笔记\n\n' + '\n'.join(
                     f'- [{other.title}]({other.url})' for other in incoming) + '\n'
-            markdown_url = f'/knowledge/raw/{note.slug}.md'
+            markdown_url = f'/{note.section}/raw/{note.slug}.md'
             # .md 使用普通 Markdown 解析；remark-math 在解析期识别公式。
             # 不继承私有 frontmatter，也不把数学改写为 Hugo 简码或 MDX。
             title = self.categories[note.category]['title'] if note.landing else note.title
-            page(content / note.url.removeprefix('/knowledge/') / 'index.md',
+            page(docs / note.url.lstrip('/') / 'index.md',
                  {'title': title, 'description': note.description}, headings(body))
-            (public / 'raw' / f'{note.slug}.md').write_text(
+            (docs / 'public' / note.section / 'raw' / f'{note.slug}.md').write_text(
                 f'# {title}\n\n' + body, encoding='utf-8')
             if note.landing:
                 # 保留旧文章路由，使用原生运行时跳转；正文不再生成第二份页面。
-                page(content / note.slug / 'index.mdx',
+                page(docs / note.section / note.slug / 'index.mdx',
                      {'title': '概览入口', 'pageType': 'blank', 'search': False},
                      redirect_page(note.url))
             records.append({'id': note.slug, 'title': note.title, 'description': note.description,
                             'url': note.url,
-                            'markdown': markdown_url, 'category': note.category,
+                            'markdown': markdown_url, 'section': note.section, 'category': note.category,
                             'group': note.group, 'chapter': note.chapter,
                             'links': sorted(note.links), 'backlinks': [n.slug for n in incoming]})
             if note.landing:
-                records[-1]['aliases'] = [f'/knowledge/{note.slug}/']
+                records[-1]['aliases'] = [f'/{note.section}/{note.slug}/']
         for source, name in self.used_assets.items():
             (public / 'attachments').mkdir(exist_ok=True)
             shutil.copyfile(source, public / 'attachments' / name)

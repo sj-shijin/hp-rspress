@@ -68,6 +68,72 @@ $$
         self.manifest.write_text(json.dumps(self.spec if spec is None else spec))
         return export(self.vault, self.manifest, self.out, site_source=self.site)
 
+    def add_project(self):
+        folder = self.vault / '项目/临时项目'
+        folder.mkdir(parents=True)
+        (folder / '项目概览.md').write_text('# 临时项目概览\n\n[[设计说明]]。\n')
+        (folder / '设计说明.md').write_text(
+            '# 临时设计说明\n\n[数学定义](<../../甲.md>)。[[乙]]。\n')
+        self.spec['categories'].append({
+            'id': 'demo', 'title': '临时项目', 'section': 'projects',
+            'overview': 'demo-overview', 'description': '临时项目的设计与实现。',
+        })
+        self.spec['notes'] += [
+            {'path': '项目/临时项目/项目概览.md', 'slug': 'demo-overview',
+             'category': 'demo', 'description': '临时项目介绍。'},
+            {'path': '项目/临时项目/设计说明.md', 'slug': 'demo-design',
+             'category': 'demo', 'description': '临时项目的设计说明。'},
+        ]
+
+    def test_projects_have_independent_navigation_cards_sidebar_and_cleanup(self):
+        self.add_project()
+        self.run_export()
+        config = json.loads((self.out / 'theme-config.json').read_text())
+        self.assertEqual([item['text'] for item in config['nav']], ['项目', '知识库'])
+        self.assertEqual(config['nav'][0], {'text': '项目', 'link': '/projects/demo/',
+                                             'activeMatch': '/projects/'})
+        self.assertNotIn('临时项目', (self.out / 'docs/knowledge/index.md').read_text())
+        self.assertNotIn('数学领域', (self.out / 'docs/projects/index.md').read_text())
+        self.assertEqual(config['sidebar']['/projects/'][0]['items'][0],
+                         {'text': '项目概览', 'link': '/projects/demo/'})
+        self.assertNotIn('/knowledge/', json.dumps(config['sidebar']['/projects/']))
+        self.assertTrue((self.out / 'docs/public/projects/raw/demo-design.md').is_file())
+        self.spec['categories'] = self.spec['categories'][:1]
+        self.spec['notes'] = self.spec['notes'][:2]
+        self.run_export()
+        self.assertFalse((self.out / 'docs/projects').exists())
+        self.assertFalse((self.out / 'docs/public/projects').exists())
+
+    def test_relative_links_resolve_selected_notes_across_sections(self):
+        self.add_project()
+        path = self.vault / '甲.md'
+        path.write_text(path.read_text() +
+                        '\n[项目设计](<项目/临时项目/设计说明.md>)。'
+                        '[未公开](<未公开.md>)。\n')
+        self.run_export()
+        rendered = (self.out / 'docs/knowledge/math/index.md').read_text()
+        project = (self.out / 'docs/projects/demo-design/index.md').read_text()
+        self.assertIn('[项目设计](/projects/demo-design/)', rendered)
+        self.assertIn('[数学定义](/knowledge/math/)', project)
+        self.assertNotIn('UNPUBLISHED_BODY_SENTINEL', rendered + project)
+        index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
+        records = {note['id']: note for note in index['notes']}
+        self.assertIn('demo-design', records['alpha']['backlinks'])
+        self.assertIn('alpha', records['demo-design']['backlinks'])
+
+    def test_llms_lists_project_entry_and_project_notes_once(self):
+        self.add_project()
+        self.run_export()
+        for origin in ['', 'https://shijin.space']:
+            with self.subTest(origin=origin):
+                text = self.render_llms(origin)
+                self.assertIn(f'[项目]({origin}/projects/index.md)', text)
+                self.assertIn('## 临时项目', text)
+                self.assertIn('临时项目的设计说明。', text)
+                self.assertEqual(text.count(f']({origin}/projects/demo/index.md)'), 1)
+                self.assertEqual(text.count(f']({origin}/projects/demo-design/index.md)'), 1)
+                self.assertNotIn('/projects/demo-overview/', text)
+
     def test_public_boundary_links_backlinks_and_math(self):
         report = self.run_export()
         rendered = (self.out / 'docs/knowledge/math/index.md').read_text()
@@ -141,6 +207,9 @@ $$
     def render_llms(self, origin=''):
         index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
         entries = [{'title': '知识库', 'url': '/knowledge/', 'description': '知识库目录。'}]
+        if any(category.get('section') == 'projects' for category in index['categories']):
+            entries.append({'title': '项目', 'url': '/projects/',
+                            'description': '项目的设计、实现与实践记录。'})
         entries += index['categories'] + index['notes']
         unique = {}
         for item in entries:
@@ -214,14 +283,19 @@ $$
         self.assertIn('更新后的临时介绍。', (self.out / 'docs/index.md').read_text())
 
     def test_site_cannot_override_knowledge_publication(self):
-        target = self.site / 'knowledge/unapproved.md'
-        target.write_text('临时未允许内容。')
-        with self.assertRaisesRegex(ValueError, '公开清单'):
-            self.run_export()
-        target.unlink()
-        (self.site / 'public/knowledge').mkdir(parents=True)
-        with self.assertRaisesRegex(ValueError, '公开清单'):
-            self.run_export()
+        for section in ['knowledge', 'projects']:
+            with self.subTest(section=section):
+                target = self.site / section / 'unapproved.md'
+                target.parent.mkdir(exist_ok=True)
+                target.write_text('临时未允许内容。')
+                with self.assertRaisesRegex(ValueError, '公开清单'):
+                    self.run_export()
+                target.unlink()
+                public = self.site / 'public' / section
+                public.mkdir(parents=True)
+                with self.assertRaisesRegex(ValueError, '公开清单'):
+                    self.run_export()
+                public.rmdir()
 
     def test_public_note_requires_explicit_summary(self):
         del self.spec['notes'][0]['description']
