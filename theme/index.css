@@ -165,6 +165,11 @@ html.rp-dark .rp-codeblock .shiki span {
   text-decoration: none;
 }
 
+.sj-profile__entry + .sj-profile__entry {
+  margin-top: 0;
+  border-top: 0;
+}
+
 .sj-profile__entry-title {
   font-size: 22px;
   font-weight: 500;

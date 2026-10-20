@@ -9,6 +9,13 @@ description: 记录思考，整理知识。从问题出发，在阅读与实践�
   <h1 class="sj-profile__name" id="profile-name">ShiJin</h1>
   <p class="sj-profile__intro">记录思考，整理知识。</p>
   <p class="sj-profile__note">从问题出发，在阅读与实践中积累理解。</p>
+  <a class="sj-profile__entry" href="/projects/mosaic-sieve/">
+    <div>
+      <h2 class="sj-profile__entry-title">项目</h2>
+      <p class="sj-profile__entry-detail">MOSAIC-Sieve · 面向格筛法的计算框架。</p>
+    </div>
+    <span class="sj-profile__entry-arrow" aria-hidden="true">↗</span>
+  </a>
   <a class="sj-profile__entry" href="/knowledge/">
     <div>
       <h2 class="sj-profile__entry-title">知识库</h2>
