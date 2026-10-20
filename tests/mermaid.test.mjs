@@ -112,3 +112,40 @@ test('渲染器加载失败时保留原有静态 SVG', async context => {
   assert.equal(console.warn.mock.callCount(), 1);
   dispose();
 });
+
+
+test('弹窗挂载启用缩放，关闭后不再回调已卸载的界面', async () => {
+  let hooks, rendered = 0, errors = 0, destroyed = 0;
+  const dispose = enhanceMermaid({}, 'flowchart LR\n A --> B', async () => ({
+    mountAsync: async (_container, _source, options) => {
+      hooks = options;
+      options.onRender({});
+      return { destroy() { destroyed++; } };
+    },
+  }), {
+    zoom: { always: true, labels: { reset: '重置视图' } },
+    onRender() { rendered++; },
+    onError() { errors++; },
+  });
+  await turn();
+  assert.equal(hooks.zoom.always, true);
+  assert.equal(hooks.zoom.labels.reset, '重置视图');
+  assert.equal(rendered, 1);
+  dispose();
+  hooks.onRender({});
+  hooks.onError(new Error('关闭后才返回的错误'));
+  assert.equal(rendered, 1);
+  assert.equal(errors, 0);
+  assert.equal(destroyed, 1);
+});
+
+test('弹窗模块加载失败时通知界面，允许显示重试提示', async () => {
+  const failure = new Error('图表模块加载失败');
+  let received;
+  const dispose = enhanceMermaid({}, 'flowchart LR\n A --> B', async () => {
+    throw failure;
+  }, { onError(error) { received = error; } });
+  await turn();
+  assert.equal(received, failure);
+  dispose();
+});
