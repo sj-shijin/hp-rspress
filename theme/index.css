@@ -17,6 +17,11 @@
   --rp-home-hero-title-bg: var(--rp-c-text-1);
 }
 
+/* 正文强调允许合成粗体，保留文楷及现有文字颜色。 */
+.rp-doc.rspress-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(strong, b) {
+  font-synthesis-weight: auto;
+}
+
 /* 标识使用原生亮暗主题切换；正文继续沿用文楷等宽字体。 */
 .rp-nav__title__link {
   font-size: 1.25rem;
