@@ -34,7 +34,7 @@ export default function remarkMermaid() {
         const parts = [
           element('div', 'sj-mermaid__diagram', html.parse(svg).children),
           element('details', 'sj-mermaid__source', [
-            // 界面控件沿用原生类排除出正文比较；源码仍参与严格检查。
+            // 界面控件沿用原生的非正文样式。
             element('summary', 'rp-not-doc', [{ type: 'text', value: '查看 Mermaid 源码' }]),
             { type: 'element', tagName: 'pre', properties: {}, children: [
               element('code', 'language-mermaid', [{ type: 'text', value: node.value + '\n' }]),

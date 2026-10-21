@@ -42,7 +42,7 @@ def main():
             if check['id'] in ('markdown-content-parity', 'content-negotiation'):
                 lines.append(f'  {check["id"]}: {check["status"]}; {check["message"]}')
         if name == 'report':
-            lines.append('  本模式的内容一致性状态仅供报告；是否一致以严格构建检查为准。')
+                lines.append('  本模式的内容差异仅供人工核对；不改写网站或 Markdown 正文。')
         summary.extend(lines)
         (output / 'summary.txt').write_text('\n'.join(summary) + '\n', encoding='utf-8')
         print('\n'.join(lines), flush=True)

@@ -49,6 +49,12 @@ jobs:
           python-version: '3.13'
           cache: pip
 
+      - name: 安装 Pandoc 3.12.1
+        run: |
+          curl --fail --location --silent --show-error --output "$RUNNER_TEMP/pandoc.deb" \
+            https://github.com/jgm/pandoc/releases/download/3.12.1/pandoc-3.12.1-1-amd64.deb
+          sudo dpkg --install "$RUNNER_TEMP/pandoc.deb"
+
       - name: 安装锁定的依赖
         run: |
           python -m venv .venv

@@ -1,6 +1,6 @@
 # AFDocs 官方配置：https://afdocs.dev/checks/observability#markdown-content-parity
 url: https://shijin.space
 options:
-  # 保留差异数据，仅停止本项告警；公式与正文由 postbuild 严格检查。
+  # 通用正文比较可能误报公式和脚注；保留原始差异供人工核对。
   parityPassThreshold: 0
   parityWarnThreshold: 0

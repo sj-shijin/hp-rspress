@@ -14,6 +14,7 @@ from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit
 
 import yaml
+from markdown_tools import markdown_tools
 
 
 SECTIONS = {'projects': '项目', 'knowledge': '知识库'}
@@ -53,9 +54,6 @@ def read_note(vault: Path, item: dict) -> Note:
     slug = item['slug']
     if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', slug):
         raise ValueError("slug 只能使用小写英文、数字和连字符")
-    description = str(item.get('description', '')).strip()
-    if not description:
-        raise ValueError('公开笔记需要在清单中填写 description 摘要')
     text = path.read_text(encoding='utf-8')
     metadata = {}
     if text.startswith('---\n'):
@@ -63,6 +61,9 @@ def read_note(vault: Path, item: dict) -> Note:
         if not separator:
             raise ValueError("笔记的 YAML 属性未闭合")
         metadata = yaml.safe_load(frontmatter) or {}
+    description = str(metadata.get('description', '')).strip()
+    if not description:
+        raise ValueError(f'公开笔记需要在前置属性中填写 description 摘要：{item["path"]}')
     if '{{<' in text or '{{%' in text:
         raise ValueError("笔记包含 Hugo shortcode，请先转换为普通 Markdown")
     title = str(metadata.get('title', path.stem))
@@ -101,6 +102,40 @@ def outside_code(text: str, transform) -> str:
             pos = match.end()
         result.append(transform(chunk[pos:]))
     return ''.join(result)
+
+
+def render_citations(text: str, bibliography: Path, slug: str) -> str:
+    """只转换 [@文献键]；不让 Pandoc 重写正文、公式或代码。"""
+    if '[@' not in text:
+        return text
+    source = markdown_tools('citations', [{'markdown': text, 'slug': slug}])[0]
+    body, citations = source['markdown'], source['citations']
+    if not citations:
+        return text
+    if not bibliography.is_file():
+        raise ValueError(f'引用文献需要知识库根目录的 references.bib：{slug}')
+    if not shutil.which('pandoc'):
+        raise ValueError('文献引用转换需要 Pandoc，请先安装 Pandoc（CI 使用 3.12.1）')
+    project = Path(__file__).resolve().parents[1]
+    result = subprocess.run([
+        'pandoc', '--from=markdown-smart',
+        '--to=gfm', '--citeproc', f'--bibliography={bibliography}',
+        f'--csl={project / "knowledge/author-title.csl"}',
+        f'--lua-filter={project / "scripts/citation_links.lua"}',
+        '--metadata=link-citations:true', f'--metadata=reference-slug:{slug}',
+        '--wrap=none', '--fail-if-warnings',
+    ], input='\n\n'.join(citations), text=True, capture_output=True)
+    if result.returncode:
+        raise ValueError(f'文献引用转换失败：{slug}：{result.stderr.strip()}')
+    rendered, separator, references = result.stdout.partition(f'<div id="refs-{slug}"')
+    markers = rendered.strip().split('\n\n')
+    if not separator or len(markers) != len(citations):
+        raise ValueError(f'文献引用未生成对应的编号与参考文献：{slug}')
+    for i, marker in enumerate(markers, 1):
+        body = body.replace(f'@@cite-{slug}-{i}@@', marker)
+    # 书目去重、编号和定位由 citeproc 处理；锚点包含 slug，合并全文时不串引。
+    return (body.rstrip() + f'\n\n## 参考文献 {{#references-{slug}}}\n\n'
+            + (separator + references).strip() + '\n')
 
 
 def anchor(title: str) -> str:
@@ -241,7 +276,8 @@ class Exporter:
                 target, separator, label = match.group(2).replace(r'\|', '|').partition('|')
                 return self.link(note, target, label if separator else target, bool(match.group(1)))
             return re.sub(r'(!?)\[\[([^\]\n]+)\]\]', wiki, part)
-        return outside_code(note.body, transform)
+        return render_citations(outside_code(note.body, transform),
+                                self.vault / 'references.bib', note.slug)
 
     def sidebar_items(self, notes: list[Note]) -> list[dict]:
         """排序完全来自公开清单；章节不再在站点配置中重复维护。"""
@@ -381,9 +417,6 @@ class Exporter:
         for note in self.notes:
             incoming = [other for other in self.notes if note.slug in other.links and other != note]
             body = converted[note.slug]
-            if incoming:
-                body += '\n## 引用此笔记\n\n' + '\n'.join(
-                    f'- [{other.title}]({other.url})' for other in incoming) + '\n'
             markdown_url = f'/{note.section}/raw/{note.slug}.md'
             # .md 使用普通 Markdown 解析；remark-math 在解析期识别公式。
             # 不继承私有 frontmatter，也不把数学改写为 Hugo 简码或 MDX。

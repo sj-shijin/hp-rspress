@@ -5,13 +5,9 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import remarkCjkFriendly from 'remark-cjk-friendly';
 import remarkCjkFriendlyGfmStrikethrough from 'remark-cjk-friendly-gfm-strikethrough';
-import rehypeParse from 'rehype-parse';
 
 const markdownParser = unified().use(remarkParse).use(remarkGfm)
   .use(remarkCjkFriendly).use(remarkCjkFriendlyGfmStrikethrough).use(remarkMath);
-const htmlParser = unified().use(rehypeParse, { fragment: true });
-const classes = node => node.properties?.className || [];
-const normalize = text => text.replace(/\s+/g, ' ').trim();
 
 function visit(node, callback) {
   callback(node);
@@ -79,84 +75,25 @@ function prepareMarkdown(markdown, route, origin, routes) {
   return `${hint}\n\n${text.trim()}\n`;
 }
 
-function markdownContent(markdown) {
-  const math = [], mermaid = [];
-
-  function text(node) {
-    if (['math', 'inlineMath'].includes(node.type)) {
-      math.push({ tex: normalize(node.value), display: node.type === 'math' });
-      return ' MATH ';
+function citationSource(markdown, slug) {
+  const matches = [];
+  visit(markdownParser.parse(markdown), node => {
+    // 只读取普通文本；公式、围栏代码和行内代码不会进入转换。
+    if (node.type !== 'text') return;
+    const offset = node.position.start.offset;
+    const source = markdown.slice(offset, node.position.end.offset);
+    for (const match of source.matchAll(/(?<!\\)\[@[^\]\n]+\]/g)) {
+      matches.push({ start: offset + match.index, end: offset + match.index + match[0].length,
+        citation: match[0] });
     }
-    if (node.type === 'code' && node.lang === 'mermaid') mermaid.push(node.value.trimEnd());
-    if (node.type === 'html') return htmlContent(node.value, false).text;
-    if (node.type === 'image') return node.alt || '';
-    if (node.type === 'definition') return '';
-    if (node.type === 'break') return '\n';
-    if (node.value !== undefined) return node.value;
-    const block = ['root', 'heading', 'paragraph', 'list', 'listItem', 'blockquote', 'table', 'tableRow'];
-    const separated = ['root', 'list', 'listItem', 'blockquote', 'table', 'tableRow'];
-    const value = (node.children || []).map(text).join(separated.includes(node.type) ? '\n' : '');
-    return block.includes(node.type) ? `\n${value}\n` : value;
+  });
+  matches.sort((a, b) => a.start - b.start);
+  let text = markdown;
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const { start, end } = matches[i];
+    text = text.slice(0, start) + `@@cite-${slug}-${i + 1}@@` + text.slice(end);
   }
-  const tree = markdownParser.parse(markdown.replace(/^> For AI agents:[^\n]*\n/, ''));
-  return { text: text(tree), math, mermaid };
-}
-
-function htmlContent(html, requireDocument = true) {
-  const tree = htmlParser.parse(html);
-  let document;
-  visit(tree, node => { if (classes(node).includes('rspress-doc')) document = node; });
-  if (requireDocument && !document) throw new Error('网页缺少 rspress-doc 正文容器');
-  const math = [], mermaid = [];
-  function text(node, display = false) {
-    const names = classes(node);
-    if (names.includes('sj-mermaid')) {
-      const diagrams = [], sources = [];
-      visit(node, child => {
-        if (child.tagName === 'svg' && classes(child).includes('pele')) diagrams.push(child);
-        if (child.tagName === 'code') sources.push(child);
-      });
-      if (diagrams.length !== 1 || sources.length !== 1) throw new Error('Mermaid 图缺少 SVG 或唯一源码');
-      let source = '';
-      visit(sources[0], child => { if (child.type === 'text') source += child.value; });
-      mermaid.push(source.trimEnd());
-    }
-    if (names.includes('katex')) {
-      let tex;
-      visit(node, child => {
-        if (child.tagName === 'annotation' && child.properties?.encoding === 'application/x-tex') {
-          tex = (child.children || []).map(part => part.value || '').join('');
-        }
-      });
-      if (tex === undefined) throw new Error('公式缺少 LaTeX 标注');
-      math.push({ tex: normalize(tex), display });
-      return ' MATH ';
-    }
-    if (['script', 'style', 'button', 'svg'].includes(node.tagName)
-        || names.some(name => ['rp-not-doc', 'rp-header-anchor', 'rp-llms-hint'].includes(name))
-        || node.properties?.ariaHidden === 'true') return '';
-    if (node.type === 'text') return node.value;
-    if (node.tagName === 'img') return node.properties?.alt || '';
-    const value = (node.children || []).map(child => text(child, display || names.includes('katex-display'))).join('');
-    const block = /^(?:p|div|h[1-6]|li|tr|td|th|blockquote|pre|section|article|br)$/.test(node.tagName);
-    return block ? `\n${value}\n` : value;
-  }
-  return { text: text(document || tree), math, mermaid };
-}
-
-function compareContent(html, markdown) {
-  const actual = htmlContent(html);
-  const source = markdownContent(markdown);
-  const plain = normalize(source.text);
-  const missing = [...new Set(actual.text.split('\n').map(normalize).filter(Boolean))]
-    .filter(segment => !plain.includes(segment));
-  const htmlPlain = normalize(actual.text);
-  const missingHtml = [...new Set(source.text.split('\n').map(normalize).filter(Boolean))]
-    .filter(segment => !htmlPlain.includes(segment));
-  return { htmlFormulas: actual.math.length, markdownFormulas: source.math.length,
-    formulasMatch: JSON.stringify(actual.math) === JSON.stringify(source.math),
-    htmlDiagrams: actual.mermaid.length, markdownDiagrams: source.mermaid.length,
-    diagramsMatch: JSON.stringify(actual.mermaid) === JSON.stringify(source.mermaid), missing, missingHtml };
+  return { markdown: text, citations: matches.map(match => match.citation) };
 }
 
 let input = '';
@@ -164,7 +101,7 @@ for await (const chunk of process.stdin) input += chunk;
 const request = JSON.parse(input);
 const result = request.action === 'prepare'
   ? request.pages.map(page => prepareMarkdown(page.markdown, page.route, request.origin, request.routes))
-  : request.action === 'compare'
-    ? request.pages.map(page => compareContent(page.html, page.markdown))
+  : request.action === 'citations'
+    ? request.pages.map(page => citationSource(page.markdown, page.slug))
     : request.pages.map(page => destinations(page.markdown).map(link => link.url));
 process.stdout.write(JSON.stringify(result));

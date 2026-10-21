@@ -95,7 +95,11 @@ export default defineConfig({
     },
     remarkPlugins: [remarkMath, remarkMathBlocks, remarkMermaid],
     rehypePlugins: [[rehypeKatex, { strict: 'ignore', throwOnError: true }]],
-    link: { checkDeadLinks: true, checkAnchors: true },
+    link: {
+      checkDeadLinks: true,
+      // 2.0 的内置检查只登记标题锚点；Pandoc 书目 div 的锚点由 check_build 核验。
+      checkAnchors: { excludes: (href: string) => href.startsWith('#ref-') },
+    },
   },
   themeConfig: {
     ...navigation,

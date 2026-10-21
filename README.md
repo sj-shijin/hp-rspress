@@ -7,7 +7,8 @@ ShiJin 的个人网站，使用 Rspress 2 构建，包含个人主页、知识�
 
 ## 本地使用
 
-需要 Node.js 20.19+／22.12+ 和 Python 3。
+需要 Node.js 20.19+／22.12+、Python 3 和 Pandoc；CI 固定使用 Pandoc 3.12.1。
+本机未安装 Pandoc 时先执行 `brew install pandoc`（macOS），其他系统使用 [官方安装包](https://github.com/jgm/pandoc/releases/tag/3.12.1)。
 
 ```sh
 sh scripts/install.sh  # 首次安装依赖
@@ -43,12 +44,26 @@ scripts/                # 内容导出、Markdown 校正与产物检查
 ## 知识库内容
 
 正式笔记在 Obsidian 知识库维护，不在子模块副本中编辑。
-公开清单维护笔记摘要、类别、分组、章节和顺序；导出不继承私有 frontmatter，也不沿链接扩大公开范围。
+公开清单维护笔记路径、网址、类别、分组、章节和顺序；标题和摘要直接读取笔记的 `title`、`description`，不重复维护。
+导出只选取需要的前置属性，不沿链接扩大公开范围。
 `site/knowledge/` 与 `site/projects/` 仅维护入口 `index.md`，正文和附件由清单生成。
 
 `categories[].overview` 指定的概览正文作为类别首页，默认位于 `/knowledge/<category>/`，
 普通笔记使用 `/knowledge/<slug>/`。类别指定 `section: projects` 时，使用独立的 `/projects/` 导航、侧栏和卡片入口。旧概览网页与 Markdown 地址继续兼容，搜索和 AI 索引不重复收录。
-双链在导出时转换并生成反链；未公开笔记链接显示为文字，整篇嵌入、块引用及未获允许的附件会中止导出。
+双链在导出时转换，反链仅保存在关联索引的 `backlinks` 字段，不追加到正文；未公开笔记链接显示为文字，整篇嵌入、块引用及未获允许的附件会中止导出。
+
+文献在知识库根目录的 `references.bib` 维护，正文使用 Pandoc 引用：
+
+```markdown
+关键结论 [@Regev2004Introduction, pp. 1, 3–4]。
+多篇文献 [@Regev2004Introduction, p. 1; @Micciancio2017PointLattices, p. 2]。
+```
+
+导出时仅把引用片段交给 Pandoc `--citeproc`，将生成的编号引用放回原文；正文、公式、代码与 Mermaid 不重新序列化。
+`knowledge/author-title.csl` 按首次引用顺序编号，定位保留在正文，例如 `[1, pp. 3–4]`；“参考文献”中每篇只展示一次完整作者、题名、出版信息，不输出 Bib 的 `note`。
+来源链接优先使用 DOI，否则使用 URL；`scripts/citation_links.lua` 仅将链接缩为“DOI”或“原文”，并为书目锚点加上笔记 slug，合并全文时不会串引。书目文件不整库发布，未引用条目不会导出。
+Rspress 2.0 的内置锚点检查仅登记标题；书目使用 Pandoc 原生 `div` 锚点，由产物检查核验引用目标存在且不重复。
+未知文献键或不正确的引用语法会报告来源问题，不自动改写知识库。
 
 预览使用子模块的固定提交，不读取正式库中尚未提交的修改。
 更新笔记时，先在正式库提交并推送，再更新网站的子模块版本、检查差异并重新构建：
@@ -63,11 +78,12 @@ git diff --submodule
 
 ```text
 网站正文 + 私有子模块中的公开内容
-  → .generated/docs/ → Rspress → Markdown 校正 → 产物检查
+  → 读取笔记摘要、转换文献引用 → .generated/docs/
+  → Rspress → 复用导出的 Markdown、补全链接 → 产物检查
   → .generated/site/
 ```
 
-- `/llms.txt`：按领域、分组和章节发现笔记，链接与摘要来自公开清单。
+- `/llms.txt`：按公开清单的领域、分组和章节发现笔记，摘要来自笔记属性。
 - `/llms-full.txt`：按上述索引合并的全文。
 - `/knowledge/<slug>/index.md`、`/knowledge/raw/<slug>.md`：单篇 Markdown 与下载副本。
 - `/knowledge/index.json`：单独标识的 JSON 辅助资源，提供链接、反链与旧地址。
@@ -77,10 +93,11 @@ git diff --submodule
 配色随网站亮暗主题切换，字体继承文楷；页面保留可展开的源码，Markdown／AI 接口保留原始 Mermaid。
 手写固定颜色会覆盖主题配色，语法错误会中止构建；离开图表页面时清理监听，渲染器加载失败时保留静态 SVG。
 
-`postbuild` 校正 Rspress 2.0 SSG-MD 的 LaTeX 转义，恢复 AI 导航提示，并按 `SITE_ORIGIN` 补全链接。
-构建检查核对公开范围、搜索、链接、提示及 sitemap，逐个比较公式并双向核验正文。
+Rspress 2.0 SSG-MD 不运行自定义数学插件，会重新转义 LaTeX；`postbuild` 复用同一份导出 Markdown 作为标准入口与下载副本，保留公式与文献引用，并补充 AI 导航提示及 `SITE_ORIGIN` 链接。
+构建检查核对公开范围、摘要、搜索、链接、提示及 sitemap；不比较 HTML 与 Markdown 的正文文本。
+公式保留由引用转换测试验证，公式和 Mermaid 的语法错误由各自渲染器报告。
 检查失败会中止构建，报告见 `.generated/build-check.json`。
-AFDocs 固定使用 0.22.2（需要 Node.js 22+）；通用正文比较可能误报 KaTeX，公式与正文一致性继续由上述严格构建检查验证。
+AFDocs 固定使用 0.22.2（需要 Node.js 22+）；通用正文比较可能误报公式和脚注，差异保留供人工核对。
 `agent-docs.config.yml` 仅将该项设为仅报告，保留差异数据；`agent-docs.defaults.yml` 不覆盖任何检查参数，保留原始对照口径。
 
 ```sh

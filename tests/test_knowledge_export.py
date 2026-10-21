@@ -26,7 +26,7 @@ class KnowledgeExportTests(unittest.TestCase):
         (self.vault / '甲.md').write_text('''---
 title: 甲
 private_metadata: PRIVATE_METADATA_SENTINEL
-description: PRIVATE_METADATA_SENTINEL
+description: 甲的定义与公式。
 ---
 # 甲
 
@@ -47,22 +47,25 @@ $$
 
 `$inline_literal$`
 ''', encoding='utf-8')
-        (self.vault / '乙.md').write_text('# 乙\n\n## 基本区域\n回到 [[甲|前置定义]]。\n', encoding='utf-8')
+        self.write_note('乙.md', '# 乙\n\n## 基本区域\n回到 [[甲|前置定义]]。\n',
+                        '乙的基本区域与前置联系。')
         (self.vault / '未公开.md').write_text('UNPUBLISHED_BODY_SENTINEL\n', encoding='utf-8')
         (self.vault / '图.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
         self.spec = {
             'categories': [{'id': 'math', 'title': '数学领域', 'overview': 'alpha',
                             'description': '数学领域的阅读入口。'}],
-            'notes': [{'path': '甲.md', 'slug': 'alpha', 'category': 'math', 'group': '概览',
-                       'description': '甲的定义与公式。'},
+            'notes': [{'path': '甲.md', 'slug': 'alpha', 'category': 'math', 'group': '概览'},
                       {'path': '乙.md', 'slug': 'beta', 'category': 'math',
-                       'group': '基础知识', 'chapter': '几何基础',
-                       'description': '乙的基本区域与前置联系。'}],
+                       'group': '基础知识', 'chapter': '几何基础'}],
             'attachments': ['图.svg'],
         }
 
     def tearDown(self):
         shutil.rmtree(self.root)
+
+    def write_note(self, path, body, description):
+        (self.vault / path).write_text(
+            f'---\ndescription: {description}\n---\n\n{body}', encoding='utf-8')
 
     def run_export(self, spec=None):
         self.manifest.write_text(json.dumps(self.spec if spec is None else spec))
@@ -71,18 +74,18 @@ $$
     def add_project(self):
         folder = self.vault / '项目/临时项目'
         folder.mkdir(parents=True)
-        (folder / '项目概览.md').write_text('# 临时项目概览\n\n[[设计说明]]。\n')
-        (folder / '设计说明.md').write_text(
-            '# 临时设计说明\n\n[数学定义](<../../甲.md>)。[[乙]]。\n')
+        self.write_note('项目/临时项目/项目概览.md', '# 临时项目概览\n\n[[设计说明]]。\n', '临时项目介绍。')
+        self.write_note('项目/临时项目/设计说明.md',
+                        '# 临时设计说明\n\n[数学定义](<../../甲.md>)。[[乙]]。\n', '临时项目的设计说明。')
         self.spec['categories'].append({
             'id': 'demo', 'title': '临时项目', 'section': 'projects',
             'overview': 'demo-overview', 'description': '临时项目的设计与实现。',
         })
         self.spec['notes'] += [
             {'path': '项目/临时项目/项目概览.md', 'slug': 'demo-overview',
-             'category': 'demo', 'description': '临时项目介绍。'},
+             'category': 'demo'},
             {'path': '项目/临时项目/设计说明.md', 'slug': 'demo-design',
-             'category': 'demo', 'description': '临时项目的设计说明。'},
+             'category': 'demo'},
         ]
 
     def test_projects_have_independent_navigation_cards_sidebar_and_cleanup(self):
@@ -143,7 +146,8 @@ $$
         for marker in ['PRIVATE_METADATA_SENTINEL', 'HIDDEN_COMMENT_SENTINEL', 'UNPUBLISHED_BODY_SENTINEL']:
             self.assertNotIn(marker, all_text)
         self.assertIn('/knowledge/beta/#%E5%9F%BA%E6%9C%AC%E5%8C%BA%E5%9F%9F', rendered)
-        self.assertIn('引用此笔记', rendered)
+        self.assertNotIn('引用此笔记', rendered)
+        self.assertNotIn('引用此笔记', raw)
         self.assertIn('待补资料', rendered)
         self.assertIn('$x^2$', rendered)
         self.assertIn('$$\nx\n=\ny\n$$', rendered)
@@ -195,8 +199,7 @@ $$
 
     def test_manifest_removal_cleans_pages_assets_and_navigation(self):
         self.run_export()
-        self.run_export({'notes': [{'path': '乙.md', 'slug': 'beta',
-                                  'description': '乙的基本区域。'}]})
+        self.run_export({'notes': [{'path': '乙.md', 'slug': 'beta'}]})
         self.assertFalse((self.out / 'docs/knowledge/alpha').exists())
         self.assertFalse((self.out / 'docs/knowledge/math').exists())
         self.assertFalse((self.out / 'docs/public/knowledge/raw/alpha.md').exists())
@@ -231,7 +234,7 @@ $$
                               input=json.dumps({'context': context, 'index': index}),
                               text=True, capture_output=True, check=True).stdout
 
-    def test_llms_groups_summaries_and_order_follow_public_manifest(self):
+    def test_llms_groups_and_order_follow_manifest_with_note_summaries(self):
         self.run_export()
         for origin in ['', 'https://shijin.space']:
             with self.subTest(origin=origin):
@@ -254,8 +257,8 @@ $$
         self.spec['categories'].append({'id': 'computing', 'title': '计算领域',
                                         'description': '计算领域的阅读入口。'})
         self.spec['notes'][1].update(category='computing', group='研究增量', chapter='')
-        (self.vault / '丙.md').write_text('# 丙\n\n独立笔记。', encoding='utf-8')
-        self.spec['notes'].append({'path': '丙.md', 'slug': 'gamma', 'description': '独立笔记。'})
+        self.write_note('丙.md', '# 丙\n\n独立笔记。', '独立笔记。')
+        self.spec['notes'].append({'path': '丙.md', 'slug': 'gamma'})
         self.run_export()
         text = self.render_llms('https://shijin.space')
         self.assertLess(text.index('## 数学领域'), text.index('## 计算领域'))
@@ -298,9 +301,23 @@ $$
                 public.rmdir()
 
     def test_public_note_requires_explicit_summary(self):
-        del self.spec['notes'][0]['description']
+        path = self.vault / '甲.md'
+        path.write_text(path.read_text().replace('description: 甲的定义与公式。\n', ''))
+        self.spec['notes'][0]['description'] = '清单中的旧摘要不能兜底。'
         with self.assertRaisesRegex(ValueError, 'description'):
             self.run_export()
+
+    def test_summary_updates_from_note_without_copying_other_metadata(self):
+        path = self.vault / '甲.md'
+        path.write_text(path.read_text().replace('甲的定义与公式。', '笔记中更新后的摘要。'))
+        self.spec['notes'][0]['description'] = '清单中的过期摘要。'
+        self.run_export()
+        index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
+        self.assertEqual(index['notes'][0]['description'], '笔记中更新后的摘要。')
+        self.assertIn('description: 笔记中更新后的摘要。',
+                      (self.out / 'docs/knowledge/math/index.md').read_text())
+        self.assertIn('笔记中更新后的摘要。', self.render_llms())
+        self.assertNotIn('清单中的过期摘要。', self.render_llms())
 
     def test_unapproved_attachment_stops_export(self):
         self.spec['attachments'] = []
@@ -309,7 +326,7 @@ $$
 
     def test_note_embeds_and_block_links_stop_export(self):
         for link in ['![[乙]]', '[[乙#^block]]']:
-            (self.vault / '甲.md').write_text('# 甲\n\n' + link, encoding='utf-8')
+            self.write_note('甲.md', '# 甲\n\n' + link, '临时嵌入示例。')
             with self.subTest(link=link), self.assertRaises(ValueError):
                 self.run_export()
 

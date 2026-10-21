@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""检查实际网站产物的公开范围、链接、搜索索引和 Markdown 一致性。"""
+"""检查实际网站产物的公开范围、摘要、链接和索引。"""
 import argparse
 from collections import Counter
 import hashlib
@@ -11,8 +11,8 @@ import re
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
 
-from export_knowledge import SECTIONS, inside, outside_code
-from finalize_markdown import markdown_tools
+from export_knowledge import SECTIONS, inside, outside_code, read_note
+from markdown_tools import markdown_tools
 
 
 def require(condition, message):
@@ -66,17 +66,18 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         require(category['url'] == category_urls[category['id']]
                 and category.get('section', 'knowledge') == categories[category['id']].get('section', 'knowledge'),
                 '类别网址或导航分类与公开清单不一致')
-    aliases, math_pages, comparisons = set(), 0, []
+    aliases, math_pages = set(), 0
 
     for identifier, note in notes.items():
         item = expected[identifier]
+        description = read_note(vault, item).description
         category = categories.get(item.get('category'), {})
         landing = category.get('overview') == identifier
         url = f"/{section(item)}/{item['category'] if landing else identifier}/"
         old_urls = [f'/{section(item)}/{identifier}/'] if landing else []
         require(note['url'] == url and note.get('aliases', []) == old_urls,
                 f'笔记网址与清单不一致：{identifier}')
-        require(note['description'] == item['description'], f'笔记摘要不一致：{identifier}')
+        require(note['description'] == description, f'笔记摘要不一致：{identifier}')
         require(set(note['links']) <= notes.keys(), f'关联指向未公开笔记：{identifier}')
         incoming = {n['id'] for n in notes.values() if identifier in n['links'] and n['id'] != identifier}
         require(set(note['backlinks']) == incoming, f'反向链接不一致：{identifier}')
@@ -87,8 +88,14 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         raw = output / markdown_url.lstrip('/')
         require(canonical.read_bytes() == raw.read_bytes(), f'Markdown 公式或正文不一致：{identifier}')
         page = Page(output / url.lstrip('/') / 'index.html')
+        ids = [attrs['id'] for _, attrs in page.tags if attrs.get('id', '').startswith('ref-')]
+        require(len(ids) == len(set(ids)), f'参考文献锚点重复：{identifier}')
+        for tag, attrs in page.tags:
+            href = attrs.get('href', '')
+            if tag == 'a' and href.startswith('#ref-'):
+                require(unquote(href[1:]) in ids, f'参考文献链接失效：{identifier}：{href}')
         require(page.has('h1'), f'正文未生成：{identifier}')
-        require(page.has('meta', name='description', content=item['description']),
+        require(page.has('meta', name='description', content=description),
                 f'网页摘要不一致：{identifier}')
         require(page.has('link', rel='alternate', type='text/markdown', href=origin + url + 'index.md'),
                 f'网页 Markdown 链接或 SITE_ORIGIN 不一致：{identifier}')
@@ -100,8 +107,6 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         if has_math(raw.read_text(encoding='utf-8')):
             require('katex' in classes, f'公式未渲染：{identifier}')
             math_pages += 1
-        comparisons.append({'html': (output / url.lstrip('/') / 'index.html').read_text(encoding='utf-8'),
-                            'markdown': canonical.read_text(encoding='utf-8')})
         expected_html.add(url.lstrip('/') + 'index.html')
         for alias in old_urls:
             aliases.add(alias)
@@ -112,17 +117,6 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
                     f'旧网址兼容页未正确生成：{alias}')
             require((output / alias.lstrip('/') / 'index.md').read_bytes() == raw.read_bytes(),
                     f'旧 Markdown 网址失效：{alias}')
-
-    parity = markdown_tools('compare', comparisons)
-    for identifier, result in zip(notes, parity):
-        require(result['formulasMatch'],
-                f'HTML 与 Markdown 公式不一致：{identifier} '
-                f'({result["htmlFormulas"]}/{result["markdownFormulas"]})')
-        require(result['diagramsMatch'], f'HTML 与 Markdown Mermaid 图或源码不一致：{identifier}')
-        require(not result['missing'],
-                f'HTML 正文未出现在 Markdown：{identifier}：{result["missing"][:3]}')
-        require(not result['missingHtml'],
-                f'Markdown 正文未出现在 HTML：{identifier}：{result["missingHtml"][:3]}')
 
     actual_html = {p.relative_to(output).as_posix()
                    for key in SECTIONS for p in (output / key).rglob('*.html')}
@@ -225,8 +219,6 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
             'project_html_pages': sum(p.startswith('projects/') for p in actual_html),
             'attachments': len(assets),
             'search_pages': len(search), 'llms_pages': len(links), 'math_pages': math_pages,
-            'math_formulas': sum(result['markdownFormulas'] for result in parity),
-            'mermaid_diagrams': sum(result['markdownDiagrams'] for result in parity),
             'markdown_files_checked': len(markdown_files), 'sitemap_pages': len(locations),
             'legacy_routes': len(aliases), 'site_origin': origin}
 

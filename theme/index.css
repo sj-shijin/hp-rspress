@@ -83,6 +83,23 @@ html.rp-dark .rp-codeblock .shiki span {
   padding-block: 0.25rem;
 }
 
+/* 参考文献保留完整作者和题名，使用较小字号和紧凑段距。 */
+.rp-doc .references.csl-bib-body {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.rp-doc .references .csl-entry p {
+  margin-block: 0.5rem;
+  line-height: inherit;
+}
+
+.rp-doc h2[id^='references-'] {
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
 /* 桌面导航依次显示知识库、GitHub、主题和搜索；手机保留原生折叠菜单。 */
 @media (min-width: 769px) {
   .rp-nav__right > .rp-search-button {

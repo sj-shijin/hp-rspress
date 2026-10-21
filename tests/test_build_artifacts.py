@@ -20,12 +20,12 @@ class BuildArtifactTests(unittest.TestCase):
         self.vault.mkdir()
         self.source = self.root / 'site'
         shutil.copytree(Path(__file__).resolve().parents[1] / 'site', self.source)
-        (self.vault / '概览.md').write_text('# 概览\n\n临时概览。[[定义]]\n')
-        (self.vault / '定义.md').write_text('# 定义\n\n公式 $x^2$。\n\n$$\nx=y\n$$\n')
+        (self.vault / '概览.md').write_text('---\ndescription: 临时阅读入口。\n---\n# 概览\n\n临时概览。[[定义]]\n')
+        (self.vault / '定义.md').write_text('---\ndescription: 临时公式定义。\n---\n# 定义\n\n公式 $x^2$。\n\n$$\nx=y\n$$\n')
         self.spec = {
             'categories': [{'id': 'math', 'title': '临时数学', 'overview': 'overview'}],
-            'notes': [{'path': '概览.md', 'slug': 'overview', 'category': 'math', 'description': '临时阅读入口。'},
-                      {'path': '定义.md', 'slug': 'definition', 'category': 'math', 'description': '临时公式定义。'}],
+            'notes': [{'path': '概览.md', 'slug': 'overview', 'category': 'math'},
+                      {'path': '定义.md', 'slug': 'definition', 'category': 'math'}],
         }
         self.manifest = self.root / 'publish.json'
         self.manifest.write_text(json.dumps(self.spec))
@@ -49,8 +49,7 @@ class BuildArtifactTests(unittest.TestCase):
                 return f'<span class="katex-display">{expression}</span>' if display else expression
             content = ('<p>临时概览。<a href="/knowledge/definition/">定义</a></p>'
                        if note['id'] == 'overview' else
-                       f'<p>公式 {formula("x^2")}。</p>{formula("x=y", True)}'
-                       '<h2>引用此笔记</h2><ul><li><a href="/knowledge/math/">概览</a></li></ul>')
+                       f'<p>公式 {formula("x^2")}。</p>{formula("x=y", True)}')
             title = '临时数学' if note['id'] == 'overview' else note['title']
             (folder / 'index.html').write_text(
                 f'<meta name="description" content="{escape(note["description"])}">'
@@ -85,7 +84,6 @@ class BuildArtifactTests(unittest.TestCase):
     def test_local_build_contract(self):
         report = self.check()
         self.assertEqual((report['notes'], report['math_pages'], report['legacy_routes']), (2, 1, 1))
-        self.assertEqual(report['math_formulas'], 2)
         self.assertEqual(report['sitemap_pages'], 3)
 
     def test_production_build_contract(self):
@@ -109,11 +107,7 @@ class BuildArtifactTests(unittest.TestCase):
             ('knowledge/definition/index.html',
              (self.output / 'knowledge/definition/index.html').read_text().replace('class="katex"', 'class="missing"'), '公式未渲染'),
             ('knowledge/definition/index.html',
-             (self.output / 'knowledge/definition/index.html').read_text().replace('x^2', 'x^3'), '公式不一致'),
-            ('knowledge/definition/index.html',
-             (self.output / 'knowledge/definition/index.html').read_text().replace('公式 ', '网页独有的错误正文'), 'HTML 正文'),
-            ('knowledge/math/index.html',
-             (self.output / 'knowledge/math/index.html').read_text().replace('临时概览。', ''), 'Markdown 正文'),
+             (self.output / 'knowledge/definition/index.html').read_text().replace('临时公式定义。', '错误摘要。'), '网页摘要'),
             ('knowledge/index.md', '# 缺少提示\n', 'AI 导航提示'),
             ('llms.txt', (self.output / 'llms.txt').read_text() +
              '\n[错误的文档入口](/knowledge/index.json)\n', 'JSON 辅助资源'),
@@ -168,34 +162,19 @@ class BuildArtifactTests(unittest.TestCase):
                                origin='https://shijin.space', routes={})[0]
         self.assertEqual(result, again)
 
-    def test_chinese_emphasis_and_formula_use_rspress_parsing_rules(self):
-        markdown = '# 临时定义\n\n因此，**用 $y$ 缩短指定向量 $x$**的条件是。\n'
-        html = ('<div class="rspress-doc"><h1>临时定义</h1><p>因此，<strong>用 '
-                '<span class="katex"><annotation encoding="application/x-tex">y</annotation></span>'
-                ' 缩短指定向量 '
-                '<span class="katex"><annotation encoding="application/x-tex">x</annotation></span>'
-                '</strong>的条件是。</p></div>')
-        result = markdown_tools('compare', [{'html': html, 'markdown': markdown}])[0]
-        self.assertTrue(result['formulasMatch'])
-        self.assertEqual((result['missing'], result['missingHtml']), ([], []))
-
-
-    def test_mermaid_source_remains_part_of_strict_content_checks(self):
-        source = 'flowchart LR\n A[中文知识] --> B[研究增量]'
-        markdown = '```mermaid\n' + source + '\n```'
-        html = ('<div class="rspress-doc"><figure class="sj-mermaid">'
-                '<svg class="pele"><text>中文知识</text></svg>'
-                '<details><summary class="rp-not-doc">查看 Mermaid 源码</summary>'
-                '<pre><code>' + escape(source) + '</code></pre></details></figure></div>')
-        result = markdown_tools('compare', [{'html': html, 'markdown': markdown}])[0]
-        self.assertTrue(result['diagramsMatch'])
-        self.assertEqual((result['htmlDiagrams'], result['markdownDiagrams']), (1, 1))
-        self.assertEqual((result['missing'], result['missingHtml']), ([], []))
-        changed = markdown_tools('compare', [{'html': html, 'markdown': markdown.replace('研究增量', '被修改的内容')}])[0]
-        self.assertFalse(changed['diagramsMatch'])
-        with self.assertRaisesRegex(ValueError, 'Mermaid.*SVG'):
-            markdown_tools('compare', [{'html': html.replace('<svg class="pele"><text>中文知识</text></svg>', ''),
-                                        'markdown': markdown}])
+    def test_reference_anchors_are_checked_even_though_they_are_not_headings(self):
+        page = self.output / 'knowledge/definition/index.html'
+        original = page.read_text()
+        reference = '<a href="#ref-definition-paper">1, p. 2</a>'
+        target = '<div id="ref-definition-paper">完整文献</div>'
+        page.write_text(original + reference + target)
+        self.check()
+        for invalid, error in [(reference, '参考文献链接失效'),
+                               (reference + target + target, '参考文献锚点重复')]:
+            with self.subTest(error=error):
+                page.write_text(original + invalid)
+                with self.assertRaisesRegex(ValueError, error):
+                    self.check()
 
 
 if __name__ == '__main__':

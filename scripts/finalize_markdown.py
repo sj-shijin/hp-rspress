@@ -1,22 +1,12 @@
 #!/usr/bin/env python3
-"""用已批准的 Markdown 校正 SSG-MD，保留 LaTeX 并同步全文入口。"""
+"""复用导出的 Markdown、补全链接并同步全文入口，不重写正文。"""
 import json
 import os
 from pathlib import Path
 import re
 import shutil
-import subprocess
 from urllib.parse import unquote, urlsplit
-
-
-def markdown_tools(action, pages, **options):
-    script = Path(__file__).with_name('markdown_tools.mjs')
-    process = subprocess.run(['node', str(script)],
-                             input=json.dumps({'action': action, 'pages': pages, **options}),
-                             text=True, capture_output=True)
-    if process.returncode:
-        raise ValueError(f'Markdown 解析或核验失败：{process.stderr.strip()}')
-    return json.loads(process.stdout)
+from markdown_tools import markdown_tools
 
 
 def finalize(output: Path, site_origin: str = '') -> dict:
