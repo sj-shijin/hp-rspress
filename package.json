@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "export": ".venv/bin/python scripts/export_knowledge.py",
+    "colors": "node cinderfolio/build.mjs",
+    "predev": "npm run colors",
     "dev": "npm run export && rspress dev --host 127.0.0.1 --port 1320",
+    "prebuild": "npm run colors",
     "build": "npm run export && rspress build",
     "postbuild": ".venv/bin/python scripts/finalize_markdown.py && npm run check:build",
     "preview": "rspress preview --host 127.0.0.1 --port 1320",
-    "test": ".venv/bin/python -m unittest discover -s tests -v && node --test tests/mermaid.test.mjs",
+    "test": ".venv/bin/python -m unittest discover -s tests -v && node --test tests/*.test.mjs",
     "check:build": ".venv/bin/python scripts/check_build.py",
     "check:afdocs": ".venv/bin/python scripts/check_afdocs.py"
   },

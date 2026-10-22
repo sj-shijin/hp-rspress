@@ -6,3 +6,6 @@ node_modules/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Cinderfolio 产物由 npm run colors 生成，dev / build 会自动执行。
+cinderfolio/dist/
