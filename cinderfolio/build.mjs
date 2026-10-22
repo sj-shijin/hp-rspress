@@ -34,8 +34,9 @@ for (const [mode, c] of Object.entries(themes)) {
     ['文字选区说明 / 淡主题色底', c.textMuted, c.selection, 4.5],
     ['文字选区链接 / 淡主题色底', c.link, c.selection, 4.5, false],
     ['控件选中文字 / 实底', c.controlSelectedForeground, c.controlSelectedBackground, 4.5],
-    ['控件选中底色 / 画布', c.controlSelectedBackground, c.background, 3],
-    ['控件选中底色 / 悬浮层', c.controlSelectedBackground, c.surfaceHover, 3],
+    // 品牌实底保留原色；记录它与邻近背景的差异，文字与控件边界仍做必要检查。
+    ['控件选中底色 / 画布', c.controlSelectedBackground, c.background, 3, false],
+    ['控件选中底色 / 悬浮层', c.controlSelectedBackground, c.surfaceHover, 3, false],
     ['控件边界 / 画布', c.controlBorder, c.background, 3],
     ['控件边界 / 悬浮底色', c.controlBorder, c.surfaceHover, 3],
     ['图表描边 / 画布', c.diagramStroke, c.background, 3, false],

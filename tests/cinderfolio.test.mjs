@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { seeds, recipes, createGrayScale, adjustLightness, createAccentScale, createPalette } from '../cinderfolio/palette.mjs';
+import { seeds, recipes, createGrayScale, adjustLightness, createAccentScale, createPalette, contrast } from '../cinderfolio/palette.mjs';
 import { themeVariables, createColorCss, createPeleCss, peleRoles } from '../cinderfolio/css.mjs';
 import { createRspressCss } from '../cinderfolio/rspress.mjs';
 
@@ -13,20 +13,13 @@ test('ink 到 paper 十六等分，两个端点和十五个中间灰保持固定
   });
 });
 
-test('中性职责只选择固定灰阶，预览选档自动镜像并保持 Orange 不变', () => {
+test('中性职责引用固定灰阶，暗色使用对应镜像档位', () => {
   const gray = createGrayScale();
-  const original = createPalette();
-  const changed = createPalette(seeds, { surface: 14 });
-  assert.equal(changed.light.surface, gray.g14);
-  assert.equal(changed.dark.surface, gray.g2);
-  assert.equal(changed.light.surface, changed.light.surfaceHover);
-  assert.equal(changed.dark.surface, changed.dark.surfaceHover);
-  assert.notEqual(changed.light.surface, original.light.surface);
-  for (const mode of ['light', 'dark']) {
-    for (const [key, recipe] of Object.entries(recipes)) {
-      if (recipe.gray !== undefined) assert.ok(Object.values(gray).includes(changed[mode][key]), `${mode}.${key}`);
-      else assert.equal(changed[mode][key], original[mode][key], `${mode}.${key}`);
-    }
+  const { light, dark } = createPalette();
+  for (const [key, recipe] of Object.entries(recipes)) {
+    if (recipe.gray === undefined) continue;
+    assert.equal(light[key], gray[`g${recipe.gray}`], `light.${key}`);
+    assert.equal(dark[key], gray[`g${16 - recipe.gray}`], `dark.${key}`);
   }
 });
 
@@ -36,14 +29,26 @@ test('单一橙色种子保持已确认的五档色阶', () => {
   });
 });
 
-test('文字选区采用淡橙，控件继续使用独立的灰色实底', () => {
+test('文字选区保持淡橙，控件选中使用品牌实底与深色文字', () => {
   const { light, dark } = createPalette();
   assert.equal(light.selection, '#fad8c0');
   assert.equal(dark.selection, '#4c2a13');
-  assert.equal(light.controlSelectedBackground, '#4c4c4c');
-  assert.equal(light.controlSelectedForeground, '#fafaf8');
-  assert.equal(dark.controlSelectedBackground, '#c0c0bf');
+  assert.equal(light.controlSelectedBackground, '#f97316');
+  assert.equal(light.controlSelectedForeground, '#121212');
+  assert.equal(dark.controlSelectedBackground, '#f97316');
   assert.equal(dark.controlSelectedForeground, '#121212');
+});
+
+test('更换品牌色后，控件选中文字从自定义端点中自动选择深色或浅色', () => {
+  for (const [accent, expected] of [['#000080', '#f3f5f7'], ['#eab308', '#102030']]) {
+    const input = { ink: '#102030', paper: '#f3f5f7', accent };
+    for (const colors of Object.values(createPalette(input))) {
+      assert.equal(colors.controlSelectedBackground, accent);
+      assert.equal(colors.controlSelectedForeground, expected);
+      assert.ok(contrast(colors.controlSelectedForeground, colors.controlSelectedBackground) >= 4.5);
+    }
+    assert.ok(createRspressCss(input).includes(`--cf-control-selected-foreground: ${expected};`));
+  }
 });
 
 test('更换黑白种子不会改变橙色链接、交互和描边，避免再次混成棕色', () => {

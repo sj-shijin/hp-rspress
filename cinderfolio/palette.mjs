@@ -76,9 +76,9 @@ export const recipes = {
   textSubtle: { label: '辅助文字', gray: 5, usage: '时间、路径、行号与元信息' },
   border: { label: '淡分隔线', gray: 14, usage: '导航底线、表格、卡片与图表外框' },
   borderStrong: { label: '强分隔线', gray: 12, usage: '弹窗外框与需要明确边界的分组' },
-  controlBorder: { label: '控件边界', gray: 5, usage: '输入框与次要按钮；聚焦时使用品牌色' },
-  controlSelectedBackground: { label: '控件选中底色', gray: 4, usage: '复选框、切换按钮与搜索当前项的中性实底' },
-  controlSelectedForeground: { label: '控件选中文字', gray: 16, usage: '控件实底上的文字与勾选标记' },
+  controlBorder: { label: '控件边界', gray: 5, usage: '次要按钮与切换按钮的边界' },
+  controlSelectedBackground: { label: '控件选中底色', accent: 'brand', usage: '切换按钮与搜索当前项的品牌色实底' },
+  controlSelectedForeground: { label: '控件选中文字', contrast: 'controlSelectedBackground', usage: '选中项文字与滑块，自动选择对比更高的端点' },
   interaction: { label: '交互提示', accent: 'brand', usage: '导航强调、悬浮提示与焦点' },
   link: { label: '链接与当前项目文字', accent: { light: 'dark', dark: 'light' }, usage: '正文链接、当前项目文字与语法关键词' },
   diagramStroke: { label: '图表描边', accent: { light: 'darker', dark: 'light' }, usage: '图表节点与分组描边' },
@@ -99,17 +99,19 @@ export const syntaxRoles = {
   punctuation: { color: 'textMuted' },
 };
 
-export function createPalette(input = seeds, roleSteps = {}) {
+export function createPalette(input = seeds) {
   const themes = {};
   const accent = createAccentScale(input.accent);
   const gray = createGrayScale(input);
   for (const mode of ['light', 'dark']) {
     const colors = {};
     for (const [key, recipe] of Object.entries(recipes)) {
-      if (recipe.gray !== undefined) colors[key] = gray[`g${grayIndex(roleSteps[key] ?? recipe.gray, mode)}`];
-      else if (recipe.alias) colors[key] = colors[recipe.alias];
+      if (recipe.gray !== undefined) colors[key] = gray[`g${grayIndex(recipe.gray, mode)}`];
       else if (recipe.accent) colors[key] = accent[typeof recipe.accent === 'string' ? recipe.accent : recipe.accent[mode]];
-      else {
+      else if (recipe.contrast) {
+        const background = colors[recipe.contrast];
+        colors[key] = contrast(input.ink, background) >= contrast(input.paper, background) ? input.ink : input.paper;
+      } else {
         const [a, b, percent] = recipe.mix;
         colors[key] = mix(colors[a] ?? input[a], colors[b] ?? input[b], percent);
       }

@@ -92,6 +92,7 @@ export default function CinderfolioPreview({ section }: { section: 'controls' | 
           let source;
           if ('gray' in recipe) source = `g${grayIndex(recipe.gray, mode)}`;
           else if ('accent' in recipe) source = typeof recipe.accent === 'string' ? recipe.accent : recipe.accent[mode];
+          else if ('contrast' in recipe) source = colors[key] === input.ink ? 'g0' : 'g16';
           else {
             const [a, b, percent] = recipe.mix;
             const names = { accent: 'brand', background: 'bg' };

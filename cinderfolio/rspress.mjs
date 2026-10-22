@@ -78,7 +78,7 @@ html .rp-button--alt:hover {
   opacity: 1;
 }
 
-/* 搜索当前项使用控件选中职责；侧栏当前项仍使用淡橙底色。 */
+/* 搜索当前项使用控件选中职责；侧栏当前项使用淡品牌色底。 */
 html .rp-suggest-item .rp-suggest-item__link {
   box-shadow: var(--rp-shadow-1);
 }
