@@ -225,11 +225,26 @@ html.rp-dark .rp-codeblock .shiki span {
   margin-top: 0.75rem;
 }
 
-.sj-mermaid__source > summary {
-  width: fit-content;
-  color: var(--rp-c-text-2);
+.sj-mermaid__source .rp-callout--details {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+}
+
+.sj-mermaid__source .rp-callout__title {
+  margin: 0;
   font-size: 0.875rem;
-  cursor: pointer;
+}
+
+.sj-mermaid__source .rp-callout__title::before {
+  left: -0.75rem;
+}
+
+.sj-mermaid__source .rp-callout__content {
+  cursor: auto;
+}
+
+.sj-mermaid__source .rp-codeblock {
+  margin: 0.75rem 0 0;
 }
 
 /* 弹窗仍在原图的 DOM 下，直接继承 Pele 和网站的主题变量。 */
@@ -253,6 +268,7 @@ html.rp-dark .rp-codeblock .shiki span {
 }
 
 .sj-mermaid__icon-button:focus-visible,
+.sj-mermaid__source .rp-callout__title:focus-visible,
 .sj-mermaid__canvas button:focus-visible,
 .sj-mermaid__canvas > svg:focus-visible {
   outline: 2px solid var(--rp-c-brand);

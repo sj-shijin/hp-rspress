@@ -31,15 +31,12 @@ export default function remarkMermaid() {
           file.fail(`Mermaid / Pele: ${error.message}`, node);
         }
         // 使用 MDX 节点，避免普通 .md 的 rehype-raw 将组件名转为小写 HTML 标签。
+        // 图表与源码按顺序传给 Mermaid；源码由组件中的官方 Callout 包裹。
         const parts = [
           element('div', 'sj-mermaid__diagram', html.parse(svg).children),
-          element('details', 'sj-mermaid__source', [
-            // 界面控件沿用原生的非正文样式。
-            element('summary', 'rp-not-doc', [{ type: 'text', value: '查看 Mermaid 源码' }]),
-            { type: 'element', tagName: 'pre', properties: {}, children: [
-              element('code', 'language-mermaid', [{ type: 'text', value: node.value + '\n' }]),
-            ] },
-          ]),
+          { type: 'element', tagName: 'pre', properties: {}, children: [
+            element('code', 'language-mermaid', [{ type: 'text', value: node.value + '\n' }]),
+          ] },
         ];
         parent.children[position] = {
           type: 'mdxJsxFlowElement', name: 'Mermaid', position: node.position,

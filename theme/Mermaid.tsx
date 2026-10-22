@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Children, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Callout } from '@rspress/core/theme-original';
 import { enhanceMermaid } from './mermaid_lifecycle.mjs';
 
 function MermaidDialog({ source, onClose }: { source: string; onClose: () => void }) {
@@ -75,6 +76,7 @@ function MermaidDialog({ source, onClose }: { source: string; onClose: () => voi
 export default function Mermaid({ source, children }: { source: string; children: ReactNode }) {
   const figure = useRef<HTMLElement>(null);
   const [expanded, setExpanded] = useState(false);
+  const [diagram, code] = Children.toArray(children);
 
   useEffect(() => {
     const container = figure.current!.querySelector<HTMLElement>('.sj-mermaid__diagram')!;
@@ -91,7 +93,10 @@ export default function Mermaid({ source, children }: { source: string; children
           <path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" />
         </svg>
       </button>
-      {children}
+      {diagram}
+      <div className="sj-mermaid__source">
+        <Callout type="details" title="查看 Mermaid 源码">{code}</Callout>
+      </div>
       {expanded && <MermaidDialog source={source} onClose={() => setExpanded(false)} />}
     </figure>
   );
