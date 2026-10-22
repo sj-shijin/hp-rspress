@@ -1,14 +1,6 @@
 @import './fonts/lxgw-wenkai-mono-gb/font.css';
 
 :root {
-  /* Orange 品牌色：链接、交互状态和选中背景共用同一组色阶。 */
-  --rp-c-brand: #F97316;
-  --rp-c-brand-dark: #ef6606;
-  --rp-c-brand-darker: #d65b06;
-  --rp-c-brand-light: #fa9148;
-  --rp-c-brand-lighter: #fcaf79;
-  --rp-c-brand-tint: rgba(249, 115, 22, 0.15);
-
   --rp-font-family-base: 'LXGW WenKai Mono GB', -apple-system, BlinkMacSystemFont,
     'Segoe UI', sans-serif;
   --rp-font-family-mono: 'LXGW WenKai Mono GB', Menlo, Monaco, Consolas, monospace;
@@ -36,26 +28,6 @@
 .rp-nav__title .rp-nav__title__logo-image {
   width: 2rem;
   height: 2rem;
-}
-
-/* 代码区域随网站主题切换：One Light / Material Theme Darker。 */
-.rp-codeblock {
-  --rp-code-block-bg: #fafafa;
-  --rp-code-block-color: #383a42;
-  --rp-code-title-bg: #fafafa;
-  --rp-c-text-1: #383a42;
-  --rp-c-text-2: #696c77;
-  --rp-c-text-3: #90939c;
-}
-
-html.rp-dark .rp-codeblock {
-  --rp-code-block-bg: #212121;
-  --rp-code-block-color: #eeffff;
-  --rp-code-title-bg: #212121;
-  --rp-code-block-border: 1px solid #ffffff1a;
-  --rp-c-text-1: #eeffff;
-  --rp-c-text-2: #b0bec5;
-  --rp-c-text-3: #90a4ae;
 }
 
 /* Shiki 同时生成两套颜色；用页面主题选择，保留各自的字形样式。 */
@@ -228,30 +200,9 @@ html.rp-dark .rp-codeblock .shiki span {
 
 /* Pele 在构建时生成 SVG，颜色继承网站主题，切换亮暗无需重新渲染。 */
 .sj-mermaid {
-  /* 图表的配色与线宽在此统一管理，正文与放大弹窗共用。 */
-  --sj-mermaid-accent: var(--rp-c-brand-darker);
-  --sj-mermaid-node-width: 1.75px;
-  --sj-mermaid-edge-width: 1.5px;
-  --pele-bg: var(--rp-c-bg);
-  --pele-fg: var(--rp-c-text-1);
-  --pele-muted: var(--rp-c-text-1);
-  --pele-line: var(--rp-c-text-1);
-  --pele-surface: var(--rp-c-bg);
-  --pele-surface-alt: color-mix(in srgb, var(--rp-c-text-1) 18%, var(--rp-c-bg));
-  --pele-border: var(--sj-mermaid-accent);
-  --pele-accent: var(--sj-mermaid-accent);
-  --pele-critical: color-mix(in srgb, #ef4444 80%, var(--rp-c-text-1));
-  --pele-error: var(--pele-critical);
+  /* 配色和描边由 Cinderfolio 的 Pele 适配负责；这里只保留站内字体与布局。 */
   --pele-font: var(--rp-font-family-base);
   --pele-font-mono: var(--rp-font-family-mono);
-  --pele-series-1: var(--rp-c-link);
-  --pele-series-2: color-mix(in srgb, #3b82f6 80%, var(--rp-c-text-1));
-  --pele-series-3: color-mix(in srgb, #22c55e 80%, var(--rp-c-text-1));
-  --pele-series-4: color-mix(in srgb, #ef4444 80%, var(--rp-c-text-1));
-  --pele-series-5: color-mix(in srgb, #14b8a6 80%, var(--rp-c-text-1));
-  --pele-series-6: color-mix(in srgb, #eab308 80%, var(--rp-c-text-1));
-  --pele-series-7: color-mix(in srgb, #a855f7 80%, var(--rp-c-text-1));
-  --pele-series-8: color-mix(in srgb, #a16207 80%, var(--rp-c-text-1));
 
   position: relative;
   margin: 1.5rem 0;
@@ -259,31 +210,6 @@ html.rp-dark .rp-codeblock .shiki span {
   border: 1px solid var(--rp-c-divider-light);
   border-radius: 0.5rem;
   background: var(--rp-c-bg);
-}
-
-html.rp-dark .sj-mermaid {
-  --sj-mermaid-accent: var(--rp-c-brand-light);
-}
-
-/* 使用 Pele 的元素类统一描边，不改动 SVG 源码或缩放控件。 */
-.sj-mermaid .pele-node > :is(rect, circle, ellipse, polygon, path),
-.sj-mermaid .pele-cluster > rect {
-  stroke-width: var(--sj-mermaid-node-width);
-}
-
-.sj-mermaid .pele-edge > :is(path, line, polyline):not(.pele-marker) {
-  stroke-width: var(--sj-mermaid-edge-width);
-}
-
-/* 事件图默认按类型填色；与流程图统一使用中性底色和橙色边框。 */
-.sj-mermaid .pele-eventmodeling .pele-node > rect {
-  fill: var(--pele-surface);
-  fill-opacity: 1;
-  stroke: var(--pele-border);
-}
-
-.sj-mermaid .pele-em-lane > rect {
-  fill: var(--pele-surface-alt);
 }
 
 .sj-mermaid__diagram {

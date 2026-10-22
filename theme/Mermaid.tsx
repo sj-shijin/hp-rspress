@@ -82,7 +82,7 @@ export default function Mermaid({ source, children }: { source: string; children
   }, [source]);
 
   return (
-    <figure className="sj-mermaid" ref={figure}>
+    <figure className="sj-mermaid cinderfolio-pele" ref={figure}>
       <button type="button" className="sj-mermaid__expand sj-mermaid__icon-button rp-not-doc"
         aria-label="放大 Mermaid 图表" aria-haspopup="dialog" title="放大图表"
         onClick={() => setExpanded(true)}>

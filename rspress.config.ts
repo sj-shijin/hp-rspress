@@ -84,11 +84,16 @@ export default defineConfig({
           to: 'fonts/lxgw-wenkai-mono-gb/OFL.txt',
         },
         { from: path.resolve('theme/brand'), to: 'brand' },
+        { from: path.resolve('cinderfolio/dist'), to: 'cinderfolio' },
       ],
     },
   },
   markdown: {
-    globalComponents: [path.resolve('theme/Mermaid.tsx')],
+    globalComponents: [
+      path.resolve('theme/Mermaid.tsx'),
+      path.resolve('theme/CinderfolioPreview.tsx'),
+      path.resolve('theme/CinderfolioDownload.tsx'),
+    ],
     shiki: {
       themes: { light: 'one-light', dark: 'material-theme-darker' },
       defaultColor: false,
