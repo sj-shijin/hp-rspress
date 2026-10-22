@@ -1,0 +1,30 @@
+---
+title: Cinderfolio-Shiki
+description: 为后续 Shiki 亮暗主题定义语法角色，复用统一配色源而不另建一套颜色。
+---
+
+# Cinderfolio-Shiki
+
+目前已定义语法角色，尚未生成或接入正式 Shiki 主题。网站代码块的容器、边界与行号已经使用 Cinderfolio，语法 token 继续使用 `one-light` 和 `material-theme-darker`。
+
+## 已有的配色契约
+
+```js
+syntaxRoles = {
+  plain:       { color: 'foreground' },
+  comment:     { color: 'textMuted', fontStyle: 'italic' },
+  keyword:     { color: 'link', fontStyle: 'bold' },
+  string:      { color: 'textMuted' },
+  number:      { color: 'diagramStroke' },
+  function:    { color: 'foreground', fontStyle: 'bold' },
+  punctuation: { color: 'textMuted' },
+};
+```
+
+通过同一主题色的明度、灰阶、字重和斜体区分语法，保持整体克制。文字选区继续使用淡主题色底，并保留各 token 的原字色。
+
+## 后续接入
+
+后续将这些角色映射到 TextMate scope，生成可单独导出的亮暗 Shiki 主题 JSON，再检查常用语言的高亮效果。颜色读取 `palette.mjs` 或生成的<a href="/cinderfolio/colors.json">颜色数据</a>，不在主题文件中手动维护第二组 HEX。
+
+可以先到 [Cinderfolio-Rspress](/projects/cinderfolio/preview/) 了解这些角色引用的颜色职责；正式接入时会在这里补充语法样本、生成命令、主题名和使用方式。

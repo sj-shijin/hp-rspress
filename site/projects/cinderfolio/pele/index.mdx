@@ -1,0 +1,121 @@
+---
+title: Cinderfolio-Pele
+description: 调整 Cinderfolio 配色，预览常用 Pele 图表并下载独立 CSS。
+---
+
+# Cinderfolio-Pele
+
+[Pele](https://github.com/obsidianmd/pele) 是轻量的 Mermaid 渲染器，输出可主题化的 SVG。
+
+<CinderfolioPreview section="controls" />
+
+<CinderfolioDownload target="pele" />
+
+## 流程图
+
+```mermaid
+flowchart LR
+  subgraph Preview[实时预览]
+    A[选择颜色] --> B{效果合适?}
+    B -->|调整| A
+  end
+  B -->|确定| C[导出 CSS]
+  C --> D([完成])
+```
+
+## 时序图
+
+```mermaid
+sequenceDiagram
+  participant U as 读者
+  participant W as 网页
+  participant T as 主题
+  U->>W: 选择品牌色
+  W->>T: 计算色阶
+  activate T
+  T-->>W: 返回配色
+  deactivate T
+  W-->>U: 更新预览
+  Note over U,W: 亮暗共享配色规则
+```
+
+## 类图
+
+```mermaid
+classDiagram
+  class Document["文档"] {
+    +String title
+    +render()
+  }
+  class Theme["主题"] {
+    +String name
+    +apply()
+  }
+  Document --> Theme : 使用
+```
+
+## 状态图
+
+```mermaid
+stateDiagram-v2
+  [*] --> 草稿
+  草稿 --> 预览 : 编辑
+  预览 --> 草稿 : 调整
+  预览 --> 发布 : 确认
+  发布 --> [*]
+```
+
+## 实体关系图
+
+```mermaid
+erDiagram
+  USER ||--o{ DOCUMENT : creates
+  USER {
+    int id PK
+    string name
+  }
+  DOCUMENT {
+    int id PK
+    string title
+    int author_id FK
+  }
+```
+
+## 甘特图
+
+```mermaid
+gantt
+  dateFormat YYYY-MM-DD
+  axisFormat %m-%d
+  section 配色
+    确定种子 :done, seeds, 2026-01-01, 2d
+    预览调整 :active, preview, after seeds, 3d
+  section 导出
+    网页样式 :web, after preview, 2d
+    图表样式 :diagram, after preview, 2d
+```
+
+## 饼图
+
+```mermaid
+pie showData
+  "正文与背景" : 60
+  "边界与控件" : 25
+  "品牌强调" : 15
+```
+
+## 思维导图
+
+```mermaid
+mindmap
+  root((配色))
+    深色
+      灰阶
+      边界
+    浅色
+      页面
+      容器
+    品牌色
+      链接
+      图表
+```

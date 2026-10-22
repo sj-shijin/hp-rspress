@@ -15,6 +15,7 @@ sh scripts/install.sh  # 首次安装依赖
 npm run dev           # 开发预览；修改内容或公开清单后需重启
 npm run build         # 导出、构建、校正 Markdown 并检查产物
 npm run preview       # 预览已构建的静态网站
+npm run colors        # 单独导出 Cinderfolio 通用、Pele 与 Rspress CSS
 npm test              # 使用独立临时知识库运行测试
 npm run check:build   # 单独检查现有构建产物
 ```
@@ -28,7 +29,10 @@ site/                   # 个人主页、知识库与项目入口等网站专属
   index.md              # /
   knowledge/index.md    # /knowledge/
   projects/index.md     # /projects/
+  projects.json         # 网站专属项目的显式页面清单
+  projects/cinderfolio/ # Cinderfolio 概览、Rspress 配色、Pele 与 Shiki 说明
 theme/                  # 样式、字体与标识资源
+cinderfolio/            # 独立配色源与 CSS 导出；不包含预览页面
 knowledge/publish.json  # 知识库笔记与附件的唯一公开清单
 knowledge-vault/        # 私有知识库的固定版本子模块
 scripts/                # 内容导出、Markdown 校正与产物检查
@@ -38,6 +42,7 @@ scripts/                # 内容导出、Markdown 校正与产物检查
 ```
 
 开发约定见 [AGENTS.md](AGENTS.md)，框架与主题用法见 `.agents/skills/`。
+网站默认使用 [Cinderfolio](cinderfolio/README.md)；`dev` / `build` 会自动生成配色，网页与 Pele 共用职责色。
 项目技能来自 [rstackjs/agent-skills](https://github.com/rstackjs/agent-skills)，
 通过 Skills Manager 导出为项目副本；更新时先更新共享库，再重新导出，不做全局部署。
 
@@ -46,7 +51,9 @@ scripts/                # 内容导出、Markdown 校正与产物检查
 正式笔记在 Obsidian 知识库维护，不在子模块副本中编辑。
 公开清单维护笔记路径、网址、类别、分组、章节和顺序；标题和摘要直接读取笔记的 `title`、`description`，不重复维护。
 导出只选取需要的前置属性，不沿链接扩大公开范围。
-`site/knowledge/` 与 `site/projects/` 仅维护入口 `index.md`，正文和附件由清单生成。
+`site/knowledge/` 仅维护入口 `index.md`，知识正文和附件由公开清单生成。
+网站专属项目正文维护于 `site/projects/<id>/`，通过 `site/projects.json` 显式登记页面顺序；标题与摘要读取各页前置属性，`sidebarTitle` 可设置侧栏标签。
+网站项目与知识库项目共用导航、搜索和 AI 索引，但不混用内容来源；未登记页面与冲突网址会中止导出。
 
 `categories[].overview` 指定的概览正文作为类别首页，默认位于 `/knowledge/<category>/`，
 普通笔记使用 `/knowledge/<slug>/`。类别指定 `section: projects` 时，使用独立的 `/projects/` 导航、侧栏和卡片入口。旧概览网页与 Markdown 地址继续兼容，搜索和 AI 索引不重复收录。
