@@ -6,6 +6,8 @@ import { parseArgs } from 'node:util';
 import { seeds, recipes, grayDivisions, createGrayScale, accentSteps, createAccentScale, syntaxRoles, createPalette, contrast } from './palette.mjs';
 import { createColorCss, createPeleCss } from './css.mjs';
 import { createRspressCss } from './rspress.mjs';
+import { peleRoles, createPelePalette } from './pele.mjs';
+import { seriesRecipe } from './oklch.mjs';
 
 const directory = new URL('./', import.meta.url);
 const { values } = parseArgs({ options: { check: { type: 'boolean' }, 'out-dir': { type: 'string' } } });
@@ -14,6 +16,24 @@ const themes = createPalette();
 const grayScale = createGrayScale();
 const accentScale = createAccentScale();
 const checks = {};
+const peleThemes = createPelePalette();
+const peleChecks = {};
+
+for (const [mode, { colors, onFill, series, vision }] of Object.entries(peleThemes)) {
+  if (vision.after.loss > vision.before.loss) throw new Error(`Pele ${mode} 色觉校正损失增大`);
+  if (vision.after.models.normal.minimum < seriesRecipe.distance.normal) throw new Error(`Pele ${mode} 普通色觉下的分类色过于接近`);
+  peleChecks[mode] = [
+    ...Object.keys(series).flatMap(key => [
+      [`--pele-${key}`, '深色文字', colors[key], onFill[key], seriesRecipe.textContrast],
+      [`--pele-${key}`, '画布', colors[key], colors.bg, 3, false],
+    ]),
+    ...['accent', 'critical'].map(key => [`--pele-${key}`, '实底文字', colors[key], onFill[key], 4.5]),
+  ].map(([variable, usage, color, adjacent, minimum, required = true]) => {
+    const ratio = contrast(color, adjacent);
+    if (required && ratio < minimum) throw new Error(`Pele ${mode} ${variable} / ${usage}: ${ratio.toFixed(2)} < ${minimum}`);
+    return { variable, usage, ratio: Number(ratio.toFixed(2)), minimum, required, passes: ratio >= minimum };
+  });
+}
 
 for (const [mode, c] of Object.entries(themes)) {
   const pairs = [
@@ -55,9 +75,9 @@ for (const [mode, c] of Object.entries(themes)) {
   });
 }
 
-const header = '/* 由 palette.mjs 生成；请修改来源后运行 node cinderfolio/build.mjs。 */';
+const header = '/* 由 Cinderfolio 配色源生成；请修改来源后运行 node cinderfolio/build.mjs。 */';
 const artifacts = {
-  'colors.json': `${JSON.stringify({ name: 'cinderfolio', neutralColorSpace: 'srgb', accentColorSpace: 'hsl', seeds, grayDivisions, grayScale, accentSteps, accentScale, recipes, themes, syntaxRoles, checks }, null, 2)}\n`,
+  'colors.json': `${JSON.stringify({ name: 'cinderfolio', neutralColorSpace: 'srgb', accentColorSpace: 'hsl', seeds, grayDivisions, grayScale, accentSteps, accentScale, recipes, themes, syntaxRoles, checks, pele: { seriesRecipe, roles: peleRoles, themes: peleThemes, checks: peleChecks } }, null, 2)}\n`,
   'colors.css': `${header}\n${createColorCss()}`,
   'cf-pele.css': `${header}\n${createPeleCss()}`,
   // 原生主题选择器只存在于 Rspress 产物；Pele 与通用 CSS 不知道 rp-dark。
@@ -80,6 +100,11 @@ for (const [name, content] of Object.entries(artifacts)) {
 console.log(`Cinderfolio：${Object.keys(seeds).length} 个输入色，${Object.keys(recipes).length} 个语义色，亮暗各 ${checks.light.length} 组对比度已记录。`);
 console.log(`灰阶固定 ${grayDivisions} 等分，共 ${Object.keys(grayScale).length} 档；职责按亮暗镜像引用。`);
 console.log(`主题色五档：${Object.values(accentScale).join(' / ')}。文字选区采用主题色 25% + 画布 75%，保留原字色。`);
+console.log(`Pele：${Object.keys(peleRoles).length} 个基础颜色变量；亮暗共用八色，与深色文字 ≥ ${seriesRecipe.textContrast}:1；甘特实底与文字 ≥ 4.5:1，亮暗共 ${Object.values(peleChecks).flat().filter(check => check.required).length} 项必要检查通过，画布对比度另行记录。`);
+for (const [mode, { vision }] of Object.entries(peleThemes)) {
+  const remaining = Object.values(vision.after.models).reduce((sum, model) => sum + model.conflicts.length, 0);
+  console.log(`Pele ${mode}：OKLCH 品牌衍生八色；色觉检查短缺平方和 ${vision.before.loss} → ${vision.after.loss}，剩余 ${remaining} 对低于工程参考值，详情写入 colors.json。`);
+}
 for (const [mode, colors] of Object.entries(themes)) {
   console.log(`${mode}: 正文 ${contrast(colors.foreground, colors.background).toFixed(2)}:1；链接 ${contrast(colors.link, colors.background).toFixed(2)}:1；对比度达到参考值 ${checks[mode].filter(check => check.passes).length}/${checks[mode].length}。中性文字与控件必需检查均通过。`);
 }

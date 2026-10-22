@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { seeds, recipes, createGrayScale, adjustLightness, createAccentScale, createPalette, contrast } from '../cinderfolio/palette.mjs';
-import { themeVariables, createColorCss, createPeleCss, peleRoles } from '../cinderfolio/css.mjs';
+import { themeVariables, createColorCss, createPeleCss, createPeleColorCss } from '../cinderfolio/css.mjs';
+import { peleRoles, peleRoleGroups, createPeleTheme, createPelePalette } from '../cinderfolio/pele.mjs';
 import { createRspressCss } from '../cinderfolio/rspress.mjs';
 
 test('ink 到 paper 十六等分，两个端点和十五个中间灰保持固定步长', () => {
@@ -87,9 +88,80 @@ test('独立 Pele CSS 自带亮暗颜色，无需 Rspress 或站内 Mermaid 组�
   assert.match(css, /\[data-cinderfolio="light"\]/);
   assert.match(css, /\[data-cinderfolio="dark"\]/);
   assert.match(css, /\.cinderfolio-pele \{/);
-  assert.match(css, /\.pele-cluster > rect \{\n  fill-opacity: 1;/);
-  for (const role of Object.values(peleRoles)) assert.ok(role in recipes, role);
-  assert.match(css, /--pele-border: var\(--cf-diagram-stroke\)/);
+  const groups = peleRoleGroups.flatMap(([, keys]) => keys);
+  assert.equal(new Set(groups).size, 18);
+  assert.deepEqual(groups, Object.keys(peleRoles));
+  for (const [mode, { colors, onFill }] of Object.entries(createPelePalette())) {
+    const block = css.split(`[data-cinderfolio="${mode}"] {`).at(-1).split('}')[0];
+    for (const [key, value] of Object.entries(colors)) assert.ok(block.includes(`--pele-${key}: ${value};`), `${mode}.${key}`);
+    for (const [key, value] of Object.entries(onFill)) assert.ok(block.includes(`--cf-pele-on-${key}: ${value};`), `${mode}.${key}.onFill`);
+  }
+});
+
+test('Pele 的结构色按固定灰阶镜像，品牌色按职责引用五档', () => {
+  const gray = createGrayScale(), brand = createAccentScale();
+  const { light, dark } = createPelePalette();
+  for (const [key, index] of Object.entries({ bg: 16, fg: 0, muted: 3, line: 3, surface: 15, 'surface-alt': 14, border: 7, error: 0 })) {
+    assert.equal(light.colors[key], gray[`g${index}`]);
+    assert.equal(dark.colors[key], gray[`g${16 - index}`]);
+  }
+  assert.equal(light.colors.accent, brand.light);
+  assert.equal(dark.colors.accent, brand.light);
+  assert.equal(light.colors.critical, brand.brand);
+  assert.equal(dark.colors.critical, brand.lighter);
+});
+
+test('Pele 默认 OKLCH 八色亮暗一致，并与深色文字达到 7:1', () => {
+  const expected = ['#ffa475', '#4eceff', '#76c258', '#db85e4', '#cca700', '#8fa4ff', '#00bba8', '#fb7ba2'];
+  for (const [mode, { colors, onFill, series }] of Object.entries(createPelePalette())) {
+    assert.deepEqual(Object.keys(series).map(key => colors[key]), expected);
+    assert.equal(new Set(expected).size, 8);
+    for (const key of Object.keys(series)) {
+      assert.ok(contrast(colors[key], onFill[key]) >= 7, `${mode}.${key}.text`);
+      assert.equal(onFill[key], seeds.ink);
+    }
+  }
+});
+
+test('强调和关键状态亮色使用 light / brand、暗色使用 light / lighter，字色按同一基色计算', () => {
+  const defaults = createPelePalette();
+  assert.equal(defaults.light.colors.accent, '#fa9148');
+  assert.equal(defaults.light.colors.critical, '#f97316');
+  assert.equal(defaults.dark.colors.accent, '#fa9148');
+  assert.equal(defaults.dark.colors.critical, '#fcaf79');
+  for (const accent of ['#f97316', '#0095ff', '#15f9ad', '#8b5cf6', '#606060']) {
+    const palette = createPelePalette({ ...seeds, accent });
+    for (const mode of ['light', 'dark']) for (const key of ['accent', 'critical']) {
+      const color = palette[mode].colors[key];
+      const foreground = palette[mode].onFill[key];
+      assert.equal(color, createAccentScale(accent)[peleRoles[key].accent[mode]]);
+      assert.equal(contrast(color, foreground), Math.max(contrast(color, seeds.ink), contrast(color, seeds.paper)));
+    }
+  }
+});
+
+test('Pele 分类色跟随品牌色色相，结构灰阶独立，端点改变会重新适配', () => {
+  const original = createPelePalette();
+  const changedBrand = createPelePalette({ ...seeds, accent: '#0095ff' });
+  const input = { ink: '#102030', paper: '#f3f5f7', accent: seeds.accent };
+  const changedEndpoints = createPelePalette(input);
+  for (const mode of ['light', 'dark']) {
+    const keys = Object.keys(original[mode].series);
+    assert.notDeepEqual(keys.map(k => changedBrand[mode].colors[k]), keys.map(k => original[mode].colors[k]));
+    assert.equal(changedBrand[mode].colors.border, original[mode].colors.border);
+    assert.notEqual(changedBrand[mode].colors.accent, original[mode].colors.accent);
+    const css = createPeleColorCss(input, { light: 'html.light', dark: 'html.dark' });
+    const block = css.split(`html.${mode} {`)[1].split('}')[0];
+    for (const key of keys) {
+      const { colors, onFill } = changedEndpoints[mode];
+      assert.ok(contrast(colors[key], input.ink) >= 7);
+      assert.ok(contrast(colors[key], onFill[key]) >= 7);
+      assert.ok(block.includes(`--pele-${key}: ${colors[key]};`));
+      assert.ok(block.includes(`--cf-pele-on-${key}: ${onFill[key]};`));
+    }
+  }
+  // 端点接近时计算仍有界，目标是否满足由对比度记录反映。
+  assert.equal(Object.keys(createPeleTheme({ ink: '#777777', paper: '#888888', accent: '#f97316' }).colors).length, 18);
 });
 
 test('实时预览和独立 CSS 导出使用同一组计算值，自定义种子覆盖全部色阶', () => {

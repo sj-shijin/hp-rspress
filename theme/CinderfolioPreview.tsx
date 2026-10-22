@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { ThemeContext } from '@rspress/core/runtime';
 import { seeds, recipes, grayDivisions, grayIndex, accentSteps, createGrayScale, createAccentScale, createPalette, contrast } from '../cinderfolio/palette.mjs';
+import { peleRoles, peleRoleGroups, createPeleTheme } from '../cinderfolio/pele.mjs';
 import { useCinderfolio, type CinderfolioSeeds } from './CinderfolioTheme';
 import './cinderfolio.css';
 
@@ -55,7 +56,7 @@ function ColorBar({ name, label, step, presets, value, isBackground, onChange }:
 }
 
 /** 各段复用 Layout 提供的种子；页面本身就是预览，不再绘制独立样本。 */
-export default function CinderfolioPreview({ section }: { section: 'controls' | 'roles' | 'scales' }) {
+export default function CinderfolioPreview({ section }: { section: 'controls' | 'roles' | 'pele-roles' | 'scales' }) {
   const { input, setInput } = useCinderfolio();
   const { theme, setTheme } = useContext(ThemeContext);
   // SSG 使用默认亮色；首个客户端渲染保持一致，再读取用户保存的主题。
@@ -109,6 +110,32 @@ export default function CinderfolioPreview({ section }: { section: 'controls' | 
       </ul>
     </section>)}
   </div>;
+
+  if (section === 'pele-roles') {
+    const { colors: pele } = createPeleTheme(input, mode);
+    const groups = peleRoleGroups.map(([title, keys]) => <section key={title}
+        className={`cf-role-group${title === '分类色' ? ' cf-role-group--series' : ''}`} aria-label={title}>
+        <h3>{title}</h3>
+        <ul className="cf-roles">
+          {keys.map(key => {
+            const role = peleRoles[key];
+            const isSeries = 'hueOffset' in role;
+            const source = 'gray' in role ? `g${grayIndex(role.gray, mode)}` : 'accent' in role ? role.accent[mode] : undefined;
+            return <li key={key}>
+              <div className="cf-roles__heading">
+                <span className="cf-roles__swatch" style={{ background: pele[key] }} aria-hidden="true" />
+                <span className="cf-roles__name">{isSeries ? key.slice('series-'.length) : role.label}</span>{key === 'bg' && <BgMark />}<code>{pele[key]}</code>
+              </div>
+              {!isSeries && <p className="cf-roles__detail"><code>{source}</code>{' · '}{role.usage}</p>}
+            </li>;
+          })}
+        </ul>
+      </section>);
+    return <div className="cf-role-groups rp-not-doc" aria-label="Pele 显示职责">
+      {groups[0]}
+      <div className="cf-role-stack">{groups.slice(1)}</div>
+    </div>;
+  }
 
   return <div className="cf-preview__scales rp-not-doc">
     <div className="cf-scale" aria-label="十六等分灰阶">

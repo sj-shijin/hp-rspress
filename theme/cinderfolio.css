@@ -42,6 +42,10 @@
 .rp-doc .cf-swatch code { padding: 0; border: 0; background: none; color: var(--cf-text-muted); font-size: 0.75rem; white-space: nowrap; }
 .cf-role-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 1.5rem; margin-block: 1rem; }
 .cf-role-group { min-width: 0; }
+.cf-role-stack { display: grid; align-content: start; gap: 1.25rem; min-width: 0; }
+.cf-role-group--series .cf-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0.75rem; }
+.cf-role-group--series .cf-roles > li { padding-block: 0.25rem; }
+.cf-role-group--series .cf-roles > li:nth-last-child(-n+2) { border-bottom: 0; }
 .cf-role-group h3 { margin: 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--cf-border-strong); font-size: 0.9rem; font-weight: 600; line-height: 1.5; }
 .cf-roles { margin: 0; padding: 0; list-style: none; }
 .cf-roles > li { margin: 0; padding-block: 0.5rem; border-bottom: 1px solid var(--cf-border); }
