@@ -20,7 +20,11 @@ class KnowledgeExportTests(unittest.TestCase):
         self.vault.mkdir()
         (self.root / 'state').mkdir()  # Basic Memory 配置和数据库与正式库隔离。
         self.site = self.root / 'site'
-        shutil.copytree(Path(__file__).resolve().parents[1] / 'site', self.site)
+        source = Path(__file__).resolve().parents[1] / 'site'
+        for name in ['index.md', 'knowledge/index.md', 'projects/index.md']:
+            target = self.site / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source / name, target)
         self.out = self.root / 'export'
         self.manifest = self.root / 'publish.json'
         (self.vault / '甲.md').write_text('''---
@@ -210,10 +214,11 @@ $$
     def render_llms(self, origin=''):
         index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
         entries = [{'title': '知识库', 'url': '/knowledge/', 'description': '知识库目录。'}]
-        if any(category.get('section') == 'projects' for category in index['categories']):
+        if index.get('siteProjects') or any(category.get('section') == 'projects' for category in index['categories']):
             entries.append({'title': '项目', 'url': '/projects/',
                             'description': '项目的设计、实现与实践记录。'})
         entries += index['categories'] + index['notes']
+        entries += [page for project in index.get('siteProjects', []) for page in project['pages']]
         unique = {}
         for item in entries:
             unique.setdefault(item['url'], item)
@@ -299,6 +304,50 @@ $$
                 with self.assertRaisesRegex(ValueError, '公开清单'):
                     self.run_export()
                 public.rmdir()
+
+    def add_site_project(self):
+        (self.site / 'projects.json').write_text(json.dumps([
+            {'id': 'palette', 'pages': ['index', 'preview']},
+        ]))
+        for name, title in [('index', '临时配色'), ('preview', '实时预览')]:
+            folder = self.site / 'projects/palette' / (name if name != 'index' else '')
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / 'index.mdx').write_text(
+                f'---\ntitle: {title}\ndescription: {title}的说明。\n'
+                f'sidebarTitle: {"项目概览" if name == "index" else title}\n---\n\n# {title}\n\n正文。\n')
+
+    def test_site_project_navigation_index_and_removal(self):
+        self.add_site_project()
+        self.add_project()
+        self.run_export()
+        config = json.loads((self.out / 'theme-config.json').read_text())
+        self.assertEqual([item['text'] for item in config['nav'][0]['items']], ['临时配色', '临时项目'])
+        self.assertEqual(config['sidebar']['/projects/'][0]['items'], [
+            {'text': '项目概览', 'link': '/projects/palette/'},
+            {'text': '实时预览', 'link': '/projects/palette/preview/'},
+        ])
+        self.assertTrue((self.out / 'docs/projects/palette/preview/index.mdx').is_file())
+        self.assertNotIn('临时配色', (self.out / 'docs/knowledge/index.md').read_text())
+        for origin in ['', 'https://shijin.space']:
+            text = self.render_llms(origin)
+            self.assertEqual(text.count(f']({origin}/projects/palette/index.md)'), 1)
+            self.assertEqual(text.count(f']({origin}/projects/palette/preview/index.md)'), 1)
+            self.assertIn('## 临时配色', text)
+        (self.site / 'projects.json').unlink()
+        shutil.rmtree(self.site / 'projects/palette')
+        self.run_export()
+        self.assertFalse((self.out / 'docs/projects/palette').exists())
+
+    def test_site_project_collision_and_unlisted_pages_are_rejected(self):
+        self.add_site_project()
+        self.spec['categories'][0].update(id='palette', section='projects')
+        for item in self.spec['notes']:
+            item['category'] = 'palette'
+        with self.assertRaisesRegex(ValueError, '重复网址'):
+            self.run_export()
+        (self.site / 'projects/palette/unlisted.mdx').write_text('未登记页面')
+        with self.assertRaisesRegex(ValueError, '网站项目清单'):
+            self.run_export()
 
     def test_public_note_requires_explicit_summary(self):
         path = self.vault / '甲.md'

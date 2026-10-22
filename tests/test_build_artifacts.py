@@ -19,7 +19,11 @@ class BuildArtifactTests(unittest.TestCase):
         self.vault = self.root / 'vault'
         self.vault.mkdir()
         self.source = self.root / 'site'
-        shutil.copytree(Path(__file__).resolve().parents[1] / 'site', self.source)
+        source = Path(__file__).resolve().parents[1] / 'site'
+        for name in ['index.md', 'knowledge/index.md', 'projects/index.md']:
+            target = self.source / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source / name, target)
         (self.vault / '概览.md').write_text('---\ndescription: 临时阅读入口。\n---\n# 概览\n\n临时概览。[[定义]]\n')
         (self.vault / '定义.md').write_text('---\ndescription: 临时公式定义。\n---\n# 定义\n\n公式 $x^2$。\n\n$$\nx=y\n$$\n')
         self.spec = {
@@ -79,7 +83,7 @@ class BuildArtifactTests(unittest.TestCase):
         shutil.rmtree(self.root)
 
     def check(self, origin=''):
-        return check_build(self.output, self.manifest, self.vault, origin)
+        return check_build(self.output, self.manifest, self.vault, origin, site_source=self.source)
 
     def test_local_build_contract(self):
         report = self.check()
@@ -97,6 +101,39 @@ class BuildArtifactTests(unittest.TestCase):
         path.write_text(path.read_text().replace('http://127.0.0.1:1320', origin))
         finalize(self.output, origin)
         self.assertEqual(self.check(origin)['site_origin'], origin)
+
+    def test_site_project_is_checked_against_its_own_explicit_manifest(self):
+        (self.source / 'projects.json').write_text('[{"id":"palette","pages":["index"]}]')
+        folder = self.source / 'projects/palette'
+        folder.mkdir(parents=True)
+        (folder / 'index.mdx').write_text('---\ntitle: 配色\ndescription: 临时配色说明。\n---\n\n# 配色\n')
+        index_path = self.output / 'knowledge/index.json'
+        index = json.loads(index_path.read_text())
+        page = {'title': '配色', 'label': '配色', 'description': '临时配色说明。', 'url': '/projects/palette/'}
+        index['siteProjects'] = [{'id': 'palette', 'title': '配色', 'description': '临时配色说明。',
+                                  'url': page['url'], 'pages': [page]}]
+        index_path.write_text(json.dumps(index))
+        for route, title in [('/projects/', '项目'), (page['url'], page['title'])]:
+            folder = self.output / route.lstrip('/')
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / 'index.html').write_text(
+                '<meta name="description" content="临时配色说明。">'
+                f'<link rel="alternate" type="text/markdown" href="{route}index.md">'
+                f'<link rel="describedby" href="/llms.txt"><h1>{title}</h1>')
+            (folder / 'index.md').write_text(f'# {title}\n\n临时配色说明。\n')
+            llms = self.output / 'llms.txt'
+            llms.write_text(llms.read_text() + f'- [{title}]({route}index.md): 临时配色说明。\n')
+            sitemap = self.output / 'sitemap.xml'
+            sitemap.write_text(sitemap.read_text().replace('</urlset>',
+                f'<url><loc>http://127.0.0.1:1320{route}</loc></url></urlset>'))
+        search = self.output / 'static/search_index.zh.test.json'
+        search.write_text(json.dumps([*json.loads(search.read_text()), {'routePath': page['url']}]))
+        finalize(self.output)
+        self.assertEqual(self.check()['site_project_pages'], 1)
+        index['siteProjects'] = []
+        index_path.write_text(json.dumps(index))
+        with self.assertRaisesRegex(ValueError, '网站项目索引'):
+            self.check()
 
     def test_known_build_regressions_are_rejected(self):
         regressions = [

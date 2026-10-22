@@ -15,6 +15,7 @@ from urllib.parse import quote, unquote, urlsplit
 
 import yaml
 from markdown_tools import markdown_tools
+from site_projects import read_site_projects
 
 
 SECTIONS = {'projects': '项目', 'knowledge': '知识库'}
@@ -302,10 +303,16 @@ class Exporter:
 
     def write(self, output: Path, *, preview: bool = True, site_source: Path | None = None) -> dict:
         site_source = site_source or Path(__file__).resolve().parents[1] / 'site'
+        site_projects = read_site_projects(site_source)
+        reserved = {n.url for n in self.notes} | {f'/{n.section}/{n.slug}/' for n in self.notes} | {
+            f'/{c.get("section", "knowledge")}/{identifier}/' for identifier, c in self.categories.items()}
+        if any(page['url'] in reserved for project in site_projects for page in project['pages']):
+            raise ValueError('网站项目与公开清单产生重复网址')
         # 网站入口与知识笔记分开维护，知识页面与附件始终只能由公开清单导出。
         for section in SECTIONS:
             if (site_source / 'public' / section).exists() or any(
-                    p.is_file() and p.relative_to(site_source / section).as_posix() != 'index.md'
+                    section == 'knowledge' and p.is_file()
+                    and p.relative_to(site_source / section).as_posix() != 'index.md'
                     for p in (site_source / section).rglob('*')):
                 raise ValueError(f'site/{section}/ 仅允许入口 index.md，知识内容请使用公开清单')
         converted = {note.slug: self.convert(note) for note in self.notes}
@@ -323,7 +330,8 @@ class Exporter:
         public = docs / 'public/knowledge'
         public.mkdir(parents=True, exist_ok=True)
         sections = [key for key in SECTIONS
-                    if key == 'knowledge' or any(n.section == key for n in self.notes)]
+                    if key == 'knowledge' or any(n.section == key for n in self.notes)
+                    or (key == 'projects' and site_projects)]
         for section in SECTIONS:
             if section not in sections:
                 # 未选入内容的项目入口不生成空页面，也不进入搜索。
@@ -341,6 +349,12 @@ class Exporter:
         features = {key: [] for key in sections}
         navigation = {key: [] for key in sections}
         sidebar = {key: [] for key in sections}
+        for project in site_projects:
+            features['projects'].append({'title': project['title'], 'details': project['description'],
+                                         'link': project['url']})
+            navigation['projects'].append({'text': project['title'], 'link': project['url']})
+            sidebar['projects'].append({'text': project['title'], 'items': [
+                {'text': item['label'], 'link': item['url']} for item in project['pages']]})
         categories = []
         for identifier, category in self.categories.items():
             notes = [n for n in self.notes if n.category == identifier]
@@ -441,7 +455,8 @@ class Exporter:
             (public / 'attachments').mkdir(exist_ok=True)
             shutil.copyfile(source, public / 'attachments' / name)
         (public / 'index.json').write_text(
-            json.dumps({'categories': categories, 'notes': records}, ensure_ascii=False, indent=2)
+            json.dumps({'categories': categories, 'notes': records, 'siteProjects': site_projects},
+                       ensure_ascii=False, indent=2)
             + '\n', encoding='utf-8')
         revision = subprocess.run(['git', '-C', str(self.vault), 'rev-parse', 'HEAD'],
                                   text=True, capture_output=True)

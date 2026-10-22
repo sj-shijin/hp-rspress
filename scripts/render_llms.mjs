@@ -43,8 +43,12 @@ export function renderLlmsTxt(context, index) {
 
   lines.push('## 内容导航', '');
   entry('/knowledge/', '按领域查阅基础知识、研究增量与阅读路线。');
-  if (index.categories.some(category => category.section === 'projects')) {
+  if (index.siteProjects?.length || index.categories.some(category => category.section === 'projects')) {
     entry('/projects/', '项目的设计、实现与实践记录。');
+  }
+  for (const project of index.siteProjects || []) {
+    lines.push('', `## ${project.title}`, '');
+    for (const page of project.pages) entry(page.url, page.description);
   }
   for (const category of index.categories) {
     lines.push('', `## ${category.title}`, '');
