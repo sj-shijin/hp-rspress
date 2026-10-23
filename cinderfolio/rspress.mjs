@@ -42,10 +42,10 @@ html ::selection {
   background: var(--cf-selection);
 }
 
-/* 代码容器复用网页职责；Shiki token 继续使用现有主题。 */
+/* 代码容器复用网页职责；Shiki token 通过同一色阶变量实时更新。 */
 html .rp-codeblock {
-  --rp-code-block-bg: var(--cf-surface);
-  --rp-code-title-bg: var(--cf-surface);
+  --rp-code-block-bg: var(--cf-background);
+  --rp-code-title-bg: var(--cf-background);
   --rp-code-block-color: var(--cf-foreground);
   --rp-code-block-border: 1px solid var(--cf-border);
   --rp-c-text-1: var(--cf-foreground);

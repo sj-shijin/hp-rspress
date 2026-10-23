@@ -12,13 +12,14 @@ class CinderfolioExportTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp(prefix='cinderfolio-export-'))
         try:
             source = Path(__file__).resolve().parents[1] / 'cinderfolio'
-            for name in ['palette.mjs', 'oklch.mjs', 'pele.mjs', 'css.mjs', 'build.mjs', 'rspress.mjs']:
+            for name in ['palette.mjs', 'oklch.mjs', 'pele.mjs', 'shiki.mjs', 'css.mjs', 'build.mjs', 'rspress.mjs']:
                 shutil.copyfile(source / name, root / name)
             command = ['node', str(root / 'build.mjs'), '--out-dir', str(root / 'exported')]
             subprocess.run(command, check=True, capture_output=True, text=True)
             output = root / 'exported'
             self.assertEqual({path.name for path in output.iterdir()},
-                             {'colors.css', 'colors.json', 'cf-pele.css', 'cf-rspress.css'})
+                             {'colors.css', 'colors.json', 'cf-pele.css', 'cf-rspress.css',
+                              'cf-shiki-light.json', 'cf-shiki-dark.json'})
             pele = (output / 'cf-pele.css').read_text()
             self.assertNotRegex(pele, r'@import|--rp-|rp-dark|sj-mermaid')
             self.assertIn('[data-cinderfolio="dark"]', pele)
@@ -37,6 +38,15 @@ class CinderfolioExportTests(unittest.TestCase):
             self.assertEqual(colors['pele']['roles']['critical']['accent']['light'], 'brand')
             self.assertEqual(colors['pele']['themes']['dark']['colors']['accent'], '#fa9148')
             self.assertIn('deuteranopia', colors['pele']['themes']['light']['vision']['after']['models'])
+            for mode, foreground, background in [('light', '#121212', '#fafaf8'), ('dark', '#fafaf8', '#121212')]:
+                content = (output / f'cf-shiki-{mode}.json').read_text()
+                theme = json.loads(content)
+                self.assertEqual(theme, colors['shiki']['themes'][mode])
+                self.assertEqual(theme['type'], mode)
+                self.assertEqual(theme['colors']['editor.foreground'], foreground)
+                self.assertEqual(theme['colors']['editor.background'], background)
+                self.assertNotIn('var(', content)
+                self.assertEqual(len(theme['tokenColors']), 7)
             subprocess.run([*command, '--check'], check=True, capture_output=True, text=True)
         finally:
             shutil.rmtree(root)

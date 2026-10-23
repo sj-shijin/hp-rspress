@@ -3,11 +3,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { seeds, recipes, grayDivisions, createGrayScale, accentSteps, createAccentScale, syntaxRoles, createPalette, contrast } from './palette.mjs';
+import { seeds, recipes, grayDivisions, createGrayScale, accentSteps, createAccentScale, createPalette, contrast } from './palette.mjs';
 import { createColorCss, createPeleCss } from './css.mjs';
 import { createRspressCss } from './rspress.mjs';
 import { peleRoles, createPelePalette } from './pele.mjs';
 import { seriesRecipe } from './oklch.mjs';
+import { shikiRoles, createShikiPalette, createShikiTheme } from './shiki.mjs';
 
 const directory = new URL('./', import.meta.url);
 const { values } = parseArgs({ options: { check: { type: 'boolean' }, 'out-dir': { type: 'string' } } });
@@ -18,6 +19,19 @@ const accentScale = createAccentScale();
 const checks = {};
 const peleThemes = createPelePalette();
 const peleChecks = {};
+const shikiThemes = Object.fromEntries(['light', 'dark'].map(mode => [mode, createShikiTheme(seeds, mode)]));
+const shikiChecks = {};
+
+for (const mode of ['light', 'dark']) {
+  const palette = createShikiPalette(seeds, mode);
+  shikiChecks[mode] = Object.entries(shikiRoles).filter(([key]) => key !== 'background').map(([key, role]) => {
+    const ratio = contrast(palette[key].color, palette.background.color);
+    const required = 'gray' in role;
+    if (required && ratio < 4.5) throw new Error(`Shiki ${mode} ${key}: ${ratio.toFixed(2)} < 4.5`);
+    return { role: key, foreground: palette[key].color, background: palette.background.color,
+      ratio: Number(ratio.toFixed(2)), minimum: 4.5, required, passes: ratio >= 4.5 };
+  });
+}
 
 for (const [mode, { colors, onFill, series, vision }] of Object.entries(peleThemes)) {
   if (vision.after.loss > vision.before.loss) throw new Error(`Pele ${mode} 色觉校正损失增大`);
@@ -43,10 +57,10 @@ for (const [mode, c] of Object.entries(themes)) {
     ['次要文字 / 画布', c.textMuted, c.background, 4.5],
     ['次要文字 / 悬浮底色', c.textMuted, c.surfaceHover, 4.5],
     ['辅助文字 / 画布', c.textSubtle, c.background, 4.5],
-    ['辅助文字 / 代码底色', c.textSubtle, c.surface, 4.5],
-    ['注释 / 代码底色', c.textMuted, c.surface, 4.5],
+    ['辅助文字 / 行内代码底色', c.textSubtle, c.surface, 4.5],
+    ['次要文字 / 行内代码底色', c.textMuted, c.surface, 4.5],
     ['链接 / 画布', c.link, c.background, 4.5, false],
-    ['链接 / 代码底色', c.link, c.surface, 4.5, false],
+    ['链接 / 行内代码底色', c.link, c.surface, 4.5, false],
     ['链接 / 选中底色', c.link, c.selectedBackground, 4.5, false],
     ['交互文字 / 画布', c.interaction, c.background, 4.5, false],
     ['按钮文字 / 中性实底', c.background, c.foreground, 4.5],
@@ -61,10 +75,6 @@ for (const [mode, c] of Object.entries(themes)) {
     ['控件边界 / 悬浮底色', c.controlBorder, c.surfaceHover, 3],
     ['图表描边 / 画布', c.diagramStroke, c.background, 3, false],
     ['图表描边 / 分组底色', c.diagramStroke, c.surfaceHover, 3, false],
-    ...Object.entries(syntaxRoles).map(([key, role]) => [
-      `语法 ${key} / 代码底色`, c[role.color], c.surface, 4.5,
-      !['link', 'diagramStroke'].includes(role.color),
-    ]),
   ];
   checks[mode] = pairs.map(([usage, foreground, background, minimum, required = true]) => {
     const ratio = contrast(foreground, background);
@@ -77,11 +87,13 @@ for (const [mode, c] of Object.entries(themes)) {
 
 const header = '/* 由 Cinderfolio 配色源生成；请修改来源后运行 node cinderfolio/build.mjs。 */';
 const artifacts = {
-  'colors.json': `${JSON.stringify({ name: 'cinderfolio', neutralColorSpace: 'srgb', accentColorSpace: 'hsl', seeds, grayDivisions, grayScale, accentSteps, accentScale, recipes, themes, syntaxRoles, checks, pele: { seriesRecipe, roles: peleRoles, themes: peleThemes, checks: peleChecks } }, null, 2)}\n`,
+  'colors.json': `${JSON.stringify({ name: 'cinderfolio', neutralColorSpace: 'srgb', accentColorSpace: 'hsl', seeds, grayDivisions, grayScale, accentSteps, accentScale, recipes, themes, checks, pele: { seriesRecipe, roles: peleRoles, themes: peleThemes, checks: peleChecks }, shiki: { roles: shikiRoles, themes: shikiThemes, checks: shikiChecks } }, null, 2)}\n`,
   'colors.css': `${header}\n${createColorCss()}`,
   'cf-pele.css': `${header}\n${createPeleCss()}`,
   // 原生主题选择器只存在于 Rspress 产物；Pele 与通用 CSS 不知道 rp-dark。
   'cf-rspress.css': `${header}\n${createRspressCss()}`,
+  'cf-shiki-light.json': `${JSON.stringify(shikiThemes.light, null, 2)}\n`,
+  'cf-shiki-dark.json': `${JSON.stringify(shikiThemes.dark, null, 2)}\n`,
 };
 
 // --check 只核对产物与来源一致，并重新检查实际使用组合的对比度。
@@ -100,6 +112,7 @@ for (const [name, content] of Object.entries(artifacts)) {
 console.log(`Cinderfolio：${Object.keys(seeds).length} 个输入色，${Object.keys(recipes).length} 个语义色，亮暗各 ${checks.light.length} 组对比度已记录。`);
 console.log(`灰阶固定 ${grayDivisions} 等分，共 ${Object.keys(grayScale).length} 档；职责按亮暗镜像引用。`);
 console.log(`主题色五档：${Object.values(accentScale).join(' / ')}。文字选区采用主题色 25% + 画布 75%，保留原字色。`);
+console.log(`Shiki：${Object.keys(shikiRoles).length} 个颜色职责，亮暗主题 JSON 已导出；灰阶文字必要对比度检查通过，品牌色对比度另行记录。`);
 console.log(`Pele：${Object.keys(peleRoles).length} 个基础颜色变量；亮暗共用八色，与深色文字 ≥ ${seriesRecipe.textContrast}:1；甘特实底与文字 ≥ 4.5:1，亮暗共 ${Object.values(peleChecks).flat().filter(check => check.required).length} 项必要检查通过，画布对比度另行记录。`);
 for (const [mode, { vision }] of Object.entries(peleThemes)) {
   const remaining = Object.values(vision.after.models).reduce((sum, model) => sum + model.conflicts.length, 0);
