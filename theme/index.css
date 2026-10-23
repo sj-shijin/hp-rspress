@@ -31,6 +31,10 @@
 }
 
 /* Shiki 同时生成两套颜色；用页面主题选择，保留各自的字形样式。 */
+.rp-codeblock .shiki {
+  font-synthesis-weight: auto;
+}
+
 .rp-codeblock .shiki,
 .rp-codeblock .shiki span {
   color: var(--shiki-light);

@@ -1,6 +1,6 @@
 /* 调色直接作用于整个网站；这里只维护颜色选择与职责说明的布局。 */
-.cf-preview { min-width: 0; }
-.cf-preview__seeds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.cf-preview { min-width: 0; padding-block: 0.75rem; }
+.cf-preview__seeds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
 .cf-color-strip { min-width: 0; }
 .cf-color-strip--accent { grid-column: 1 / -1; }
 .cf-color-strip__heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
@@ -8,7 +8,7 @@
 .rp-doc .cf-color-strip__heading code { padding: 0; border: 0; background: none; color: var(--cf-text-muted); font-size: 0.8rem; }
 .cf-color-strip__value { margin-left: auto; }
 .cf-bg { flex: none; padding: 0.05rem 0.2rem; border: 1px solid var(--cf-border-strong); border-radius: 0.2rem; color: var(--cf-text-muted); font-family: var(--rp-font-family-mono); font-size: 0.65rem; line-height: 1.2; }
-.cf-color-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-height: 3.5rem; padding: 0.75rem 1rem; border: 1px solid var(--cf-border-strong); border-radius: 0.5rem; background: var(--cf-surface); }
+.cf-color-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-height: 3rem; padding: 0.5rem 1rem; border: 1px solid var(--cf-border-strong); border-radius: 0.5rem; background: var(--cf-surface); }
 /* 端点色块放在相反明度的底色上；g0…g16 不随网站亮暗反转。 */
 .cf-color-strip--ink .cf-color-bar { --cf-surface: var(--cf-g15); --cf-surface-hover: var(--cf-g14); --cf-foreground: var(--cf-g0); --cf-text-muted: var(--cf-g3); --cf-border-strong: var(--cf-g12); }
 .cf-color-strip--paper .cf-color-bar { --cf-surface: var(--cf-g1); --cf-surface-hover: var(--cf-g2); --cf-foreground: var(--cf-g16); --cf-text-muted: var(--cf-g13); --cf-border-strong: var(--cf-g4); }
@@ -23,14 +23,15 @@
 /* 透明的原生拾色器覆盖圆轮，保留浏览器的 RGB / HEX 和取色交互。 */
 .cf-color-bar__custom input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 .cf-color-bar__custom:focus-within { outline: 2px solid var(--cf-interaction); outline-offset: 3px; }
-.cf-preview__metrics { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; margin-block: 0.75rem; color: var(--cf-text-muted); font-size: 0.75rem; }
+.cf-preview__footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin-top: 0.5rem; color: var(--cf-text-muted); font-size: 0.75rem; }
 .cf-preview__scope { display: inline-flex; align-items: center; gap: 0.5rem; }
 .cf-theme-switch { flex: none; width: 2.25rem; height: 1.25rem; padding: 2px; border: 1px solid var(--cf-control-border); border-radius: 999px; background: var(--cf-surface); cursor: pointer; }
 .cf-theme-switch:hover { border-color: var(--cf-interaction); }
 .cf-theme-switch__thumb { display: block; width: 0.875rem; height: 0.875rem; border-radius: 50%; background: var(--cf-foreground); }
 .cf-theme-switch[aria-checked="true"] { background: var(--cf-control-selected-background); }
 .cf-theme-switch[aria-checked="true"] .cf-theme-switch__thumb { transform: translateX(1rem); background: var(--cf-control-selected-foreground); }
-.cf-download { gap: 0.4rem; }
+.cf-download { gap: 0.4rem; white-space: nowrap; }
+.cf-downloads { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; margin-left: auto; }
 .cf-preview :is(button, a):focus-visible, .cf-download:focus-visible { outline: 2px solid var(--cf-interaction); outline-offset: 2px; }
 .cf-scale { display: grid; grid-template-columns: repeat(17, minmax(4.5rem, 1fr)); gap: 0.35rem; overflow-x: auto; padding-block: 0.5rem; }
 .cf-scale--accent { grid-template-columns: repeat(5, minmax(5.5rem, 1fr)); }
@@ -56,7 +57,22 @@
 .cf-roles__heading code { flex: none; color: var(--cf-text-muted); font-size: 0.75rem; white-space: nowrap; }
 .cf-roles__detail { margin: 0.2rem 0 0; color: var(--cf-text-muted); font-size: 0.75rem; line-height: 1.5; overflow-wrap: anywhere; }
 .cf-roles__detail code { font-size: inherit; }
+.cf-shiki-roles { margin-block: 1rem; }
+.cf-shiki-roles__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.5rem; }
+.cf-shiki-roles__grid > li { min-width: 0; padding-block: 0.75rem; }
+.cf-shiki-roles__grid > li:nth-last-child(-n+2) { border-bottom: 0; }
+.cf-shiki-roles__legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; padding-top: 0.75rem; border-top: 1px solid var(--cf-border-strong); color: var(--cf-text-muted); font-size: 0.75rem; }
+.cf-shiki-roles__background, .cf-shiki-roles__diff { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.cf-shiki-roles__legend code { font-size: inherit; }
+.cf-pele-categories > .rp-page-tabs__label { flex-wrap: wrap; gap: 0.25rem 1rem; margin-block: 0.75rem; }
+.cf-pele-categories .rp-page-tabs__label__item { padding: 0.65rem 0.25rem; }
+.cf-pele-categories .rp-tabs { margin-block: 0.75rem; border: 0; box-shadow: none; }
+.cf-pele-categories .rp-tabs__label { gap: 0.25rem 0; padding: 0.5rem 0; background: none; }
+.cf-pele-categories .rp-tabs__content__item { padding: 0; }
+.cf-pele-categories .sj-mermaid { margin-block: 0.75rem; }
+.cf-pele-categories .sj-mermaid__diagram > svg { max-width: 100%; max-height: 22rem; }
 @media (max-width: 540px) {
   .cf-preview__seeds { grid-template-columns: 1fr; gap: 1rem; }
-  .cf-role-groups { grid-template-columns: 1fr; }
+  .cf-role-groups, .cf-shiki-roles__grid { grid-template-columns: 1fr; }
+  .cf-shiki-roles__grid > li:nth-last-child(2) { border-bottom: 1px solid var(--cf-border); }
 }

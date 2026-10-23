@@ -1,7 +1,8 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { ThemeContext } from '@rspress/core/runtime';
-import { seeds, recipes, grayDivisions, grayIndex, accentSteps, createGrayScale, createAccentScale, createPalette, contrast } from '../cinderfolio/palette.mjs';
+import { seeds, recipes, grayDivisions, grayIndex, accentSteps, createGrayScale, createAccentScale, createPalette } from '../cinderfolio/palette.mjs';
 import { peleRoles, peleRoleGroups, createPeleTheme } from '../cinderfolio/pele.mjs';
+import { shikiRoles, shikiRoleGroups, createShikiPalette } from '../cinderfolio/shiki.mjs';
 import { useCinderfolio, type CinderfolioSeeds } from './CinderfolioTheme';
 import './cinderfolio.css';
 
@@ -56,7 +57,7 @@ function ColorBar({ name, label, step, presets, value, isBackground, onChange }:
 }
 
 /** 各段复用 Layout 提供的种子；页面本身就是预览，不再绘制独立样本。 */
-export default function CinderfolioPreview({ section }: { section: 'controls' | 'roles' | 'pele-roles' | 'scales' }) {
+export default function CinderfolioPreview({ section, children }: { section: 'controls' | 'roles' | 'pele-roles' | 'shiki-roles' | 'scales'; children?: ReactNode }) {
   const { input, setInput } = useCinderfolio();
   const { theme, setTheme } = useContext(ThemeContext);
   // SSG 使用默认亮色；首个客户端渲染保持一致，再读取用户保存的主题。
@@ -71,7 +72,7 @@ export default function CinderfolioPreview({ section }: { section: 'controls' | 
       {seedControls.map(control => <ColorBar key={control.name} {...control} value={input[control.name]} isBackground={control.step === backgroundStep}
         onChange={color => setInput(previous => ({ ...previous, [control.name]: color }))} />)}
     </div>
-    <div className="cf-preview__metrics rp-not-doc">
+    <div className="cf-preview__footer rp-not-doc">
       <div className="cf-preview__scope">
         <button type="button" className="cf-theme-switch" role="switch" aria-label="暗色模式" aria-checked={mode === 'dark'}
           title={mode === 'light' ? '切换为暗色' : '切换为亮色'} onClick={() => setTheme?.(theme === 'dark' ? 'light' : 'dark')}>
@@ -79,8 +80,7 @@ export default function CinderfolioPreview({ section }: { section: 'controls' | 
         </button>
         <span>{mode === 'light' ? '亮色' : '暗色'} · 全网页生效</span>
       </div>
-      <span>正文 {contrast(colors.foreground, colors.background).toFixed(2)}:1</span>
-      <span>链接 {contrast(colors.link, colors.background).toFixed(2)}:1</span>
+      {children && <div className="cf-downloads">{children}</div>}
     </div>
   </div>;
 
@@ -110,6 +110,44 @@ export default function CinderfolioPreview({ section }: { section: 'controls' | 
       </ul>
     </section>)}
   </div>;
+
+  if (section === 'shiki-roles') {
+    const palette = createShikiPalette(input, mode);
+    const styleNames = { bold: '粗体', italic: '斜体' };
+    const roleStyle = (key: keyof typeof shikiRoles): CSSProperties => ({
+      color: palette[key].color,
+      fontWeight: shikiRoles[key].fontStyle === 'bold' ? 700 : 400,
+      fontStyle: shikiRoles[key].fontStyle === 'italic' ? 'italic' : 'normal',
+      textDecoration: shikiRoles[key].fontStyle === 'strikethrough' ? 'line-through' : 'none',
+    });
+    return <div className="cf-shiki-roles rp-not-doc" aria-label="Shiki 显示职责">
+      <ul className="cf-roles cf-shiki-roles__grid">
+        {shikiRoleGroups.map(([title, keys, usage]) => {
+          const key = keys[0];
+          const { step, color } = palette[key];
+          return <li key={title}>
+            <div className="cf-roles__heading">
+              <span className="cf-roles__swatch" style={{ background: color }} aria-hidden="true" />
+              <span className="cf-roles__name" style={roleStyle(key)}>{title}</span><code>{color}</code>
+            </div>
+            <p className="cf-roles__detail"><code>{step}</code>{' · '}{styleNames[shikiRoles[key].fontStyle] ?? '常规'}</p>
+            <p className="cf-roles__detail">{usage}</p>
+          </li>;
+        })}
+      </ul>
+      <div className="cf-shiki-roles__legend">
+        <span className="cf-shiki-roles__background">
+          <span className="cf-roles__swatch" style={{ background: palette.background.color }} aria-hidden="true" />
+          底色 <code>{palette.background.step}</code><BgMark /><code>{palette.background.color}</code>
+        </span>
+        <span className="cf-shiki-roles__diff">Diff
+          {([['execution', '+ 新增'], ['deleted', '− 删除'], ['navigation', '! 修改']] as const).map(([key, label]) => <span key={key} style={roleStyle(key)}>
+            {label}
+          </span>)}
+        </span>
+      </div>
+    </div>;
+  }
 
   if (section === 'pele-roles') {
     const { colors: pele } = createPeleTheme(input, mode);

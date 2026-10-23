@@ -6,6 +6,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkMermaid from './scripts/remark_mermaid.mjs';
 import { renderLlmsTxt } from './scripts/render_llms.mjs';
+import { createShikiTheme } from './cinderfolio/shiki.mjs';
 
 const generated = path.resolve('.generated');
 const siteOrigin = process.env.SITE_ORIGIN || '';
@@ -95,7 +96,10 @@ export default defineConfig({
       path.resolve('theme/CinderfolioDownload.tsx'),
     ],
     shiki: {
-      themes: { light: 'one-light', dark: 'material-theme-darker' },
+      themes: {
+        light: createShikiTheme(undefined, 'light', { variables: true }),
+        dark: createShikiTheme(undefined, 'dark', { variables: true }),
+      },
       defaultColor: false,
     },
     remarkPlugins: [remarkMath, remarkMathBlocks, remarkMermaid],
