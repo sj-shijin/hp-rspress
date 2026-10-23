@@ -67,6 +67,43 @@ test('实时变量主题与独立 HEX 主题取色一致，六个阅读层级与
   assert.ok(html.includes('var(--cf-g0)'));
 });
 
+test('未分类的源码使用常规端点色，局部兜底保留 C 与 Python 的普通标识符', () => {
+  const samples = [
+    ['css', '.card { will-change: transform; } @media (prefers-reduced-motion: no-preference) {}', [
+      ['transform', 'content', 0], ['prefers-reduced-motion', 'content', 0], ['no-preference', 'content', 0],
+    ]],
+    ['rust', '#[derive(Debug)]\nfn run() {}', [['derive', 'content', 0], ['run', 'execution', 2]]],
+    ['c', 'int current = 0;\nvoid run() { current += 1; }', [['current', 'execution', 2], ['0;', 'content', 0]]],
+    ['python', 'value = data["key"]\n# explanation', [
+      ['value', 'execution', 2], ['data', 'execution', 2], ['key', 'content', 0], ['# explanation', 'comment', 1],
+    ]],
+  ];
+  for (const mode of ['light', 'dark']) for (const [lang, code, cases] of samples) {
+    const palette = createShikiPalette(seeds, mode);
+    for (const [text, role, style] of cases) {
+      const token = tokenAt(code, lang, mode, text);
+      assert.equal(token.color.toLowerCase(), palette[role].color, `${mode}.${lang}.${text}`);
+      assert.equal(token.fontStyle, style, `${mode}.${lang}.${text}`);
+    }
+  }
+});
+
+test('通用变量、内置属性和对象键不依赖源码粗体兜底', () => {
+  const samples = [
+    ...['javascript', 'typescript'].map(lang => [lang, 'const item = { title: "Task", limit: 3 }; const count = item.length;', ['title:', 'limit:', 'length']]),
+    ['csharp', 'class Job { static int Run(int count) { var value = count; return value; } }', ['count)', 'value =']],
+    ['java', 'record Task(String title) {}\nclass Job { void run() { var pending = load(); consume(pending); } }', ['title)', 'pending =']],
+  ];
+  for (const mode of ['light', 'dark']) for (const [lang, code, names] of samples) {
+    const palette = createShikiPalette(seeds, mode);
+    for (const text of names) {
+      const token = tokenAt(code, lang, mode, text);
+      assert.equal(token.color.toLowerCase(), palette.execution.color, `${mode}.${lang}.${text}`);
+      assert.equal(token.fontStyle, 2, `${mode}.${lang}.${text}`);
+    }
+  }
+});
+
 test('C++ 命名空间与类型使用辅助信息，函数和成员保持粗体，字面量使用常规端点色', () => {
   const code = '#include <span>\n#include "local.hpp"\n#define SCALE 2\n// explanation\nnamespace app {}\nnamespace math = app;\nusing namespace std;\nstruct Vector {};\ntemplate <std::floating_point T>\nT dot(T value) { const T result = value * 2.0f; std::cout << "result" << result; return result; }';
   for (const mode of ['light', 'dark']) {
@@ -709,7 +746,9 @@ Get-Item a && Write-Output b || Write-Warning c`;
       ['@{', 'execution', 2], ['@(', 'execution', 2], ['$Name', 'execution', 2],
       ['$true', 'content', 0], ['true', 'content', 0], ['$false', 'content', 0],
       ['false', 'content', 0], ['$null', 'content', 0], ['null', 'content', 0], ['other', 'content', 0],
-      ['Get-ChildItem', 'execution', 2], ['ForEach-Object', 'execution', 2], ['Stop', 'execution', 2],
+      ['Get-ChildItem', 'execution', 2], ['ForEach-Object', 'execution', 2],
+      // 未细分的选项和参数值随 source 使用常规端点色，不按字符串猜测语义。
+      ['Filter ', 'content', 0], ['ErrorAction', 'content', 0], ['Stop', 'content', 0],
       ['|\n', 'execution', 2], ['$_', 'execution', 2], ['.Name', 'execution', 2], ['ToUpper', 'execution', 2],
       ['if', 'navigation', 2], ['-and', 'execution', 2], ['-ne', 'execution', 2], ['return', 'navigation', 2],
       ['# explanation', 'comment', 1],

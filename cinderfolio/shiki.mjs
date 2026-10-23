@@ -25,10 +25,16 @@ export const shikiRoles = {
     ],
   },
   execution: {
-    label: '阅读主体', gray: 0, fontStyle: 'bold', usage: '标识符、表达式、模板属性、规则与标题',
+    label: '阅读主体', gray: 0, fontStyle: 'bold', usage: '函数、变量、属性、表达式与规则',
     scope: [
-      // source 兜底覆盖未细分的代码标识符；类型、字面量和标点由更具体的规则接管。
-      'source', 'variable', 'constant.other.caps', 'entity.name.function', 'support.function',
+      // 按明确职责强调；source 默认常规，不再让新语言的未分类内容全部加粗。
+      'variable', 'entity.name.variable', 'support.variable', 'meta.object-literal.key',
+      'constant.other.caps', 'entity.name.function', 'support.function',
+      // 调用、函数体与 record 声明内未细分的标识符局部兜底，内层类型和字面量仍接管。
+      'meta.function-call', 'meta.method-call', 'meta.function.call',
+      'meta.function.body', 'meta.body.function', 'meta.method.body', 'meta.record.identifier',
+      // 这些语法在顶层也省略变量名或表达式边界的标记，只在对应语言保留粗体兜底。
+      'source.c', 'source.python', 'source.sql', 'source.lua', 'source.cmake', 'source.kotlin', 'source.swift',
       'entity.name.type.class', 'entity.name.class', 'support.class', 'entity.other.inherited-class',
       'entity.other.inherited-class support.type',
       'entity.other.attribute-name', 'entity.name.other.preprocessor.macro', 'support.type.property-name',
@@ -77,6 +83,7 @@ export const shikiRoles = {
       'meta.fstring constant.character.format.placeholder', 'constant.other.general.math', 'constant.character.math',
       'markup.heading', 'entity.name.section', 'markup.bold', 'markup.inserted',
       // 正则中的普通字符与符号共同定义匹配行为；在该上下文覆盖通用文字层级。
+      'source.regexp',
       ...['string', 'constant', 'constant.character.escape', 'constant.character.format',
         'entity.name.tag', 'storage.modifier', 'keyword', 'punctuation']
         .map(scope => `source.regexp ${scope}`),
@@ -87,19 +94,17 @@ export const shikiRoles = {
     scope: ['comment', 'punctuation.definition.comment', 'comment.regexp punctuation', 'string.quoted.docstring', 'string.quoted.docstring punctuation.definition.string', 'markup.italic'],
   },
   content: {
-    label: '数据正文', gray: 0, usage: '字面量、参数值、标签与普通正文',
+    label: '数据正文', gray: 0, usage: '默认代码、字面量、标签与普通正文',
     scope: [
+      'source',
       'string', 'constant', 'support.constant', 'string storage.type.string', 'support.class.math',
       'keyword.other.unit', 'keyword.other.suffix.literal',
       // $true / $false / $null 的前缀随字面量，普通变量仍使用端点粗体。
       'constant.language.powershell punctuation.definition.variable.powershell',
-      // text 与 JSX 正文覆盖外层 source 的粗体；嵌入表达式仍复用代码规则。
+      // 文本与 JSX 正文使用常规字重；嵌入表达式仍复用代码规则。
       'text', 'meta.jsx.children', 'entity.name.tag', 'support.class.component',
-      // Diff 普通上下文不继承 source 粗体；增删行仍由各自的 markup 规则接管。
-      'source.diff',
-      // Dockerfile 的未细分参数、Make 赋值的普通取值与 CMake 原始文本使用常规字重。
-      // 指令、变量及 Make 的构建上下文由更具体的规则接管，不额外解析 Shell。
-      'source.dockerfile', 'source.makefile', 'argument.source.cmake',
+      // CMake 原始文本覆盖对应语言的粗体兜底。
+      'argument.source.cmake',
       // 公式中实际显示的圆括号随正文；命令分组花括号属于结构细节。
       'punctuation.math.begin.bracket.round.tex', 'punctuation.math.end.bracket.round.tex',
     ],
