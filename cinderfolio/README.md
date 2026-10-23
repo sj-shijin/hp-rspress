@@ -59,6 +59,7 @@ pele.mjs          # Pele 的 18 个颜色职责与实底文字计算
 shiki.mjs         # Shiki 的六个阅读层级、通用 scope、变量主题与 HEX 主题
 marp.mjs          # 独立 Marp CSS、Pele 变量与 Shiki 字形，静态和实时同步共用
 examples/marp.md  # 正文、双图与代码示例，包含公开的演讲者备注
+fonts/marp/       # Marp 本地 WOFF2、字体样式、来源与 OFL 许可证
 css.mjs           # 通用变量与独立 Pele CSS；兼容 Node.js / 浏览器
 rspress.mjs       # Rspress 职责映射与完整 CSS 导出，不包含 Pele 规则
 build.mjs         # 生成器、对比度记录与产物一致性检查
@@ -73,6 +74,7 @@ dist/             # 自动生成，已忽略，不手改
   cf-shiki-dark.json  # 独立 Shiki 暗色主题，具体 HEX
   cf-marp.css         # 独立 Marp 主题，跟随外层或系统亮暗
   marp/example.html   # Marp CLI 生成的独立 Bespoke 演示
+  marp/fonts/         # 随示例复制的本地字体，不加载到 Rspress 页面
 ```
 
 网站由 `theme/index.tsx` 加载两个 CSS 适配文件，`rspress.config.ts` 加载 Shiki 变量主题。Layout 中的 `CinderfolioProvider` 保持调色状态，通过原生 `useHead` 更新整站色阶变量；Shiki 语法颜色直接引用这些变量。`CinderfolioPreview.tsx` 展示选择栏、职责与色阶；MDX 单独放置 `CinderfolioDownload`，使用同一生成接口导出当前参数。
@@ -87,6 +89,10 @@ npm run marp   # 使用已安装的 Marp CLI 生成示例 HTML，不需要浏览
 `npm run dev`、`npm run build` 会依次执行上述步骤。示例源文件是 `examples/marp.md`，页面 `/projects/cinderfolio/marp/` 通过同源 iframe 加载 `/cinderfolio/marp/example.html`。翻页、全屏、概览和演讲者模式沿用 CLI 的 Bespoke 模板；iframe 显式允许全屏，不重做播放器。
 
 `cf-marp.css` 是自包含样式，供 Marp Core / CLI 加载，主题名为 `cinderfolio`。Pele 的 18 个颜色职责、实底文字适配和 Shiki 字形规则也在其中，无需再加载 `cf-pele.css` 或 `colors.css`。亮暗通过 `prefers-color-scheme` 选择，嵌入时可跟随外层的 `color-scheme`。
+
+Marp 正文与图表使用 `Inter, "Noto Sans SC"`，代码使用 `"Sarasa Mono SC"`；固定的 WOFF2 资源来自 Noto Sans SC 2.004、Inter 4.1 和 Sarasa Mono SC 1.0.42。中文按 Latin、GB2312 常用字与扩展字分片，保留原字体的全部字符映射；Inter 与 Noto 保留可变字重，代码包含常规、粗体、斜体和粗斜体。示例 HTML 独立加载 `./fonts/font.css`，不使用系统 `local()` 字体，也不影响网页的文楷。
+
+独立分享 HTML 时保留其同级 `fonts/` 目录；仅下载 `cf-marp.css` 不包含字体文件，其他渲染入口需自行加载 `fonts/marp/font.css` 及同目录 WOFF2。来源、原始哈希和三份 OFL 许可证在 `fonts/marp/` 中；更新字体才需运行 `scripts/prepare_marp_fonts.py`，日常开发和构建只复制资源。
 
 ```sh
 # 在本仓库中转换其他演示，复用相同渲染器。

@@ -12,6 +12,8 @@ footer: Cinderfolio · Marp
 
 同一套配色，从网页到演示。
 
+Cinderfolio · Clear ideas, consistent slides.
+
 *深色 · 浅色 · 品牌色*
 
 <!-- 这是公开的示例备注。介绍三个颜色种子，再翻到下一页。 -->
