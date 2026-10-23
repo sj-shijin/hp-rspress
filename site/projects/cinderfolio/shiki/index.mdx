@@ -27,6 +27,7 @@ import { Callout, Tab, Tabs, languageLabel } from '@rspress/core/theme';
 #include <concepts>
 #include <iostream>
 #include <span>
+#include <stdexcept>
 
 #if defined(USE_FLOAT)
 using Scalar = float;
@@ -34,12 +35,14 @@ using Scalar = float;
 using Scalar = double;
 #endif
 
-// 只读视图不复制数据；点积要求向量等长。
+// 视图不复制数据；长度不匹配时停止计算。
 template <std::floating_point T>
 class Vec {
 public:
     explicit Vec(std::span<const T> data) : data_(data) {}
-    [[nodiscard]] T dot(const Vec& rhs) const noexcept {
+    [[nodiscard]] T dot(const Vec& rhs) const {
+        if (data_.size() != rhs.data_.size())
+            throw std::invalid_argument("向量长度不一致");
         T total{};
         for (std::size_t i = 0; i < data_.size(); ++i)
             total += data_[i] * rhs.data_[i];
@@ -52,11 +55,15 @@ private:
 int main() {
     constexpr Scalar x[]{1.0, 2.0, 3.0}, y[]{4.0, 5.0, 6.0};
     const Vec<Scalar> a{x}, b{y};
-    // 引用捕获向量，初始化捕获权重。
     const auto score = [&a, scale = 0.5](const auto& v) {
         return scale * a.dot(v);
     };
-    std::cout << "加权点积 = " << score(b) << '\n';
+    try {
+        std::cout << "加权点积 = " << score(b) << '\n';
+    } catch (const std::invalid_argument& error) {
+        std::cerr << error.what() << '\n';
+        return 1;
+    }
 }
 ```
 
@@ -64,31 +71,40 @@ int main() {
 
 <Tab value="python" label={languageLabel("python")}>
 
-```python title="vector.py · Python 3.10+" lineNumbers
+```python title="tasks.py · Python 3.10+" lineNumbers
+import json
 from dataclasses import dataclass
-from math import fsum
-
+from pathlib import Path
 
 @dataclass(frozen=True)
-class Vector:
-    values: tuple[float, ...]
+class Task:
+    id: int
+    title: str
+    done: bool = False
+    owner: str | None = None
 
-    def dot(self, other: "Vector") -> float:
-        """计算等长向量的点积，长度不符时抛出异常。"""
-        return fsum(
-            x * y for x, y in zip(self.values, other.values, strict=True)
-        )
+def load_tasks(path: Path) -> list[Task]:
+    """读取任务；文件关闭由上下文管理器负责。"""
+    with path.open(encoding="utf-8") as stream:
+        data = json.load(stream)
+    return [Task(**item) for item in data["tasks"]]
 
-
-def describe(name: str, value: float | None) -> str:
-    # 同时观察参数、类型、常量、条件表达式和格式化字符串。
-    return f"{name}: {value:.3f}" if value is not None else "暂无结果"
-
+def summarize(tasks: list[Task]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for task in tasks:
+        if task.done:
+            continue
+        owner = task.owner or "未分配"
+        counts[owner] = counts.get(owner, 0) + 1
+    return counts
 
 if __name__ == "__main__":
-    lhs = Vector((1.0, 2.0, 3.0))
-    rhs = Vector((4.0, 5.0, 6.0))
-    print(describe("点积", lhs.dot(rhs)))
+    try:
+        tasks = load_tasks(Path("tasks.json"))
+        for owner, count in summarize(tasks).items():
+            print(f"{owner}: {count:02d} 项待办")
+    except (OSError, ValueError) as error:
+        print(f"读取失败：{error}")
 ```
 
 </Tab>
@@ -96,66 +112,125 @@ if __name__ == "__main__":
 <Tab value="javascript" label={languageLabel("javascript")}>
 
 ```javascript title="tasks.js · JavaScript" lineNumbers
-const tasks = [
-    { title: "调整配色", done: true },
-    { title: "导出主题", done: false },
-];
-
-function summarize(items, done = false) {
-    const names = items
-        .filter(({ done: state }) => state === done)
-        .map(({ title }) => title.trim());
-    return `${names.length} 项：${names.join(", ") || "暂无任务"}`;
+async function loadTasks(url, { limit = 3 } = {}) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    const { tasks = [] } = await response.json();
+    // 先筛选，再排序；返回适合展示的数据。
+    return tasks
+        .filter(task => !task.done)
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .slice(0, limit)
+        .map(({ id, title, owner }) => ({
+            id, title: title.trim(), owner: owner ?? "未分配",
+        }));
 }
 
-console.log(summarize(tasks));
+async function main() {
+    try {
+        const pending = await loadTasks("/tasks.json", {
+            limit: 5,
+        });
+        if (pending.length === 0) {
+            console.log("全部完成");
+            return;
+        }
+        for (const { title, owner } of pending) {
+            console.log(`${owner}: ${title}`);
+        }
+    } catch (error) {
+        console.error("读取失败：", error.message);
+    }
+}
+main();
 ```
 
 </Tab>
 
 <Tab value="typescript" label={languageLabel("typescript")}>
 
-```typescript title="tasks.ts · TypeScript" lineNumbers
+```typescript title="tasks.ts · TypeScript 4.9+" lineNumbers
 interface Task {
     readonly id: number;
     title: string;
     done: boolean;
+    owner?: string | null;
 }
+type State<T> =
+    | { status: "ready"; data: T }
+    | { status: "error"; message: string };
 
 function pending<T extends Task>(items: readonly T[]): T[] {
-    return items.filter(task => !task.done);
+    return items.filter(({ done }) => !done);
 }
 
-const tasks: Task[] = [
-    { id: 1, title: "调整配色", done: true },
-    { id: 2, title: "导出主题", done: false },
-];
+function summarize(state: State<readonly Task[]>): string {
+    // 判别字段决定后续流程，也缩小可访问的类型。
+    switch (state.status) {
+        case "error":
+            return `读取失败：${state.message}`;
+        case "ready": {
+            const names = pending(state.data).map(task => {
+                const owner = task.owner?.trim() || "未分配";
+                return `${owner}: ${task.title}`;
+            });
+            return names.join("\n") || "全部完成";
+        }
+    }
+}
 
-console.log(pending(tasks).map(task => task.title));
+const state = {
+    status: "ready",
+    data: [{
+        id: 1, title: "导出主题", done: false, owner: null,
+    }],
+} satisfies State<Task[]>;
+console.log(summarize(state));
 ```
 
 </Tab>
 
 <Tab value="rust" label={languageLabel("rust")}>
 
-```rust title="tasks.rs · Rust" lineNumbers
+```rust title="tasks.rs · Rust 2021" lineNumbers
 #[derive(Debug)]
 struct Task<'a> {
     title: &'a str,
     done: bool,
 }
 
-fn main() {
-    let tasks = [
-        Task { title: "调整配色", done: true },
-        Task { title: "导出主题", done: false },
-    ];
+fn parse_task(line: &str) -> Result<Task<'_>, String> {
+    let (title, state) = line
+        .split_once(',')
+        .ok_or("缺少状态")?;
+    let done = match state.trim() {
+        "done" => true,
+        "todo" => false,
+        other => return Err(format!("未知状态：{other}")),
+    };
+    Ok(Task { title: title.trim(), done })
+}
+
+fn main() -> Result<(), String> {
+    // 任意一行失败就返回错误；成功时保留借用的标题。
+    let tasks = ["调整配色,done", "导出主题,todo"]
+        .into_iter()
+        .map(parse_task)
+        .collect::<Result<Vec<_>, _>>()?;
     let pending: Vec<_> = tasks.iter()
         .filter(|task| !task.done)
         .map(|task| task.title)
         .collect();
 
+    if let Some(first) = pending.first() {
+        println!("下一项：{first}");
+    } else {
+        println!("全部完成");
+    }
     println!("{} 项：{}", pending.len(), pending.join(", "));
+    Ok(())
 }
 ```
 
@@ -166,22 +241,40 @@ fn main() {
 ```go title="tasks.go · Go" lineNumbers
 package main
 
-import "fmt"
+import (
+    "encoding/json"
+    "fmt"
+    "os"
+)
 
 type Task struct {
-    Title string
-    Done  bool
+    Title string `json:"title"`
+    Done  bool   `json:"done"`
+}
+
+func loadTasks(path string) ([]Task, error) {
+    file, err := os.Open(path)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+    var data struct { Tasks []Task `json:"tasks"` }
+    if err := json.NewDecoder(file).Decode(&data); err != nil {
+        return nil, fmt.Errorf("解析任务：%w", err)
+    }
+    return data.Tasks, nil
 }
 
 func main() {
-    tasks := []Task{
-        {Title: "调整配色", Done: true},
-        {Title: "导出主题", Done: false},
+    tasks, err := loadTasks("tasks.json")
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err)
+        return
     }
-    for _, task := range tasks {
-        if !task.Done {
-            fmt.Printf("待办：%s\n", task.Title)
-        }
+    // 已完成的任务直接跳过；只输出待办。
+    for index, task := range tasks {
+        if task.Done { continue }
+        fmt.Printf("%d. %s\n", index + 1, task.Title)
     }
 }
 ```
@@ -194,19 +287,39 @@ func main() {
 import java.util.List;
 
 public class Tasks {
-    record Task(String title, boolean done) {}
+    enum State { TODO, DONE }
+    record Task(String title, State state) {
+        Task {
+            if (title.isBlank()) {
+                throw new IllegalArgumentException("标题为空");
+            }
+        }
+    }
+
+    static String label(Task task) {
+        return switch (task.state()) {
+            case TODO -> "待办：" + task.title();
+            case DONE -> "完成：" + task.title();
+        };
+    }
 
     public static void main(String[] args) {
-        var tasks = List.of(
-            new Task("调整配色", true),
-            new Task("导出主题", false)
-        );
-        var pending = tasks.stream()
-            .filter(task -> !task.done())
-            .map(Task::title)
-            .toList();
-
-        System.out.println(String.join(", ", pending));
+        try {
+            var tasks = List.of(
+                new Task("调整配色", State.DONE),
+                new Task("导出主题", State.TODO)
+            );
+            // 流操作按顺序表达筛选和转换。
+            var pending = tasks.stream()
+                .filter(task -> task.state() == State.TODO)
+                .map(Tasks::label)
+                .toList();
+            for (var line : pending) {
+                System.out.println(line);
+            }
+        } catch (IllegalArgumentException error) {
+            System.err.println(error.getMessage());
+        }
     }
 }
 ```
@@ -223,20 +336,36 @@ public class Tasks {
 
 <Tab value="html" label={languageLabel("html")}>
 
-```html title="card.html · HTML" lineNumbers
+```html title="tasks.html · HTML" lineNumbers
 <!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <title>Cinderfolio</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+    <title>待办任务</title>
   </head>
   <body>
-    <!-- 用标题、属性和正文表达卡片结构。 -->
-    <article class="card" aria-labelledby="title">
+    <main class="tasks" aria-labelledby="title">
       <h1 id="title">Cinderfolio &amp; Shiki</h1>
-      <p>一套配色，适配亮暗主题。</p>
-      <button type="button" disabled>下载主题</button>
-    </article>
+      <!-- 标签呈现结构；属性表达交互与关联。 -->
+      <form action="/tasks" method="get">
+        <label for="query">筛选任务</label>
+        <input id="query" name="q" type="search"
+               placeholder="输入标题" />
+        <button type="submit">搜索</button>
+      </form>
+      <ul>
+        <li data-id="1"><a href="/tasks/1">导出主题</a></li>
+        <li>
+          <button type="button" disabled>全部完成</button>
+        </li>
+      </ul>
+      <details>
+        <summary>下载说明</summary>
+        <p>主题以 <code>JSON</code> 格式保存。</p>
+      </details>
+    </main>
   </body>
 </html>
 ```
@@ -245,8 +374,9 @@ public class Tasks {
 
 <Tab value="css" label={languageLabel("css")}>
 
-```css title="card.css · CSS" lineNumbers
-.card {
+```css title="tasks.css · CSS" lineNumbers
+/* 同一布局通过变量、状态和断点调整。 */
+.tasks {
     --gap: 1rem;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -256,13 +386,19 @@ public class Tasks {
     background: var(--cf-background);
     border: 1px solid var(--cf-border);
 }
-
-.card:hover {
+.tasks > :first-child { grid-column: 1 / -1; }
+.tasks [data-done="true"] { opacity: 0.6; }
+.tasks button:is(:hover, :focus-visible) {
     border-color: var(--cf-accent-brand);
+    transform: translateY(-1px);
 }
+.tasks button:disabled { cursor: default; }
 
 @media (max-width: 640px) {
-    .card { grid-template-columns: 1fr; }
+    .tasks { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .tasks button { transition: transform 150ms ease; }
 }
 ```
 
@@ -270,26 +406,28 @@ public class Tasks {
 
 <Tab value="scss" label={languageLabel("scss")}>
 
-```scss title="card.scss · SCSS" lineNumbers
+```scss title="tasks.scss · SCSS" lineNumbers
 $gap: 1rem;
+$densities: (compact: 0.5rem, relaxed: 1.5rem);
 
-@mixin panel($padding: $gap) {
+@mixin panel($padding: $gap, $bordered: true) {
   display: grid;
   gap: $gap;
   padding: $padding;
+  @if $bordered {
+    border: 1px solid var(--cf-border);
+  }
 }
 
-.card {
+.tasks {
   @include panel($gap * 1.5);
   color: var(--cf-foreground);
+  &__title { margin-block: 0 $gap; }
+  &:hover { border-color: var(--cf-accent-brand); }
 
-  // 嵌套选择器与属性插值。
-  &__title {
-    margin-#{"bottom"}: $gap;
-  }
-
-  &:hover {
-    border-color: var(--cf-accent-brand);
+  // 数据生成变体，插值连接选择器名称。
+  @each $name, $spacing in $densities {
+    &--#{$name} { gap: $spacing; }
   }
 }
 ```
@@ -298,25 +436,38 @@ $gap: 1rem;
 
 <Tab value="jsx" label={languageLabel("jsx")}>
 
-```jsx title="TaskList.jsx · JavaScript JSX" lineNumbers
-function TaskButton({ task, onToggle }) {
-  return (
-    <button disabled={task.done} onClick={() => onToggle(task.id)}>
-      {task.title}
-    </button>
-  );
-}
+```jsx title="TaskList.jsx · React JSX" lineNumbers
+import { useState } from "react";
 
-export default function TaskList({ tasks, onToggle }) {
-  // 组件、属性、事件与列表中的表达式。
+export default function TaskList({ initialTasks = [] }) {
+  const [tasks, setTasks] = useState(initialTasks);
+  const pending = tasks.filter(task => !task.done);
+
+  function toggle(id) {
+    // 返回新对象，让状态更新与事件的关系更清楚。
+    setTasks(current => current.map(task =>
+      task.id === id ? { ...task, done: !task.done } : task
+    ));
+  }
+
   return (
-    <ul className="tasks">
-      {tasks.map(task => (
-        <li key={task.id}>
-          <TaskButton task={task} onToggle={onToggle} />
-        </li>
-      ))}
-    </ul>
+    <section aria-label="待办任务">
+      <h2>待办 {pending.length} 项</h2>
+      {tasks.length === 0 ? <p>暂无任务</p> : (
+        <ul>
+          {tasks.map(({ id, title, done }) => (
+            <li key={id}>
+              <button
+                aria-pressed={done}
+                onClick={() => toggle(id)}
+              >
+                {done ? "✓ " : "○ "}{title}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 ```
@@ -325,27 +476,33 @@ export default function TaskList({ tasks, onToggle }) {
 
 <Tab value="tsx" label={languageLabel("tsx")}>
 
-```tsx title="TaskList.tsx · TypeScript JSX" lineNumbers
+```tsx title="TaskList.tsx · React TSX" lineNumbers
 interface Task {
-  id: number;
+  readonly id: number;
   title: string;
   done: boolean;
 }
-
 type Props = {
   tasks: readonly Task[];
-  onToggle: (id: number) => void;
+  loading?: boolean;
+  onToggle: (id: Task["id"]) => void;
 };
 
-export function TaskList({ tasks, onToggle }: Props) {
+export function TaskList({
+  tasks, loading = false, onToggle,
+}: Props) {
+  if (loading) return <p role="status">正在读取…</p>;
   const pending = tasks.filter(task => !task.done);
+
+  // 类型约束输入，事件和条件渲染描述交互流程。
   return (
     <section aria-label="待办任务">
-      {pending.map(task => (
+      <h2>待办 {pending.length} 项</h2>
+      {pending.length > 0 ? pending.map(task => (
         <button key={task.id} onClick={() => onToggle(task.id)}>
           {task.title}
         </button>
-      ))}
+      )) : <p>全部完成</p>}
     </section>
   );
 }
@@ -355,25 +512,37 @@ export function TaskList({ tasks, onToggle }: Props) {
 
 <Tab value="vue" label={languageLabel("vue")}>
 
-```vue title="TaskList.vue · Vue" lineNumbers
+```vue title="TaskList.vue · Vue 3.3+" lineNumbers
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref } from "vue";
 
+type Task = { id: number; title: string; done: boolean };
 const props = defineProps<{ title: string }>();
-const tasks = ref([
-  { id: 1, title: '调整配色', done: true },
-  { id: 2, title: '导出主题', done: false },
+const emit = defineEmits<{ complete: [id: number] }>();
+const tasks = ref<Task[]>([
+  { id: 1, title: "调整配色", done: true },
+  { id: 2, title: "导出主题", done: false },
 ]);
-const pending = computed(() => tasks.value.filter(task => !task.done));
+const pending = computed(() =>
+  tasks.value.filter(task => !task.done)
+);
+function complete(task: Task) {
+  task.done = true;
+  emit("complete", task.id);
+}
 </script>
 
 <template>
   <section class="tasks">
-    <h2>{{ props.title }}</h2>
-    <button v-for="task in pending" :key="task.id" @click="task.done = true">
-      {{ task.title }}
-    </button>
-    <p v-if="pending.length === 0">全部完成</p>
+    <h2>{{ props.title }} · {{ pending.length }}</h2>
+    <ul v-if="pending.length">
+      <li v-for="task in pending" :key="task.id">
+        <button @click="complete(task)">
+          {{ task.title }}
+        </button>
+      </li>
+    </ul>
+    <p v-else>全部完成</p>
   </section>
 </template>
 
@@ -386,24 +555,32 @@ const pending = computed(() => tasks.value.filter(task => !task.done));
 
 <Tab value="svelte" label={languageLabel("svelte")}>
 
-```svelte title="Task.svelte · Svelte" lineNumbers
+```svelte title="TaskList.svelte · Svelte 5" lineNumbers
 <script>
-  let { title = '导出主题' } = $props();
-  let done = $state(false);
-  let status = $derived(done ? '已完成' : '待处理');
-
-  function toggle() {
-    done = !done;
+  let { title = "待办任务" } = $props();
+  let tasks = $state([
+    { id: 1, title: "调整配色", done: true },
+    { id: 2, title: "导出主题", done: false },
+  ]);
+  let pending = $derived(tasks.filter(task => !task.done));
+  function toggle(task) {
+    task.done = !task.done;
   }
 </script>
 
-<button class:done onclick={toggle}>
-  {title} · {status}
-</button>
-
-{#if done}
-  <p>可以下载主题了。</p>
-{/if}
+<section>
+  <h2>{title} · {pending.length}</h2>
+  {#each tasks as task (task.id)}
+    <button class:done={task.done} onclick={() => toggle(task)}>
+      {task.title}
+    </button>
+  {:else}
+    <p>暂无任务</p>
+  {/each}
+  {#if pending.length === 0 && tasks.length > 0}
+    <p>全部完成</p>
+  {/if}
+</section>
 
 <style>
   .done { text-decoration: line-through; }
@@ -422,18 +599,27 @@ const pending = computed(() => tasks.value.filter(task => !task.done));
 
 <Tab value="json" label={languageLabel("json")}>
 
-```json title="theme.json · JSON" lineNumbers
+```json title="tasks.json · JSON" lineNumbers
 {
     "name": "Cinderfolio",
     "version": 1,
+    "enabled": true,
+    "retryDelay": 1.5e2,
     "colors": {
-        "g0": "#121212",
-        "g16": "#fafaf8",
-        "brand": "#f97316"
+        "g0": "#121212", "g16": "#fafaf8", "brand": "#f97316"
     },
     "targets": ["Rspress", "Pele", "Shiki"],
-    "enabled": true,
-    "description": null
+    "tasks": [
+        {
+            "id": 1, "title": "调整配色",
+            "done": true, "owner": "Lin"
+        },
+        {
+            "id": 2, "title": "导出主题",
+            "done": false, "owner": null
+        }
+    ],
+    "message": "保存为 \"JSON\"\n支持亮暗主题"
 }
 ```
 
@@ -442,7 +628,7 @@ const pending = computed(() => tasks.value.filter(task => !task.done));
 <Tab value="yaml" label={languageLabel("yaml")}>
 
 ```yaml title="theme.yaml · YAML" lineNumbers
-# 键名、锚点、合并引用与多行字符串。
+# 锚点共享默认值，局部配置覆盖其中的字段。
 defaults: &defaults
   enabled: true
   retries: 3
@@ -450,13 +636,21 @@ defaults: &defaults
 
 preview:
   <<: *defaults
+  retries: 1
   brand: "#f97316"
-  outputs:
-    - cf-rspress.css
-    - cf-pele.css
+  outputs: [cf-rspress.css, cf-pele.css]
+  tasks:
+    - title: 调整配色
+      done: true
+    - title: 导出主题
+      done: false
+      owner: null
   description: |
-    Cinderfolio 使用同一组颜色，
-    适配网页、图表与代码。
+    一套颜色适配网页、图表与代码。
+    换行保留在字符串中。
+  summary: >-
+    多行文字合并为一段，
+    不保留结尾换行。
 ```
 
 </Tab>
@@ -466,20 +660,29 @@ preview:
 ```toml title="theme.toml · TOML" lineNumbers
 name = "Cinderfolio"
 enabled = true
+updated = 2026-10-24T09:00:00+08:00
+limits = { retries = 3, timeout = 10.0 }
 
 [colors]
 ink = "#121212"
 paper = "#fafaf8"
 brand = "#f97316"
 
-# 分组、数组表与不同类型的取值。
+# 数组表描述多个导出目标。
 [[exports]]
 target = "Rspress"
-file = "cf-rspress.css"
+files = ["cf-rspress.css"]
 
 [[exports]]
 target = "Shiki"
-files = ["cf-shiki-light.json", "cf-shiki-dark.json"]
+files = [
+  "cf-shiki-light.json",
+  "cf-shiki-dark.json",
+]
+description = """
+一份配置，
+同时生成亮暗主题。
+"""
 ```
 
 </Tab>
@@ -487,18 +690,27 @@ files = ["cf-shiki-light.json", "cf-shiki-dark.json"]
 <Tab value="sql" label={languageLabel("sql")}>
 
 ```sql title="tasks.sql · SQL" lineNumbers
-WITH tasks(project, title, done) AS (
+WITH projects(id, name) AS (
+    VALUES (1, 'Cinderfolio'), (2, 'Pele')
+), tasks(project_id, title, done, priority) AS (
     VALUES
-        ('Cinderfolio', '调整配色', TRUE),
-        ('Cinderfolio', '导出主题', FALSE),
-        ('Pele', '检查图表', FALSE)
+        (1, '调整配色', TRUE, 2),
+        (1, '导出主题', FALSE, 3),
+        (2, '检查图表', FALSE, 1)
 )
-SELECT project, COUNT(*) AS pending
-FROM tasks
-WHERE done = FALSE
-GROUP BY project
+-- 先关联并筛选，再按项目汇总未完成的任务。
+SELECT
+    p.name,
+    COUNT(*) AS pending,
+    SUM(CASE WHEN t.priority >= 3 THEN 1 ELSE 0 END) AS urgent,
+    CASE WHEN COUNT(*) > 1 THEN '多项待办'
+         ELSE '即将完成' END AS status
+FROM projects AS p
+JOIN tasks AS t ON t.project_id = p.id
+WHERE t.done = FALSE
+GROUP BY p.id, p.name
 HAVING COUNT(*) > 0
-ORDER BY pending DESC;
+ORDER BY urgent DESC, pending DESC;
 ```
 
 </Tab>
@@ -517,17 +729,32 @@ ORDER BY pending DESC;
 #!/usr/bin/env bash
 set -euo pipefail
 
-project="Cinderfolio"
+root="${1:-cinderfolio/dist}"
 files=("cf-rspress.css" "cf-pele.css" "cf-shiki-light.json")
-printf '%s：%d 个文件\n' "$project" "${#files[@]}"
 
+report() {
+    local path="$1"
+    if [[ ! -f "$path" ]]; then
+        printf '缺少文件：%s\n' "$path" >&2
+        return 1
+    fi
+    case "$path" in
+        *.json) printf '主题：%s\n' "${path##*/}" ;;
+        *.css)  printf '样式：%s\n' "${path##*/}" ;;
+    esac
+}
+
+# 函数的退出状态决定分支；缺少文件时继续检查下一项。
+count=0
 for file in "${files[@]}"; do
-    if [[ "$file" == *.json ]]; then
-        printf '主题：%s\n' "$file"
+    if report "$root/$file"; then
+        count=$((count + 1))
     else
-        printf '样式：%s\n' "$file"
+        continue
     fi
 done
+printf '找到 %d / %d 个文件\n' "$count" "${#files[@]}"
+printf '%s\n' "${files[@]}" | sort
 ```
 
 </Tab>
@@ -540,17 +767,24 @@ param(
     [switch]$DarkOnly
 )
 
-$files = Get-ChildItem -Path $ThemePath -Filter "cf-shiki-*.json"
+$files = Get-ChildItem $ThemePath -Filter "cf-shiki-*.json" |
+    Sort-Object Name
 foreach ($file in $files) {
-    $theme = Get-Content -LiteralPath $file.FullName -Raw |
-        ConvertFrom-Json
-
-    if ($DarkOnly -and $theme.type -ne "dark") {
-        continue
+    try {
+        $raw = Get-Content $file.FullName -Raw -ErrorAction Stop
+        $theme = $raw | ConvertFrom-Json -ErrorAction Stop
+        if ($DarkOnly -and $theme.type -ne "dark") {
+            continue
+        }
+        # 管道输出对象，后续仍可按属性筛选和格式化。
+        [PSCustomObject]@{
+            Name = $theme.name
+            Type = $theme.type
+            Background = $theme.colors.'editor.background'
+        }
+    } catch {
+        Write-Warning "$($file.Name): $($_.Exception.Message)"
     }
-
-    # 参数、管道、对象属性与字符串中的子表达式。
-    Write-Output "$($theme.name): $($theme.colors.'editor.background')"
 }
 ```
 
@@ -559,16 +793,20 @@ foreach ($file in $files) {
 <Tab value="dockerfile" label={languageLabel("dockerfile")}>
 
 ```dockerfile title="Dockerfile · Docker" lineNumbers
-# 构建阶段导出独立的配色产物。
-FROM node:22-alpine AS build
+ARG NODE_VERSION=22
+FROM node:${NODE_VERSION}-alpine AS build
 WORKDIR /app
 COPY cinderfolio/ ./cinderfolio/
-RUN node cinderfolio/build.mjs
 
-# 只将导出文件复制到静态服务器。
+# 同一层生成并检查产物；反斜杠延续命令。
+RUN node cinderfolio/build.mjs --out-dir /export \
+    && test -s /export/cf-shiki-dark.json
+
 FROM nginx:alpine
-COPY --from=build /app/cinderfolio/dist/ /usr/share/nginx/html/
+COPY --from=build /export/ /usr/share/nginx/html/
 EXPOSE 80
+HEALTHCHECK --interval=30s \
+    CMD wget -q --spider http://127.0.0.1/ || exit 1
 ```
 
 </Tab>
@@ -579,17 +817,25 @@ EXPOSE 80
 CXX ?= c++
 CXXFLAGS := -std=c++20 -O2 -Wall
 TARGET := vector
-SOURCE := vector.cpp
+SOURCES := vector.cpp
+OBJECTS := $(SOURCES:.cpp=.o)
+
+ifeq ($(DEBUG),1)
+CXXFLAGS += -g -DDEBUG
+endif
 
 .PHONY: all clean
 all: $(TARGET)
 
-# 目标、依赖、变量展开与自动变量。
-$(TARGET): $(SOURCE)
-	$(CXX) $(CXXFLAGS) $< -o $@
+# 模式规则编译每个源文件，自动变量连接目标与依赖。
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(TARGET): $(OBJECTS)
+	$(CXX) $(OBJECTS) -o $@
 
 clean:
-	rm -f $(TARGET)
+	$(RM) $(TARGET) $(OBJECTS)
 ```
 
 </Tab>
@@ -599,15 +845,23 @@ clean:
 ```cmake title="CMakeLists.txt · CMake" lineNumbers
 cmake_minimum_required(VERSION 3.20)
 project(VectorDemo VERSION 1.0 LANGUAGES CXX)
+option(VECTOR_WARNINGS "Enable compiler warnings" ON)
 
 add_executable(vector vector.cpp)
 target_compile_features(vector PRIVATE cxx_std_20)
+# 生成器表达式在对应构建配置下生效。
+target_compile_definitions(vector PRIVATE
+  $<$<CONFIG:Debug>:DEBUG>
+)
 
-# 命令、目标名、变量与条件分支。
-if(MSVC)
-  target_compile_options(vector PRIVATE /W4)
-else()
-  target_compile_options(vector PRIVATE -Wall -Wextra -Wpedantic)
+if(VECTOR_WARNINGS)
+  if(MSVC)
+    target_compile_options(vector PRIVATE /W4)
+  else()
+    target_compile_options(vector PRIVATE
+      -Wall -Wextra -Wpedantic
+    )
+  endif()
 endif()
 
 message(STATUS "Building ${PROJECT_NAME} ${PROJECT_VERSION}")
@@ -625,17 +879,26 @@ message(STATUS "Building ${PROJECT_NAME} ${PROJECT_VERSION}")
 
 <Tab value="text" label={languageLabel("text")}>
 
-```text title="筛选向量 · 不使用语法高亮" lineNumbers
-输入：向量集合 V，阈值 τ = 0.75
-输出：保留集合 R
+```text title="任务处理流程 · 纯文本伪代码" lineNumbers
+输入：任务集合 tasks，最多展示 limit = 5 项
+输出：按负责人分组的待办列表
 
-R ← ∅
-for each v in V:
-    length ← sqrt(Σ v[i]²)
-    if length ≤ τ:
-        R ← R ∪ {v}
+try:
+    records ← 读取并解析 tasks
+catch 读取错误:
+    输出错误并结束
 
-return R
+groups ← 空映射
+for each task in records:
+    if task.done:
+        continue
+    owner ← task.owner ?? "未分配"
+    groups[owner] ← groups[owner] ∪ {task.title}
+
+for each (owner, titles) in groups:
+    输出 owner, titles[0:limit]
+
+return groups
 ```
 
 </Tab>
@@ -645,21 +908,32 @@ return R
 ```markdown title="README.md · Markdown" lineNumbers
 # Cinderfolio
 
-## 阅读顺序
 先看 **流程与调用**，再读 *注释与说明*。
 
-> 用同一组颜色表达不同内容。
+## 使用方法
 
-- [x] 亮暗主题
-- [ ] 导出 JSON
+1. 选择亮暗主题。
+2. 调整颜色并下载 JSON。
+   - [x] 网页预览
+   - [ ] 检查其他语言
 
-[项目仓库](https://github.com/shikijs/shiki)
-使用 `createShikiTheme(input, "light")` 生成主题。
+> 配色与字形共同决定信息层级。
+> 字面量中的 `<>` 不表示比较运算。
+
+~~~python
+for task in tasks:
+    if not task.done:
+        print(task.title)
+~~~
 
 | 内容 | 字形 |
-| --- | --- |
+| :--- | ---: |
 | 流程 | 粗体 |
 | 注释 | 斜体 |
+
+[Shiki 主题][theme] · ![预览图](./preview.png "主题预览")
+
+[theme]: https://shiki.style/guide/load-theme "自定义主题"
 ```
 
 </Tab>
@@ -673,15 +947,24 @@ return R
 \begin{document}
 
 \section{Vector score}
-% A weighted dot product for two vectors.
-For vectors $\vect{x}, \vect{y} \in \mathbb{R}^n$,
-\begin{equation}
-  s = \alpha \sum_{i=1}^{n} x_i y_i, \qquad \alpha = 0.5.
-  \label{eq:score}
-\end{equation}
+% A weighted score with a threshold.
+For $\vect{x}, \vect{y} \in \mathbb{R}^n$, define
+\begin{align}
+  s &= \alpha \sum_{i=1}^{n} x_i y_i, & \alpha &= 0.5,
+  \label{eq:score} \\
+  f(s) &= \begin{cases}
+    s, & s > 0, \\
+    0, & s \leq 0.
+  \end{cases}
+\end{align}
 
-See Equation~\eqref{eq:score}.
-\textbf{Read the flow}, \emph{then the details}.
+See Equation~\eqref{eq:score} for the score.
+\begin{itemize}
+  \item \textbf{Read the flow}:
+    compute $s$, then choose a branch.
+  \item \emph{Check the details}:
+    indices, constants and references.
+\end{itemize}
 \end{document}
 ```
 
@@ -692,13 +975,22 @@ See Equation~\eqref{eq:score}.
 {/* mmd 仅展示 Mermaid 源码，mermaid 围栏由本站 Pele 渲染。 */}
 
 ```mmd title="pipeline.mmd · Mermaid 源码" lineNumbers
-flowchart LR
-    %% 注释、方向、节点、连线与标签
-    A[读取向量] --> B{满足阈值?}
-    B -->|是| C[保留]
-    B -->|否| D[跳过]
-    C --> E([完成])
-    D --> E
+flowchart TD
+    %% 实线描述主流程，虚线补充失败路径。
+    A([开始]) --> B[读取任务]
+    B --> C{读取成功?}
+    C -->|否| X[输出错误]
+    C -->|是| D
+    subgraph processing [处理任务]
+        D{还有任务?} -->|是| E[取下一项]
+        E --> F{已完成?}
+        F -->|是| D
+        F -->|否| G[按负责人分组]
+        G --> D
+    end
+    D -->|否| H[(待办结果)]
+    H --> Z([结束])
+    X -.-> Z
 ```
 
 </Tab>
@@ -708,10 +1000,13 @@ flowchart LR
 ```regexp title="settings.regex · 正则表达式（Python）" lineNumbers
 (?mx)
 ^
-(?P<key>[A-Za-z_]\w*)   # 配置项名称
+(?P<key>[A-Za-z_]\w*)       # 配置项名称
 [ \t]* = [ \t]*
-(?P<value>[^\#\r\n]+)   # 配置值
-(?: \# [^\r\n]* )?
+(?P<value>
+    "(?: \\. | [^"\\] )*"   # 带转义的引号字符串
+    | [^\#\r\n]+?           # 或不带引号的值
+)
+[ \t]* (?: \# [^\r\n]* )?   # 可选的行尾注释
 $
 ```
 
@@ -719,10 +1014,21 @@ $
 
 <Tab value="diff" label={languageLabel("diff")}>
 
-```diff title="阈值调整 · 增删颜色" lineNumbers
- def keep(length: float) -> bool:
--    return length < 0.50
-+    return length <= 0.75
+```diff title="tasks.py · Diff" lineNumbers
+diff --git a/tasks.py b/tasks.py
+--- a/tasks.py
++++ b/tasks.py
+@@ -1,3 +1,6 @@
+ def pending(tasks, limit=5):
+-    names = [task.title for task in tasks]
++    names = [task.title for task in tasks if not task.done]
++    if not names:
++        return "全部完成"
+     return ", ".join(names[:limit])
+@@ -5 +8,2 @@
+-print(pending(tasks))
++for owner, tasks in groups.items():
++    print(f"{owner}: {pending(tasks)}")
 ```
 
 </Tab>
