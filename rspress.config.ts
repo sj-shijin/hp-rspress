@@ -7,6 +7,7 @@ import rehypeKatex from 'rehype-katex';
 import remarkMermaid from './scripts/remark_mermaid.mjs';
 import { renderLlmsTxt } from './scripts/render_llms.mjs';
 import { createShikiTheme } from './cinderfolio/shiki.mjs';
+import { vueLanguages } from './theme/shiki-languages.mjs';
 
 const generated = path.resolve('.generated');
 const siteOrigin = process.env.SITE_ORIGIN || '';
@@ -76,7 +77,11 @@ export default defineConfig({
     },
     performance: {
       // 正式域名与本地预览的虚拟页面数据不能复用同一份缓存。
-      buildCache: { cacheDigest: [siteOrigin] },
+      buildCache: {
+        cacheDigest: [siteOrigin],
+        // MDX 高亮结果依赖主题与语法，变更后不能复用旧代码块。
+        buildDependencies: [path.resolve('cinderfolio/shiki.mjs'), path.resolve('theme/shiki-languages.mjs')],
+      },
     },
     output: {
       copy: [
@@ -97,6 +102,8 @@ export default defineConfig({
       path.resolve('theme/CinderfolioMarp.tsx'),
     ],
     shiki: {
+      // 预加载 Vue 的上游注入；其他语言继续由 Rspress 按需加载。
+      langs: ['tsx', 'ts', 'js', ...vueLanguages],
       themes: {
         light: createShikiTheme(undefined, 'light', { variables: true }),
         dark: createShikiTheme(undefined, 'dark', { variables: true }),
