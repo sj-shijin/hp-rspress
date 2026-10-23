@@ -21,6 +21,49 @@ import { Callout, Tab, Tabs, languageLabel } from '@rspress/core/theme';
 
 <Tabs>
 
+<Tab value="c" label={languageLabel("c")}>
+
+```c title="tasks.c · C11" lineNumbers
+#include <stdbool.h>
+#include <stdio.h>
+#define MAX_SHOWN 2
+
+typedef struct { const char *title; bool done; } Task;
+typedef bool (*Predicate)(const Task *);
+
+static bool is_pending(const Task *task) {
+    return !task->done;
+}
+
+// 回调决定筛选条件，指针访问原数据，达到上限后提前结束。
+static size_t visit(const Task tasks[], size_t count, Predicate accept) {
+    size_t shown = 0;
+    for (size_t i = 0; i < count; ++i) {
+        const Task *task = &tasks[i];
+        if (!accept(task)) continue;
+        printf("%zu. %s\n", shown + 1, task->title);
+        if (++shown == MAX_SHOWN) break;
+    }
+    return shown;
+}
+
+int main(void) {
+    const Task tasks[] = {
+        {.title = "调整配色", .done = true},
+        {.title = "导出主题", .done = false},
+        {.title = "检查示例", .done = false},
+    };
+#if defined(DEBUG)
+    fprintf(stderr, "开始筛选待办任务\n");
+#endif
+    size_t count = sizeof tasks / sizeof tasks[0];
+    size_t shown = visit(tasks, count, is_pending);
+    return shown > 0 ? 0 : 1;
+}
+```
+
+</Tab>
+
 <Tab value="cpp" label={languageLabel("cpp")}>
 
 ```cpp title="vector.cpp · C++20" lineNumbers
@@ -29,11 +72,7 @@ import { Callout, Tab, Tabs, languageLabel } from '@rspress/core/theme';
 #include <span>
 #include <stdexcept>
 
-#if defined(USE_FLOAT)
-using Scalar = float;
-#else
 using Scalar = double;
-#endif
 
 // 视图不复制数据；长度不匹配时停止计算。
 template <std::floating_point T>
@@ -188,6 +227,51 @@ const state = {
     }],
 } satisfies State<Task[]>;
 console.log(summarize(state));
+```
+
+</Tab>
+
+<Tab value="csharp" label={languageLabel("csharp")}>
+
+```csharp title="Program.cs · C# 10 / .NET 6+" lineNumbers
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+record TaskItem(int Id, string Title, bool Done);
+
+class Program {
+    static async Task<TaskItem[]> LoadAsync() {
+        await Task.Yield();
+        return new[] {
+            new TaskItem(1, "调整配色", true),
+            new TaskItem(2, "导出主题", false),
+        };
+    }
+
+    static string Describe(TaskItem task) => task switch {
+        { Done: true } => "已完成",
+        { Title.Length: 0 } => throw new ArgumentException("标题为空"),
+        _ => $"{task.Id}: {task.Title}",
+    };
+
+    static async Task Main() {
+        try {
+            var tasks = await LoadAsync();
+            // LINQ 按顺序筛选和排序，模式匹配决定输出内容。
+            var pending = tasks.Where(task => !task.Done)
+                .OrderBy(task => task.Id).ToArray();
+            if (pending.Length == 0) {
+                Console.WriteLine("全部完成");
+                return;
+            }
+            foreach (var task in pending)
+                Console.WriteLine(Describe(task));
+        } catch (ArgumentException error) {
+            Console.Error.WriteLine(error.Message);
+        }
+    }
+}
 ```
 
 </Tab>
@@ -790,6 +874,45 @@ foreach ($file in $files) {
 
 </Tab>
 
+<Tab value="lua" label={languageLabel("lua")}>
+
+```lua title="tasks.lua · Lua 5.4" lineNumbers
+local tasks = {
+    { id = 1, title = "调整配色", done = true },
+    { id = 2, title = "导出主题", done = false },
+}
+
+local function pending(items)
+    local result = {}
+    for _, task in ipairs(items) do
+        if not task.done then
+            table.insert(result, task)
+        end
+    end
+    table.sort(result, function(a, b) return a.id < b.id end)
+    return result
+end
+
+local function describe(task)
+    assert(task.title ~= "", "标题为空")
+    return string.format("%d: %s", task.id, task.title)
+end
+
+-- pcall 将错误转换为状态值，单项失败不阻止后续处理。
+for _, task in ipairs(pending(tasks)) do
+    local ok, label = pcall(describe, task)
+    if ok then
+        print(label)
+    else
+        io.stderr:write(label, "\n")
+    end
+end
+
+return { pending = pending, describe = describe }
+```
+
+</Tab>
+
 <Tab value="dockerfile" label={languageLabel("dockerfile")}>
 
 ```dockerfile title="Dockerfile · Docker" lineNumbers
@@ -1000,13 +1123,13 @@ flowchart TD
 ```regexp title="settings.regex · 正则表达式（Python）" lineNumbers
 (?mx)
 ^
-(?P<key>[A-Za-z_]\w*)       # 配置项名称
+(?P<key>[A-Za-z_]\w*)       (?# 配置项名称)
 [ \t]* = [ \t]*
 (?P<value>
-    "(?: \\. | [^"\\] )*"   # 带转义的引号字符串
-    | [^\#\r\n]+?           # 或不带引号的值
+    "(?: \\. | [^"\\] )*"   (?# 带转义的引号字符串)
+    | [^\#\r\n]+?           (?# 或不带引号的值)
 )
-[ \t]* (?: \# [^\r\n]* )?   # 可选的行尾注释
+[ \t]* (?: \# [^\r\n]* )?   (?# 可选的行尾注释)
 $
 ```
 
