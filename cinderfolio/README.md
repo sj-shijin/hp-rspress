@@ -114,9 +114,9 @@ npx marp slides.md --config-file scripts/marp.config.mjs --theme-set ./cinderfol
 ```js
 // 亮色 / 暗色；灰阶镜像，品牌色复用现有五档。
 navigation = 'darker / light · 粗体'; // 分支、循环、声明、预处理与构建指令
-execution  = 'g0 / g16 · 粗体';      // 标识符、表达式、规则、状态与内容标题
+execution  = 'g0 / g16 · 粗体';      // 函数、变量、属性、表达式、规则与标题
 comment    = 'g0 / g16 · 斜体';      // 注释与强调文本
-content    = 'g0 / g16 · 常规';      // 字面量、普通参数值、标签名、正文与 Diff 上下文
+content    = 'g0 / g16 · 常规';      // 默认代码、字面量、参数值、标签与普通正文
 auxiliary  = 'g3 / g13 · 常规';      // 类型约束、修饰符、声明附注、命名空间与参数标签
 structure  = 'g6 / g10 · 常规';      // 分隔符、引号、文档排版边界与引用
 // Diff：上下文复用 content，新增复用 execution，修改复用 navigation，删除使用 g6 / g10 + 删除线。
@@ -133,6 +133,8 @@ const liveTheme = createShikiTheme(input, 'light', { variables: true });
 ```
 
 通用 scope 定义默认层级，具体语法和上下文负责覆盖；各例外的标记与原因直接维护在 `shiki.mjs` 中。
+
+`source` 默认使用常规端点色；变量、属性、对象键、函数及表达式通过通用标记加粗，函数体和调用上下文保留局部兜底。C、Python、SQL、Lua、CMake、Kotlin、Swift 在顶层也有未细分的标识符或边界，因此仅这些语言保留粗体兜底；类型、字面量和注释仍由更具体的规则接管。正则继续保持除注释外使用阅读主体。
 
 - 程序语言：函数、变量、表达式括号和成员连接符使用阅读主体；能识别的类型括号、泛型尖括号、修饰符、命名空间与声明附注使用辅助信息。比较和移位运算符保持阅读主体。预处理、分支、循环和异步流程保留导航色。
 - 模板与样式：流程指令使用导航色，数据绑定、事件和 CSS 选择器使用阅读主体；JSX/TSX、Svelte 属性统一加粗，静态 HTML/XML 与 Vue 已识别的普通属性使用辅助信息，标签名使用数据正文。
