@@ -2,7 +2,6 @@ import { render } from 'pele';
 import { bundledLanguagesInfo, createHighlighter } from 'shiki';
 import { createShikiTheme } from '../cinderfolio/shiki.mjs';
 import { marpFonts } from '../cinderfolio/marp.mjs';
-import { vueLanguages } from '../theme/shiki-languages.mjs';
 
 export default {
   lang: 'zh-CN',
@@ -10,8 +9,8 @@ export default {
   async engine({ marp }) {
     const highlighter = await createHighlighter({
       themes: ['light', 'dark'].map(mode => createShikiTheme(undefined, mode, { variables: true })),
-      // 仅在构建期加载语法；复用网站的 Vue 适配，不另维护语言名单。
-      langs: [...bundledLanguagesInfo.filter(lang => lang.id !== 'vue').map(lang => lang.id), ...vueLanguages],
+      // 仅在构建期加载内置语法，与网站和独立主题 JSON 一致。
+      langs: bundledLanguagesInfo.map(lang => lang.id),
     });
     const languages = new Set(highlighter.getLoadedLanguages());
     marp.markdown.set({

@@ -99,7 +99,7 @@ Marp 正文与图表使用 `Inter, "Noto Sans SC"`，代码使用 `"Sarasa Mono 
 npx marp slides.md --config-file scripts/marp.config.mjs --theme-set ./cinderfolio/dist/cf-marp.css -o slides.html
 ```
 
-`scripts/marp.config.mjs` 使用 CLI 的异步 `engine` 扩展：`mermaid` 围栏通过 Pele 生成 SVG，其他围栏通过 Shiki 高亮，保留 Marp 的代码自动缩放。Shiki 在构建期加载内置语言，并复用网站的 Vue 语法适配；未知语言按纯文本显示。主题直接调用 `createShikiTheme(..., { variables: true })`，没有第二份配色配置。亮暗字形相同，颜色使用 `light-dark()` 读取现有色阶变量。
+`scripts/marp.config.mjs` 使用 CLI 的异步 `engine` 扩展：`mermaid` 围栏通过 Pele 生成 SVG，其他围栏通过 Shiki 高亮，保留 Marp 的代码自动缩放。Shiki 在构建期加载内置语言；未知语言按纯文本显示。主题直接调用 `createShikiTheme(..., { variables: true })`，没有第二份配色配置。亮暗字形相同，颜色使用 `light-dark()` 读取现有色阶变量。
 
 每张图以 Markdown 行号生成稳定的 `idPrefix`，Pele 同时处理标题、描述的真实 `id` 和可访问性引用。普通节点的 `data-id` 属于图内数据标记，可以在不同图中重复；不做无差别的字符串替换。编译测试核验重复图表的真实 ID 唯一、引用有效和输出稳定。
 
@@ -135,19 +135,19 @@ const liveTheme = createShikiTheme(input, 'light', { variables: true });
 通用 scope 定义默认层级，具体语法和上下文负责覆盖；各例外的标记与原因直接维护在 `shiki.mjs` 中。
 
 - 程序语言：函数、变量、表达式括号和成员连接符使用阅读主体；能识别的类型括号、泛型尖括号、修饰符、命名空间与声明附注使用辅助信息。比较和移位运算符保持阅读主体。预处理、分支、循环和异步流程保留导航色。
-- 模板与样式：流程指令使用导航色，数据绑定、事件和 CSS 选择器使用阅读主体；JSX/TSX、Svelte 属性统一加粗，静态 HTML/XML 与 Vue 属性使用辅助信息，标签名使用数据正文。
+- 模板与样式：流程指令使用导航色，数据绑定、事件和 CSS 选择器使用阅读主体；JSX/TSX、Svelte 属性统一加粗，静态 HTML/XML 与 Vue 已识别的普通属性使用辅助信息，标签名使用数据正文。
 - 数据与配置：键、锚点、别名和 YAML 合并键使用阅读主体，值使用数据正文。SQL 查询步骤保留导航色，标识符使用阅读主体，`AS` 使用辅助信息。
 - 脚本与构建：强调命令、变量、执行连接和构建关系；普通参数值使用数据正文，CMake 参数标签使用辅助信息。Dockerfile 的未细分 `RUN` 参数不另行解析为 Shell。
 - 文档与文本：Markdown、LaTeX 标题与正文强调保留字形，排版命令和边界使用灰阶；Diff 上下文使用数据正文。正则除了 `(?#...)` 注释，其余模式内容使用阅读主体。
 
 语法无法区分的部分保留现状，不按字符推断语义；例如 Python 的部分类型括号、YAML 带引号的键、SQL 共用关键字标记的名称，以及 Mermaid 共用控制标记的图类型、括号和连线。
 
-`theme/shiki-languages.mjs` 适配 Shiki 4.5.0 的 Vue 注入目标：将仍指向 `source.vue` 的上游注入附到当前 `text.html.vue` 主语法，避免懒加载其他语言后丢失指令与插值标记，不修改解析规则。独立 JSON 只包含主题；同版本的其他 Vue 渲染入口也需要这项加载适配。升级 Shiki 时复核是否仍需要。
+网站、Marp 与独立 JSON 均使用 Shiki 内置 Vue 语法，无需补全注入。Shiki 4.5.0 的 HTML 回退仍保留属性上下文：`v-if`、`v-else-if`、`v-else`、`v-for` 使用导航色；未识别属性（包括动态绑定、事件和自定义属性）的名称与取值使用阅读主体。回退语法未细分属性值中的表达式和正文中的 `{{ … }}`，前者整体加粗，后者保留数据正文；不额外解析源码。已有专用 Vue 标记仍沿用通用规则。
 
 新增语言先复用通用主题，再按实际 scope 补充必要例外。预览页面覆盖 32 种语言与文本格式；C 展示条件编译，C++ 展示类与 lambda，C# 展示异步与模式匹配，Lua 展示回调与保护调用。`.tex` 示例使用 `latex` 围栏，基础 `tex` 语法也有测试。
 
 ```sh
-node --test tests/shiki.test.mjs # 用真实语法验证亮暗层级、字形、变量主题和 Vue 注入
+node --test tests/shiki.test.mjs # 用真实语法验证亮暗层级、字形、变量主题和原生 Vue
 npm run colors                 # 从同一来源生成两份 cf-shiki-*.json
 node cinderfolio/build.mjs --check
 ```
