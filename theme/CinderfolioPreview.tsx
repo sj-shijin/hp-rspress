@@ -2,7 +2,7 @@ import { useContext, useEffect, useState, type CSSProperties, type ReactNode } f
 import { ThemeContext } from '@rspress/core/runtime';
 import { seeds, recipes, grayDivisions, grayIndex, accentSteps, createGrayScale, createAccentScale, createPalette } from '../cinderfolio/palette.mjs';
 import { peleRoles, peleRoleGroups, createPeleTheme } from '../cinderfolio/pele.mjs';
-import { shikiRoles, shikiRoleGroups, createShikiPalette } from '../cinderfolio/shiki.mjs';
+import { shikiRoles, shikiDisplayRoles, createShikiPalette } from '../cinderfolio/shiki.mjs';
 import { useCinderfolio, type CinderfolioSeeds } from './CinderfolioTheme';
 import './cinderfolio.css';
 
@@ -122,15 +122,15 @@ export default function CinderfolioPreview({ section, children }: { section: 'co
     });
     return <div className="cf-shiki-roles rp-not-doc" aria-label="Shiki 显示职责">
       <ul className="cf-roles cf-shiki-roles__grid">
-        {shikiRoleGroups.map(([title, keys, usage]) => {
-          const key = keys[0];
+        {shikiDisplayRoles.map(key => {
+          const { label, usage, fontStyle } = shikiRoles[key];
           const { step, color } = palette[key];
-          return <li key={title}>
+          return <li key={key}>
             <div className="cf-roles__heading">
               <span className="cf-roles__swatch" style={{ background: color }} aria-hidden="true" />
-              <span className="cf-roles__name" style={roleStyle(key)}>{title}</span><code>{color}</code>
+              <span className="cf-roles__name" style={roleStyle(key)}>{label}</span><code>{color}</code>
             </div>
-            <p className="cf-roles__detail"><code>{step}</code>{' · '}{styleNames[shikiRoles[key].fontStyle] ?? '常规'}</p>
+            <p className="cf-roles__detail"><code>{step}</code>{' · '}{styleNames[fontStyle] ?? '常规'}</p>
             <p className="cf-roles__detail">{usage}</p>
           </li>;
         })}
@@ -141,7 +141,7 @@ export default function CinderfolioPreview({ section, children }: { section: 'co
           底色 <code>{palette.background.step}</code><BgMark /><code>{palette.background.color}</code>
         </span>
         <span className="cf-shiki-roles__diff">Diff
-          {([['execution', '+ 新增'], ['deleted', '− 删除'], ['navigation', '! 修改']] as const).map(([key, label]) => <span key={key} style={roleStyle(key)}>
+          {([['content', '上下文'], ['execution', '+ 新增'], ['deleted', '− 删除'], ['navigation', '! 修改']] as const).map(([key, label]) => <span key={key} style={roleStyle(key)}>
             {label}
           </span>)}
         </span>

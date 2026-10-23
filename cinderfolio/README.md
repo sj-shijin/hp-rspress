@@ -113,13 +113,13 @@ npx marp slides.md --config-file scripts/marp.config.mjs --theme-set ./cinderfol
 
 ```js
 // 亮色 / 暗色；灰阶镜像，品牌色复用现有五档。
-navigation = 'darker / light · 粗体'; // 关键字、声明、预处理、标题与标签
-execution  = 'g0 / g16 · 粗体';      // 函数、变量、运算与结构边界
+navigation = 'darker / light · 粗体'; // 分支、循环、声明、预处理与构建指令
+execution  = 'g0 / g16 · 粗体';      // 标识符、表达式、规则、状态与内容标题
 comment    = 'g0 / g16 · 斜体';      // 注释与强调文本
-content    = 'g0 / g16 · 常规';      // 字符串、数字与正文
-auxiliary  = 'g3 / g13 · 常规';      // 转义、格式与差异标题
-structure  = 'g6 / g10 · 常规';      // 类型、尖括号、分隔符与引用
-// Diff：新增复用 execution，修改复用 navigation，删除使用 g6 / g10 + 删除线。
+content    = 'g0 / g16 · 常规';      // 字面量、普通参数值、标签名、正文与 Diff 上下文
+auxiliary  = 'g3 / g13 · 常规';      // 类型约束、修饰符、声明附注、命名空间与参数标签
+structure  = 'g6 / g10 · 常规';      // 分隔符、引号、文档排版边界与引用
+// Diff：上下文复用 content，新增复用 execution，修改复用 navigation，删除使用 g6 / g10 + 删除线。
 ```
 
 ```js
@@ -132,11 +132,25 @@ const theme = createShikiTheme(input, 'light');
 const liveTheme = createShikiTheme(input, 'light', { variables: true });
 ```
 
-圆、方、花括号与结构边界统一匹配 `meta.brace`、`punctuation.bracket(s)`、`punctuation.section`、`punctuation.definition` 等通用标记，覆盖调用、定义、分组、数组、捕获、属性及代码块。Python 定义块的冒号也随结构边界加粗；成员、导入和类型路径的连接符统一强调。泛型、模板、包含路径与 HTML 标签的尖括号归入类型灰阶，使用常规字重；比较与移位运算符继续使用端点粗体。Kotlin 当前语法未单独标记泛型尖括号，仍沿用默认样式。引号、排版符号、列表标记由更具体的规则归回次级灰色，字符串与注释中的普通括号保持所属文字的样式。
+通用 scope 定义默认层级，具体语法和上下文负责覆盖；各例外的标记与原因直接维护在 `shiki.mjs` 中。
 
-预处理指令复用关键字样式，`#include / #define / #if` 连同 `#` 一起使用品牌色粗体。普通类型保持灰阶，因此只为缺少通用声明子类的 JS、TS、Rust 声明和 Java `var` 保留四条语言后缀规则；其余规则按通用 scope 或上下文匹配。字符串前缀通过 `string storage.type.string` 匹配，避免影响 Go 的 `string` 类型。
+- 程序语言：函数、变量、表达式括号和成员连接符使用阅读主体；能识别的类型括号、泛型尖括号、修饰符、命名空间与声明附注使用辅助信息。比较和移位运算符保持阅读主体。预处理、分支、循环和异步流程保留导航色。
+- 模板与样式：流程指令使用导航色，数据绑定、事件和 CSS 选择器使用阅读主体；JSX/TSX、Svelte 属性统一加粗，静态 HTML/XML 与 Vue 属性使用辅助信息，标签名使用数据正文。
+- 数据与配置：键、锚点、别名和 YAML 合并键使用阅读主体，值使用数据正文。SQL 查询步骤保留导航色，标识符使用阅读主体，`AS` 使用辅助信息。
+- 脚本与构建：强调命令、变量、执行连接和构建关系；普通参数值使用数据正文，CMake 参数标签使用辅助信息。Dockerfile 的未细分 `RUN` 参数不另行解析为 Shell。
+- 文档与文本：Markdown、LaTeX 标题与正文强调保留字形，排版命令和边界使用灰阶；Diff 上下文使用数据正文。正则除了 `(?#...)` 注释，其余模式内容使用阅读主体。
 
-新增语言先复用现有主题，检查实际 scope 后再决定是否补充。所有规则都在 JSON 内，网页不额外解析或按字符改色；例如 Mermaid 将图类型关键字、括号和连线共用 `keyword.control.mermaid`，它们仍一起使用导航色。`.tex` 示例使用 `latex` 围栏，基础 `tex` 语法也可复用这套主题。
+语法无法区分的部分保留现状，不按字符推断语义；例如 Python 的部分类型括号、YAML 带引号的键、SQL 共用关键字标记的名称，以及 Mermaid 共用控制标记的图类型、括号和连线。
+
+`theme/shiki-languages.mjs` 适配 Shiki 4.5.0 的 Vue 注入目标：将仍指向 `source.vue` 的上游注入附到当前 `text.html.vue` 主语法，避免懒加载其他语言后丢失指令与插值标记，不修改解析规则。独立 JSON 只包含主题；同版本的其他 Vue 渲染入口也需要这项加载适配。升级 Shiki 时复核是否仍需要。
+
+新增语言先复用通用主题，再按实际 scope 补充必要例外。预览页面覆盖 32 种语言与文本格式；C 展示条件编译，C++ 展示类与 lambda，C# 展示异步与模式匹配，Lua 展示回调与保护调用。`.tex` 示例使用 `latex` 围栏，基础 `tex` 语法也有测试。
+
+```sh
+node --test tests/shiki.test.mjs # 用真实语法验证亮暗层级、字形、变量主题和 Vue 注入
+npm run colors                 # 从同一来源生成两份 cf-shiki-*.json
+node cinderfolio/build.mjs --check
+```
 
 代码与标题底色沿用画布端点：亮色 `g16`、暗色 `g0`。默认中性语法文字在代码底色上均通过 `4.5:1` 检查。亮色品牌字色 `darker` 对 `g16` 约为 `3.75:1`，只记录对比度，不改变已确认色阶。独立导出仍只需要 Node.js 内置模块；加载与语法验证由网站现有的 Shiki 完成。
 
