@@ -4,7 +4,7 @@ description: 调整 Cinderfolio 配色，按框线、分类、叠色与状态预
 outline: false
 ---
 
-import { Callout, PageTab, PageTabs, Tab, Tabs } from '@rspress/core/theme';
+import { Callout, Tab, Tabs } from '@rspress/core/theme';
 
 {/*
 图表语法参考 https://pele.run/examples.md，精简为配色检查样例。
@@ -42,9 +42,9 @@ SOFTWARE.
   <CinderfolioDownload target="pele" />
 </CinderfolioPreview>
 
-<PageTabs className="cf-pele-categories">
+<Tabs className="cf-pele-categories">
 
-<PageTab label="框线与结构">
+<Tab label="框线与结构">
 
 <Tabs>
 
@@ -268,9 +268,9 @@ usecase-beta
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-<PageTab label="分类与实底">
+<Tab label="分类与实底">
 
 <Tabs>
 
@@ -408,9 +408,9 @@ treemap-beta
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-<PageTab label="透明与叠色">
+<Tab label="透明与叠色">
 
 <Tabs>
 
@@ -520,9 +520,9 @@ cynefin-beta
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-<PageTab label="强调与状态">
+<Tab label="强调与状态">
 
 <Tabs>
 
@@ -584,9 +584,9 @@ wardley-beta
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-</PageTabs>
+</Tabs>
 
 <Callout type="details" title="显示职责">
 

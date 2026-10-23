@@ -4,7 +4,7 @@ description: 调整配色、查看语法颜色职责，预览常用语言代码�
 outline: false
 ---
 
-import { Callout, PageTab, PageTabs, Tab, Tabs, languageLabel } from '@rspress/core/theme';
+import { Callout, Tab, Tabs, languageLabel } from '@rspress/core/theme';
 
 # Cinderfolio-Shiki
 
@@ -15,9 +15,9 @@ import { Callout, PageTab, PageTabs, Tab, Tabs, languageLabel } from '@rspress/c
   <CinderfolioDownload target="shiki-dark" />
 </CinderfolioPreview>
 
-<PageTabs className="cf-shiki-categories">
+<Tabs className="cf-shiki-categories">
 
-<PageTab label="通用编程">
+<Tab label="通用编程">
 
 <Tabs>
 
@@ -215,9 +215,9 @@ public class Tasks {
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-<PageTab label="网页与组件">
+<Tab label="网页与组件">
 
 <Tabs>
 
@@ -414,9 +414,9 @@ const pending = computed(() => tasks.value.filter(task => !task.done));
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-<PageTab label="数据与配置">
+<Tab label="数据与配置">
 
 <Tabs>
 
@@ -505,9 +505,9 @@ ORDER BY pending DESC;
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-<PageTab label="脚本与构建">
+<Tab label="脚本与构建">
 
 <Tabs>
 
@@ -617,9 +617,9 @@ message(STATUS "Building ${PROJECT_NAME} ${PROJECT_VERSION}")
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-<PageTab label="文档与文本">
+<Tab label="文档与文本">
 
 <Tabs>
 
@@ -729,9 +729,9 @@ $
 
 </Tabs>
 
-</PageTab>
+</Tab>
 
-</PageTabs>
+</Tabs>
 
 <Callout type="details" title="显示职责">
 
