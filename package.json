@@ -6,6 +6,7 @@
   "scripts": {
     "export": ".venv/bin/python scripts/export_knowledge.py",
     "colors": "node cinderfolio/build.mjs",
+    "marp": "node scripts/build_marp.mjs",
     "predev": "npm run colors",
     "dev": "npm run export && rspress dev --host 127.0.0.1 --port 1320",
     "prebuild": "npm run colors",
@@ -17,6 +18,7 @@
     "check:afdocs": ".venv/bin/python scripts/check_afdocs.py"
   },
   "devDependencies": {
+    "@marp-team/marp-cli": "4.5.1",
     "@rspress/core": "2.0.23",
     "@rspress/plugin-sitemap": "2.0.23",
     "katex": "^0.16.22",
@@ -30,6 +32,7 @@
     "remark-gfm": "4.0.1",
     "remark-math": "6.0.0",
     "remark-parse": "11.0.0",
+    "shiki": "4.5.0",
     "unified": "11.0.5"
   },
   "engines": {
