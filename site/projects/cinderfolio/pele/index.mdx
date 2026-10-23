@@ -1,10 +1,13 @@
 ---
 title: Cinderfolio-Pele
-description: 调整 Cinderfolio 配色，预览 Pele 各类官方图表示例并下载独立 CSS。
+description: 调整 Cinderfolio 配色，按框线、分类、叠色与状态预览精简图例，下载独立 Pele CSS。
+outline: false
 ---
 
+import { Callout, PageTab, PageTabs, Tab, Tabs } from '@rspress/core/theme';
+
 {/*
-以下示例选自 https://pele.run/examples.md，保留官方源码。
+图表语法参考 https://pele.run/examples.md，精简为配色检查样例。
 
 MIT License
 
@@ -31,664 +34,566 @@ SOFTWARE.
 
 # Cinderfolio-Pele
 
-[Pele](https://github.com/obsidianmd/pele) 是轻量的 Mermaid 渲染器，输出可主题化的 SVG；图表选自[官方示例](https://pele.run/examples.md)。
+[Pele](https://github.com/obsidianmd/pele) 将 Mermaid 渲染为 SVG。选择图例后调整配色，观察对应的文字、结构与填充。
 
-<CinderfolioPreview section="controls" />
+<div className="cf-pele-preview">
 
-<CinderfolioDownload target="pele" />
+<CinderfolioPreview section="controls">
+  <CinderfolioDownload target="pele" />
+</CinderfolioPreview>
 
-## 显示职责
+<PageTabs className="cf-pele-categories">
 
-分类色使用 [OKLCH](https://developer.mozilla.org/zh-CN/docs/Web/CSS/color_value/oklch) 的明度、彩度和色相，以品牌色为起点生成亮暗共用、适合深色文字的八色，并对色觉模拟中的明显冲突作小幅校正。
+<PageTab label="框线与结构">
 
-<CinderfolioPreview section="pele-roles" />
+<Tabs>
 
-## 流程图
+<Tab label="流程图">
 
 ```mermaid
 flowchart LR
-    subgraph subgraph1
-        direction TB
-        top1[top] --> bottom1[bottom]
+    subgraph 分组
+        A[输入] --> B[处理]
     end
-    subgraph subgraph2
-        direction TB
-        top2[top] --> bottom2[bottom]
-    end
-    %% ^ These subgraphs are identical, except for the links to them:
-
-    %% Link *to* subgraph1: subgraph1 direction is maintained
-    outside --> subgraph1
-    %% Link *within* subgraph2:
-    %% subgraph2 inherits the direction of the top-level graph (LR)
-    outside ---> top2
+    B --> C[输出]
 ```
 
-## 时序图
+</Tab>
+
+<Tab label="时序图">
 
 ```mermaid
 sequenceDiagram
-    participant Alice
-    participant John
-    link Alice: Dashboard @ https://dashboard.contoso.com/alice
-    link Alice: Wiki @ https://wiki.contoso.com/alice
-    link John: Dashboard @ https://dashboard.contoso.com/john
-    link John: Wiki @ https://wiki.contoso.com/john
-    Alice->>John: Hello John, how are you?
-    John-->>Alice: Great!
-    Alice-)John: See you later!
+    participant 用户
+    participant 服务
+    用户->>服务: 请求
+    activate 服务
+    Note over 用户,服务: 次要说明
+    服务-->>用户: 结果
+    deactivate 服务
 ```
 
-## 类图
+</Tab>
+
+<Tab label="类图">
 
 ```mermaid
----
-title: Reef animal example
----
 classDiagram
-    note "From Turtle till Whale"
-    Animal <|-- Turtle
-    note for Turtle "can swim<br>can dive<br>can nest on beaches<br>can live for decades"
-    Animal <|-- Shark
-    Animal <|-- Whale
-    Animal : +int age
-    Animal : +String name
-    Animal: +isMammal()
-    Animal: +migrate()
-    class Turtle{
-        +String shellColor
-        +swim()
-        +nest()
+    class Item {
+        +String title
+        +save()
     }
-    class Shark{
-        -int sizeInFeet
-        -canHunt()
+    class Note {
+        +String body
     }
-    class Whale{
-        +bool is_humpback
-        +sing()
-    }
+    Item <|-- Note
+    note for Note "次要说明"
 ```
 
-## 状态图
+</Tab>
+
+<Tab label="状态图">
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Active
-
-    state Active {
-        [*] --> NumLockOff
-        NumLockOff --> NumLockOn : EvNumLockPressed
-        NumLockOn --> NumLockOff : EvNumLockPressed
-        --
-        [*] --> CapsLockOff
-        CapsLockOff --> CapsLockOn : EvCapsLockPressed
-        CapsLockOn --> CapsLockOff : EvCapsLockPressed
-        --
-        [*] --> ScrollLockOff
-        ScrollLockOff --> ScrollLockOn : EvScrollLockPressed
-        ScrollLockOn --> ScrollLockOff : EvScrollLockPressed
+    direction LR
+    [*] --> 待处理
+    state 待处理 {
+        校验 --> 保存
     }
+    待处理 --> 完成: 提交
+    完成 --> [*]
 ```
 
-## 实体关系图
+</Tab>
+
+<Tab label="实体关系图">
 
 ```mermaid
 erDiagram
-    CAR ||--o{ NAMED-DRIVER : allows
-    CAR {
-        string registrationNumber PK
-        string make
-        string model
-        string[] parts
+    USER ||--o{ NOTE : writes
+    USER {
+        int id PK
+        string name
     }
-    PERSON ||--o{ NAMED-DRIVER : is
-    PERSON {
-        string driversLicense PK "The license #"
-        string(99) firstName "Only 99 characters are allowed"
-        string lastName
-        string phone UK
-        int age
+    NOTE {
+        int id PK
+        int user_id FK
     }
-    NAMED-DRIVER {
-        string carRegistrationNumber PK, FK
-        string driverLicense PK, FK
-    }
-    MANUFACTURER only one to zero or more CAR : makes
 ```
 
-## 甘特图
+</Tab>
 
-```mermaid
-gantt
-    title A Gantt Diagram
-    %% This is a comment
-    dateFormat YYYY-MM-DD
-    section Section
-        A task          :a1, 2014-01-01, 30d
-        Another task    :after a1, 20d
-    section Another
-        Task in Another :2014-01-12, 12d
-        another task    :24d
-```
-
-## 饼图
-
-```mermaid
-pie title Fish caught by the crew
-    "ʻAhi" : 386
-    "Mahimahi" : 85
-    "Ono" : 15
-```
-
-## 思维导图
-
-```mermaid
-mindmap
-    id1["`**Pele** is the
-goddess of volcanoes
-Unicode works too: 🌋`"]
-      id2["`She lives in **the** crater of Kīlauea... a *very old story* that is still told today`"]
-      id3[Lava builds new land]
-```
-
-## 块图
+<Tab label="块图">
 
 ```mermaid
 block
-  columns 3
-  a:3
-  block:group1:2
     columns 2
-    h i j k
-  end
-  g
-  block:group2:3
-    %% columns auto (default)
-    l m n o p q r
-  end
+    block:group:2
+        columns 2
+        a["输入"] b["处理"]
+    end
+    c["节点"] d["输出"]
 ```
 
-## C4 架构图
+</Tab>
+
+<Tab label="C4 架构图">
 
 ```mermaid
-    C4Component
-    title Component diagram for Internet Banking System - API Application
-
-    Container(spa, "Single Page Application", "javascript and angular", "Provides all the internet banking functionality to customers via their web browser.")
-    Container(ma, "Mobile App", "Xamarin", "Provides a limited subset to the internet banking functionality to customers via their mobile device.")
-    ContainerDb(db, "Database", "Relational Database Schema", "Stores user registration information, hashed authentication credentials, access logs, etc.")
-    System_Ext(mbs, "Mainframe Banking System", "Stores all of the core banking information about customers, accounts, transactions, etc.")
-
-    Container_Boundary(api, "API Application") {
-        Component(sign, "Sign In Controller", "MVC Rest Controller", "Allows users to sign in to the internet banking system")
-        Component(accounts, "Accounts Summary Controller", "MVC Rest Controller", "Provides customers with a summary of their bank accounts")
-        Component(security, "Security Component", "Spring Bean", "Provides functionality related to singing in, changing passwords, etc.")
-        Component(mbsfacade, "Mainframe Banking System Facade", "Spring Bean", "A facade onto the mainframe banking system.")
-
-        Rel(sign, security, "Uses")
-        Rel(accounts, mbsfacade, "Uses")
-        Rel(security, db, "Read & write to", "JDBC")
-        Rel(mbsfacade, mbs, "Uses", "XML/HTTPS")
-    }
-
-    Rel_Back(spa, sign, "Uses", "JSON/HTTPS")
-    Rel(spa, accounts, "Uses", "JSON/HTTPS")
-
-    Rel(ma, sign, "Uses", "JSON/HTTPS")
-    Rel(ma, accounts, "Uses", "JSON/HTTPS")
-
-    UpdateRelStyle(spa, sign, $offsetY="-40")
-    UpdateRelStyle(spa, accounts, $offsetX="40", $offsetY="40")
-
-    UpdateRelStyle(ma, sign, $offsetX="-90", $offsetY="40")
-    UpdateRelStyle(ma, accounts, $offsetY="-40")
-
-        UpdateRelStyle(sign, security, $offsetX="-160", $offsetY="10")
-        UpdateRelStyle(accounts, mbsfacade, $offsetX="140", $offsetY="10")
-        UpdateRelStyle(security, db, $offsetY="-40")
-        UpdateRelStyle(mbsfacade, mbs, $offsetY="-40")
+C4Component
+    Component(api, "接口", "HTTP", "接收请求")
+    ContainerDb(db, "存储", "SQL", "保存数据")
+    Rel(api, db, "写入")
 ```
 
-## 事件建模图
+</Tab>
 
-```mermaid
-eventmodeling
-
-timeframe 01 ui CartUI
-timeframe 02 command AddItem
-timeframe 03 event ItemAdded
-
-resetframe 04 event External.InventoryChanged
-timeframe 05 processor InventoryProcessor
-timeframe 06 command ChangeInventory
-timeframe 07 event Cart.InventoryChanged
-```
-
-## Git 提交图
-
-```mermaid
-    gitGraph
-        commit id: "ZERO"
-        branch develop
-        branch release
-        commit id:"A"
-        checkout main
-        commit id:"ONE"
-        checkout develop
-        commit id:"B"
-        checkout main
-        merge develop id:"MERGE"
-        commit id:"TWO"
-        checkout release
-        cherry-pick id:"MERGE" parent:"B"
-        commit id:"THREE"
-        checkout develop
-        commit id:"C"
-```
-
-## 看板
+<Tab label="数据包图">
 
 ```mermaid
 ---
 config:
-  kanban:
-    ticketBaseUrl: 'https://mermaidchart.atlassian.net/browse/#TICKET#'
----
-kanban
-  Todo
-    [Create Documentation]
-    docs[Create Blog about the new diagram]
-  [In progress]
-    id6[Create renderer so that it works in all cases. We also add some extra text here for testing purposes. And some more just for the extra flare.]
-  id9[Ready for deploy]
-    id8[Design grammar]@{ assigned: 'knsv' }
-  id10[Ready for test]
-    id4[Create parsing tests]@{ ticket: MC-2038, assigned: 'K.Sveidqvist', priority: 'High' }
-    id66[last item]@{ priority: 'Very Low', assigned: 'knsv' }
-  id11[Done]
-    id5[define getData]
-    id2[Title of diagram is more than 100 chars when user duplicates diagram with 100 char]@{ ticket: MC-2036, priority: 'Very High'}
-    id3[Update DB function]@{ ticket: MC-2037, assigned: knsv, priority: 'High' }
-
-  id12[Can't reproduce]
-    id3[Weird flickering in Firefox]
-```
-
-## 数据包图
-
-```mermaid
----
-title: "TCP Packet"
+  packet:
+    bitsPerRow: 16
 ---
 packet
-0-15: "Source Port"
-16-31: "Destination Port"
-32-63: "Sequence Number"
-64-95: "Acknowledgment Number"
-96-99: "Data Offset"
-100-105: "Reserved"
-106: "URG"
-107: "ACK"
-108: "PSH"
-109: "RST"
-110: "SYN"
-111: "FIN"
-112-127: "Window"
-128-143: "Checksum"
-144-159: "Urgent Pointer"
-160-191: "(Options and Padding)"
-192-255: "Data (variable length)"
+0-3: "版本"
+4-7: "标记"
+8-15: "长度"
+16-31: "载荷"
 ```
 
-## 象限图
+</Tab>
 
-```mermaid
-quadrantChart
-    title Reach and engagement of campaigns
-    x-axis Low Reach --> High Reach
-    y-axis Low Engagement --> High Engagement
-    quadrant-1 We should expand
-    quadrant-2 Need to promote
-    quadrant-3 Re-evaluate
-    quadrant-4 May be improved
-    Campaign A: [0.3, 0.6]
-    Campaign B: [0.45, 0.23]
-    Campaign C: [0.57, 0.69]
-    Campaign D: [0.78, 0.34]
-    Campaign E: [0.40, 0.34]
-    Campaign F: [0.35, 0.78]
-```
-
-## 需求图
+<Tab label="需求图">
 
 ```mermaid
 requirementDiagram
-
-direction LR
-
-requirement test_req {
-    id: 1
-    text: the test text.
-    risk: high
-    verifymethod: test
-}
-
-element test_entity {
-    type: simulation
-}
-
-test_entity - satisfies -> test_req
+    direction LR
+    requirement theme {
+        id: 1
+        text: readable
+        risk: low
+        verifymethod: test
+    }
+    element preview {
+        type: sample
+    }
+    preview - satisfies -> theme
 ```
 
-## 桑基图
+</Tab>
 
-```mermaid
----
-config:
-  sankey:
-    showValues: false
-    nodeWidth: 15
-    nodePadding: 20
----
-sankey
-
-Electricity grid,Heating and cooling - homes,113.726
-Electricity grid,Industry,342.165
-Electricity grid,Losses,56.691
-```
-
-## 时间线
-
-```mermaid
-timeline
-    title Timeline of the Hawaiian Islands
-    section Older islands
-        Kauaʻi : 5 million years old, Canyons, Sea <br>cliffs
-        Oʻahu : 3 million years old, Diamond Head, Surf breaks
-        Molokaʻi : 2 million years old, Fishponds, Tall cliffs
-    section Younger islands
-        Maui : 1 million years old, Haleakalā, Whale watching
-        Hawaiʻi : Still growing, Mauna Kea, Kīlauea
-```
-
-## 用户旅程图
-
-```mermaid
-journey
-    title My working day
-    section Go to work
-      Make tea: 5: Me
-      Go upstairs: 3: Me
-      Do work: 1: Me, Cat
-    section Go home
-      Go downstairs: 5: Me
-      Sit down: 5: Me
-```
-
-## XY 图
-
-```mermaid
-xychart
-    title "Ocean Temperature"
-    x-axis [jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec]
-    y-axis "Temperature (in °F)" 74 --> 82
-    bar [76.3, 75.9, 76.0, 76.7, 77.8, 78.9, 79.9, 80.7, 81.1, 80.5, 79.1, 77.4]
-    line [76.3, 75.9, 76.0, 76.7, 77.8, 78.9, 79.9, 80.7, 81.1, 80.5, 79.1, 77.4]
-```
-
-## 智能体流程图
-
-```mermaid
-agentflow-beta TB
-  flow intake["Intake"]
-    receive["Receive request"]@{ shape: input }
-  end
-
-  flow processing["Processing"]
-    validate["Validate"]@{ shape: task }
-    enrich["Enrich"]@{ shape: task }
-    validate --> enrich
-  end
-  processing@{ view: "collapsed" }
-
-  flow output["Output"]
-    publish["Publish"]@{ shape: action }
-  end
-
-  receive --> validate
-  enrich --> publish
-```
-
-## 架构图
+<Tab label="架构图">
 
 ```mermaid
 architecture-beta
-    service left_disk(disk)[Disk]
-    service top_disk(disk)[Disk]
-    service bottom_disk(disk)[Disk]
-    service top_gateway(internet)[Gateway]
-    service bottom_gateway(internet)[Gateway]
-    junction junctionCenter
-    junction junctionRight
-
-    left_disk:R -- L:junctionCenter
-    top_disk:B -- T:junctionCenter
-    bottom_disk:T -- B:junctionCenter
-    junctionCenter:R -- L:junctionRight
-    top_gateway:B -- T:junctionRight
-    bottom_gateway:T -- B:junctionRight
+    group app(cloud)[服务组]
+    service api(server)[接口] in app
+    service db(database)[存储] in app
+    api:R -- L:db
 ```
 
-## Cynefin 框架图
+</Tab>
 
-```mermaid
-cynefin-beta
-  title Strategy Categorization
-
-  complex
-    "Market research"
-
-  complicated
-    "Competitive analysis"
-
-  clear
-    "Standard pricing"
-
-  chaotic
-    "Crisis management"
-
-  complex --> complicated : "Pattern identified"
-  complicated --> clear : "Best practice codified"
-  clear --> chaotic : "Complacency"
-  chaotic --> complex : "Stabilized"
-```
-
-## 鱼骨图
+<Tab label="鱼骨图">
 
 ```mermaid
 ishikawa-beta
-    Blurry Photo
-    Process
-        Out of focus
-        Shutter speed too slow
-        Protective film not removed
-        Beautification filter applied
-    User
-        Shaky hands
-    Equipment
-        LENS
-            Inappropriate lens
-            Damaged lens
-            Dirty lens
-        SENSOR
-            Damaged sensor
-            Dirty sensor
-    Environment
-        Subject moved too quickly
-        Too dark
+    可读性
+    文字
+        字色
+        字号
+    图形
+        描边
+        底色
 ```
 
-## 雷达图
+</Tab>
 
-```mermaid
-radar-beta
-  title Restaurant Comparison
-  axis food["Food Quality"], service["Service"], price["Price"]
-  axis ambiance["Ambiance"]
-
-  curve a["Restaurant A"]{4, 3, 2, 4}
-  curve b["Restaurant B"]{3, 4, 3, 3}
-  curve c["Restaurant C"]{2, 3, 4, 2}
-  curve d["Restaurant D"]{2, 2, 4, 3}
-
-  graticule polygon
-  max 5
-```
-
-## 语法铁路图
+<Tab label="语法铁路图">
 
 ```mermaid
 railroad-ebnf-beta
-title "Arithmetic Expression Grammar"
-
-expression = term ( ( "+" | "-" ) term )* ;
-term = factor ( ( "*" | "/" ) factor )* ;
-factor = number | "(" expression ")" ;
-number = digit+ ;
-digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+    value = "数值" ( ( "+" | "-" ) "数值" )* ;
 ```
 
-## 泳道图
+</Tab>
+
+<Tab label="泳道图">
 
 ```mermaid
 swimlane-beta LR
-  subgraph Customer
-    request[Request service]
-    receive[Receive update]
-  end
-
-  subgraph Support
-    triage[Triage request]
-    answer[Send answer]
-  end
-
-  subgraph Engineering
-    investigate[Investigate issue]
-    fix[Prepare fix]
-  end
-
-  request --> triage
-  triage -->|Known issue| answer
-  triage -->|Needs code change| investigate
-  investigate --> fix --> answer
-  answer --> receive
+    subgraph 用户
+        request[提交]
+        receive[接收]
+    end
+    subgraph 服务
+        save[保存]
+    end
+    request --> save --> receive
 ```
 
-## 目录树
+</Tab>
+
+<Tab label="目录树">
+
+```mermaid
+treeView-beta
+    src/
+        theme.ts
+        colors.css
+    README.md
+```
+
+</Tab>
+
+<Tab label="用例图">
+
+```mermaid
+usecase-beta
+    direction LR
+    actor Reader
+    systemBoundary Notes
+        Read("阅读")
+        Edit("编辑")
+    end
+    Reader --> Read
+    Reader --> Edit
+    Edit ..> : include Read
+```
+
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+<PageTab label="分类与实底">
+
+<Tabs>
+
+<Tab label="饼图">
+
+```mermaid
+pie
+    "1" : 1
+    "2" : 1
+    "3" : 1
+    "4" : 1
+    "5" : 1
+    "6" : 1
+    "7" : 1
+    "8" : 1
+```
+
+</Tab>
+
+<Tab label="思维导图">
+
+```mermaid
+mindmap
+    root[主题]
+        分支一
+        分支二
+        分支三
+        分支四
+```
+
+</Tab>
+
+<Tab label="Git 提交图">
+
+```mermaid
+gitGraph
+    commit id: "起点"
+    branch feature
+    commit id: "功能"
+    checkout main
+    branch docs
+    commit id: "文档"
+    checkout main
+    merge feature id: "合并"
+```
+
+</Tab>
+
+<Tab label="象限图">
 
 ```mermaid
 ---
 config:
-  treeView:
-    showIcons: true
-    defaultIconPack: material-icon-theme
-    filenameIcons:
-      Dockerfile: docker
-    extensionIcons:
-      .ts: typescript
-      .tsx: react-ts
-      .txt: none
+  quadrantChart:
+    chartWidth: 360
+    chartHeight: 280
 ---
-treeView-beta
-    src/
-        App.tsx
-        utils.ts
-    Dockerfile
-    notes.txt
-    README.md
+quadrantChart
+    x-axis 低 --> 高
+    y-axis 低 --> 高
+    quadrant-1 推进
+    quadrant-2 试验
+    quadrant-3 观察
+    quadrant-4 改进
+    A: [0.3, 0.7]
+    B: [0.7, 0.6]
+    C: [0.4, 0.3]
 ```
 
-## 矩形树图
+</Tab>
+
+<Tab label="时间线">
+
+```mermaid
+timeline
+    section 准备
+        计划 : 范围
+    section 实施
+        执行 : 交付
+```
+
+</Tab>
+
+<Tab label="用户旅程图">
+
+```mermaid
+journey
+    section 准备
+        阅读: 5: 用户
+        配色: 3: 用户, 设计
+    section 完成
+        检查: 1: 设计
+```
+
+</Tab>
+
+<Tab label="XY 图">
+
+```mermaid
+---
+config:
+  xyChart:
+    width: 440
+    height: 280
+---
+xychart
+    x-axis [A, B, C, D]
+    y-axis 0 --> 10
+    bar [3, 6, 4, 8]
+    line [5, 4, 7, 6]
+```
+
+</Tab>
+
+<Tab label="矩形树图">
 
 ```mermaid
 ---
 config:
   treemap:
-    valueFormat: '$0,0'
+    nodeWidth: 44
+    nodeHeight: 24
 ---
 treemap-beta
-"Budget"
-    "Operations"
-        "Salaries": 700000
-        "Equipment": 200000
-        "Supplies": 100000
-    "Marketing"
-        "Advertising": 400000
-        "Events": 100000
+"内容"
+    "笔记"
+        "基础": 4
+        "进阶": 3
+    "项目"
+        "设计": 2
+        "开发": 3
 ```
 
-## 用例图
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+<PageTab label="透明与叠色">
+
+<Tabs>
+
+<Tab label="雷达图">
 
 ```mermaid
 ---
 config:
-  theme: default
-  look: classic
-  layout: dagre
+  radar:
+    width: 360
+    height: 260
 ---
-usecase-beta
-direction LR
-actor Customer
-actor Support
-systemBoundary Storefront
-  Browse("Browse catalog")
-  Checkout("Checkout")
-end
-systemBoundary Fulfilment
-  Track("Track delivery")
-end
-Customer --> Browse
-Customer --> Checkout
-Customer --> Track
-Support --> Track
-Checkout ..> : include Browse
+radar-beta
+    axis text["文字"], line["连线"], fill["填充"], border["描边"]
+    curve a["方案 A"]{4, 2, 4, 3}
+    curve b["方案 B"]{2, 4, 3, 4}
+    graticule polygon
+    max 5
 ```
 
-## 韦恩图
+</Tab>
+
+<Tab label="韦恩图">
 
 ```mermaid
 venn-beta
-  set A["Frontend"]
-    text A1["React"]
-    text A2["Design Systems"]
-  set B["Backend"]
-    text B1["API"]
-  union A,B["Shared"]
-    text AB1["OpenAPI"]
+    set A["文字"]
+        text A1["清晰"]
+    set B["图形"]
+        text B1["协调"]
+    union A,B["重叠"]
+        text AB1["可读"]
 ```
 
-## Wardley 地图
+</Tab>
+
+<Tab label="桑基图">
 
 ```mermaid
-wardley-beta
-title Tea Shop Value Chain
-
-anchor Business [0.95, 0.63]
-component Cup of Tea [0.79, 0.61]
-component Tea [0.63, 0.81]
-component Hot Water [0.52, 0.80]
-component Kettle [0.43, 0.35]
-component Power [0.10, 0.70]
-
-Business -> Cup of Tea
-Cup of Tea -> Tea
-Cup of Tea -> Hot Water
-Hot Water -> Kettle
-Kettle -> Power
-
-evolve Kettle 0.62
-evolve Power 0.89
-
-note "Standardizing power allows Kettles to evolve faster" [0.30, 0.49]
+---
+config:
+  sankey:
+    width: 440
+    height: 240
+    showValues: false
+---
+sankey
+Input A,Process,4
+Input B,Process,3
+Process,Output,7
 ```
+
+</Tab>
+
+<Tab label="事件建模图">
+
+```mermaid
+eventmodeling
+    timeframe 01 ui View
+    timeframe 02 command Save
+    timeframe 03 event Saved
+```
+
+</Tab>
+
+<Tab label="智能体流程图">
+
+```mermaid
+agentflow-beta LR
+    flow input["输入组"]
+        receive["接收"]@{ shape: input }
+    end
+    flow output["处理组"]
+        check["校验"]@{ shape: task }
+        save["保存"]@{ shape: action }
+        check --> save
+    end
+    receive --> check
+```
+
+</Tab>
+
+<Tab label="Cynefin 框架图">
+
+```mermaid
+---
+config:
+  cynefin:
+    width: 440
+    height: 280
+    showDomainDescriptions: false
+---
+cynefin-beta
+    complex
+        "探索"
+    complicated
+        "分析"
+    clear
+        "执行"
+    chaotic
+        "应急"
+    complex --> complicated : "识别"
+    chaotic --> clear : "稳定"
+```
+
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+<PageTab label="强调与状态">
+
+<Tabs>
+
+<Tab label="甘特图">
+
+```mermaid
+---
+config:
+  gantt:
+    useWidth: 520
+    leftPadding: 64
+    rightPadding: 16
+---
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %m-%d
+    todayMarker off
+    section 任务
+        普通任务 :normal, 2026-01-01, 4d
+        进行中   :active, current, 2026-01-02, 4d
+        已完成   :done, finished, 2026-01-01, 3d
+        关键任务 :crit, important, 2026-01-03, 4d
+```
+
+</Tab>
+
+<Tab label="看板">
+
+```mermaid
+kanban
+    待处理
+        normal[普通任务]
+        critical[关键任务]@{ priority: 'Very High' }
+    进行中
+        active[更新主题]@{ priority: 'High', assigned: '设计' }
+```
+
+</Tab>
+
+<Tab label="Wardley 地图">
+
+```mermaid
+---
+config:
+  wardley-beta:
+    width: 520
+    height: 300
+---
+wardley-beta
+    anchor User [0.95, 0.5]
+    component App [0.75, 0.3]
+    component Storage [0.4, 0.5]
+    User -> App
+    App -> Storage
+    evolve Storage 0.8
+```
+
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+</PageTabs>
+
+<Callout type="details" title="显示职责">
+
+分类色以品牌色为起点，使用 OKLCH 生成亮暗共用的八色，并对色觉模拟中的明显冲突作小幅校正。图例沿用原生透明度，实底文字随深浅端点适配。
+
+<CinderfolioPreview section="pele-roles" />
+
+</Callout>
+
+</div>

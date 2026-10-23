@@ -1,30 +1,740 @@
 ---
 title: Cinderfolio-Shiki
-description: 为后续 Shiki 亮暗主题定义语法角色，复用统一配色源而不另建一套颜色。
+description: 调整配色、查看语法颜色职责，预览常用语言代码并下载亮暗 Shiki 主题 JSON。
+outline: false
 ---
+
+import { Callout, PageTab, PageTabs, Tab, Tabs, languageLabel } from '@rspress/core/theme';
 
 # Cinderfolio-Shiki
 
-目前已定义语法角色，尚未生成或接入正式 Shiki 主题。网站代码块的容器、边界与行号已经使用 Cinderfolio，语法 token 继续使用 `one-light` 和 `material-theme-darker`。
+[Shiki](https://github.com/shikijs/shiki) 是基于 TextMate 语法的代码高亮器，在渲染时生成带有语法颜色与字形的 HTML。
 
-## 已有的配色契约
+<CinderfolioPreview section="controls">
+  <CinderfolioDownload target="shiki-light" />
+  <CinderfolioDownload target="shiki-dark" />
+</CinderfolioPreview>
 
-```js
-syntaxRoles = {
-  plain:       { color: 'foreground' },
-  comment:     { color: 'textMuted', fontStyle: 'italic' },
-  keyword:     { color: 'link', fontStyle: 'bold' },
-  string:      { color: 'textMuted' },
-  number:      { color: 'diagramStroke' },
-  function:    { color: 'foreground', fontStyle: 'bold' },
-  punctuation: { color: 'textMuted' },
+<PageTabs className="cf-shiki-categories">
+
+<PageTab label="通用编程">
+
+<Tabs>
+
+<Tab value="cpp" label={languageLabel("cpp")}>
+
+```cpp title="vector.cpp · C++20" lineNumbers
+#include <concepts>
+#include <iostream>
+#include <span>
+
+#if defined(USE_FLOAT)
+using Scalar = float;
+#else
+using Scalar = double;
+#endif
+
+// 只读视图不复制数据；点积要求向量等长。
+template <std::floating_point T>
+class Vec {
+public:
+    explicit Vec(std::span<const T> data) : data_(data) {}
+    [[nodiscard]] T dot(const Vec& rhs) const noexcept {
+        T total{};
+        for (std::size_t i = 0; i < data_.size(); ++i)
+            total += data_[i] * rhs.data_[i];
+        return total;
+    }
+private:
+    std::span<const T> data_;
 };
+
+int main() {
+    constexpr Scalar x[]{1.0, 2.0, 3.0}, y[]{4.0, 5.0, 6.0};
+    const Vec<Scalar> a{x}, b{y};
+    // 引用捕获向量，初始化捕获权重。
+    const auto score = [&a, scale = 0.5](const auto& v) {
+        return scale * a.dot(v);
+    };
+    std::cout << "加权点积 = " << score(b) << '\n';
+}
 ```
 
-通过同一主题色的明度、灰阶、字重和斜体区分语法，保持整体克制。文字选区继续使用淡主题色底，并保留各 token 的原字色。
+</Tab>
 
-## 后续接入
+<Tab value="python" label={languageLabel("python")}>
 
-后续将这些角色映射到 TextMate scope，生成可单独导出的亮暗 Shiki 主题 JSON，再检查常用语言的高亮效果。颜色读取 `palette.mjs` 或生成的<a href="/cinderfolio/colors.json">颜色数据</a>，不在主题文件中手动维护第二组 HEX。
+```python title="vector.py · Python 3.10+" lineNumbers
+from dataclasses import dataclass
+from math import fsum
 
-可以先到 [Cinderfolio-Rspress](/projects/cinderfolio/preview/) 了解这些角色引用的颜色职责；正式接入时会在这里补充语法样本、生成命令、主题名和使用方式。
+
+@dataclass(frozen=True)
+class Vector:
+    values: tuple[float, ...]
+
+    def dot(self, other: "Vector") -> float:
+        """计算等长向量的点积，长度不符时抛出异常。"""
+        return fsum(
+            x * y for x, y in zip(self.values, other.values, strict=True)
+        )
+
+
+def describe(name: str, value: float | None) -> str:
+    # 同时观察参数、类型、常量、条件表达式和格式化字符串。
+    return f"{name}: {value:.3f}" if value is not None else "暂无结果"
+
+
+if __name__ == "__main__":
+    lhs = Vector((1.0, 2.0, 3.0))
+    rhs = Vector((4.0, 5.0, 6.0))
+    print(describe("点积", lhs.dot(rhs)))
+```
+
+</Tab>
+
+<Tab value="javascript" label={languageLabel("javascript")}>
+
+```javascript title="tasks.js · JavaScript" lineNumbers
+const tasks = [
+    { title: "调整配色", done: true },
+    { title: "导出主题", done: false },
+];
+
+function summarize(items, done = false) {
+    const names = items
+        .filter(({ done: state }) => state === done)
+        .map(({ title }) => title.trim());
+    return `${names.length} 项：${names.join(", ") || "暂无任务"}`;
+}
+
+console.log(summarize(tasks));
+```
+
+</Tab>
+
+<Tab value="typescript" label={languageLabel("typescript")}>
+
+```typescript title="tasks.ts · TypeScript" lineNumbers
+interface Task {
+    readonly id: number;
+    title: string;
+    done: boolean;
+}
+
+function pending<T extends Task>(items: readonly T[]): T[] {
+    return items.filter(task => !task.done);
+}
+
+const tasks: Task[] = [
+    { id: 1, title: "调整配色", done: true },
+    { id: 2, title: "导出主题", done: false },
+];
+
+console.log(pending(tasks).map(task => task.title));
+```
+
+</Tab>
+
+<Tab value="rust" label={languageLabel("rust")}>
+
+```rust title="tasks.rs · Rust" lineNumbers
+#[derive(Debug)]
+struct Task<'a> {
+    title: &'a str,
+    done: bool,
+}
+
+fn main() {
+    let tasks = [
+        Task { title: "调整配色", done: true },
+        Task { title: "导出主题", done: false },
+    ];
+    let pending: Vec<_> = tasks.iter()
+        .filter(|task| !task.done)
+        .map(|task| task.title)
+        .collect();
+
+    println!("{} 项：{}", pending.len(), pending.join(", "));
+}
+```
+
+</Tab>
+
+<Tab value="go" label={languageLabel("go")}>
+
+```go title="tasks.go · Go" lineNumbers
+package main
+
+import "fmt"
+
+type Task struct {
+    Title string
+    Done  bool
+}
+
+func main() {
+    tasks := []Task{
+        {Title: "调整配色", Done: true},
+        {Title: "导出主题", Done: false},
+    }
+    for _, task := range tasks {
+        if !task.Done {
+            fmt.Printf("待办：%s\n", task.Title)
+        }
+    }
+}
+```
+
+</Tab>
+
+<Tab value="java" label={languageLabel("java")}>
+
+```java title="Tasks.java · Java 17+" lineNumbers
+import java.util.List;
+
+public class Tasks {
+    record Task(String title, boolean done) {}
+
+    public static void main(String[] args) {
+        var tasks = List.of(
+            new Task("调整配色", true),
+            new Task("导出主题", false)
+        );
+        var pending = tasks.stream()
+            .filter(task -> !task.done())
+            .map(Task::title)
+            .toList();
+
+        System.out.println(String.join(", ", pending));
+    }
+}
+```
+
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+<PageTab label="网页与组件">
+
+<Tabs>
+
+<Tab value="html" label={languageLabel("html")}>
+
+```html title="card.html · HTML" lineNumbers
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cinderfolio</title>
+  </head>
+  <body>
+    <!-- 用标题、属性和正文表达卡片结构。 -->
+    <article class="card" aria-labelledby="title">
+      <h1 id="title">Cinderfolio &amp; Shiki</h1>
+      <p>一套配色，适配亮暗主题。</p>
+      <button type="button" disabled>下载主题</button>
+    </article>
+  </body>
+</html>
+```
+
+</Tab>
+
+<Tab value="css" label={languageLabel("css")}>
+
+```css title="card.css · CSS" lineNumbers
+.card {
+    --gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gap);
+    padding: calc(var(--gap) * 1.5);
+    color: var(--cf-foreground);
+    background: var(--cf-background);
+    border: 1px solid var(--cf-border);
+}
+
+.card:hover {
+    border-color: var(--cf-accent-brand);
+}
+
+@media (max-width: 640px) {
+    .card { grid-template-columns: 1fr; }
+}
+```
+
+</Tab>
+
+<Tab value="scss" label={languageLabel("scss")}>
+
+```scss title="card.scss · SCSS" lineNumbers
+$gap: 1rem;
+
+@mixin panel($padding: $gap) {
+  display: grid;
+  gap: $gap;
+  padding: $padding;
+}
+
+.card {
+  @include panel($gap * 1.5);
+  color: var(--cf-foreground);
+
+  // 嵌套选择器与属性插值。
+  &__title {
+    margin-#{"bottom"}: $gap;
+  }
+
+  &:hover {
+    border-color: var(--cf-accent-brand);
+  }
+}
+```
+
+</Tab>
+
+<Tab value="jsx" label={languageLabel("jsx")}>
+
+```jsx title="TaskList.jsx · JavaScript JSX" lineNumbers
+function TaskButton({ task, onToggle }) {
+  return (
+    <button disabled={task.done} onClick={() => onToggle(task.id)}>
+      {task.title}
+    </button>
+  );
+}
+
+export default function TaskList({ tasks, onToggle }) {
+  // 组件、属性、事件与列表中的表达式。
+  return (
+    <ul className="tasks">
+      {tasks.map(task => (
+        <li key={task.id}>
+          <TaskButton task={task} onToggle={onToggle} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+</Tab>
+
+<Tab value="tsx" label={languageLabel("tsx")}>
+
+```tsx title="TaskList.tsx · TypeScript JSX" lineNumbers
+interface Task {
+  id: number;
+  title: string;
+  done: boolean;
+}
+
+type Props = {
+  tasks: readonly Task[];
+  onToggle: (id: number) => void;
+};
+
+export function TaskList({ tasks, onToggle }: Props) {
+  const pending = tasks.filter(task => !task.done);
+  return (
+    <section aria-label="待办任务">
+      {pending.map(task => (
+        <button key={task.id} onClick={() => onToggle(task.id)}>
+          {task.title}
+        </button>
+      ))}
+    </section>
+  );
+}
+```
+
+</Tab>
+
+<Tab value="vue" label={languageLabel("vue")}>
+
+```vue title="TaskList.vue · Vue" lineNumbers
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+
+const props = defineProps<{ title: string }>();
+const tasks = ref([
+  { id: 1, title: '调整配色', done: true },
+  { id: 2, title: '导出主题', done: false },
+]);
+const pending = computed(() => tasks.value.filter(task => !task.done));
+</script>
+
+<template>
+  <section class="tasks">
+    <h2>{{ props.title }}</h2>
+    <button v-for="task in pending" :key="task.id" @click="task.done = true">
+      {{ task.title }}
+    </button>
+    <p v-if="pending.length === 0">全部完成</p>
+  </section>
+</template>
+
+<style scoped>
+.tasks { display: grid; gap: 0.75rem; }
+</style>
+```
+
+</Tab>
+
+<Tab value="svelte" label={languageLabel("svelte")}>
+
+```svelte title="Task.svelte · Svelte" lineNumbers
+<script>
+  let { title = '导出主题' } = $props();
+  let done = $state(false);
+  let status = $derived(done ? '已完成' : '待处理');
+
+  function toggle() {
+    done = !done;
+  }
+</script>
+
+<button class:done onclick={toggle}>
+  {title} · {status}
+</button>
+
+{#if done}
+  <p>可以下载主题了。</p>
+{/if}
+
+<style>
+  .done { text-decoration: line-through; }
+</style>
+```
+
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+<PageTab label="数据与配置">
+
+<Tabs>
+
+<Tab value="json" label={languageLabel("json")}>
+
+```json title="theme.json · JSON" lineNumbers
+{
+    "name": "Cinderfolio",
+    "version": 1,
+    "colors": {
+        "g0": "#121212",
+        "g16": "#fafaf8",
+        "brand": "#f97316"
+    },
+    "targets": ["Rspress", "Pele", "Shiki"],
+    "enabled": true,
+    "description": null
+}
+```
+
+</Tab>
+
+<Tab value="yaml" label={languageLabel("yaml")}>
+
+```yaml title="theme.yaml · YAML" lineNumbers
+# 键名、锚点、合并引用与多行字符串。
+defaults: &defaults
+  enabled: true
+  retries: 3
+  timeout: 10
+
+preview:
+  <<: *defaults
+  brand: "#f97316"
+  outputs:
+    - cf-rspress.css
+    - cf-pele.css
+  description: |
+    Cinderfolio 使用同一组颜色，
+    适配网页、图表与代码。
+```
+
+</Tab>
+
+<Tab value="toml" label={languageLabel("toml")}>
+
+```toml title="theme.toml · TOML" lineNumbers
+name = "Cinderfolio"
+enabled = true
+
+[colors]
+ink = "#121212"
+paper = "#fafaf8"
+brand = "#f97316"
+
+# 分组、数组表与不同类型的取值。
+[[exports]]
+target = "Rspress"
+file = "cf-rspress.css"
+
+[[exports]]
+target = "Shiki"
+files = ["cf-shiki-light.json", "cf-shiki-dark.json"]
+```
+
+</Tab>
+
+<Tab value="sql" label={languageLabel("sql")}>
+
+```sql title="tasks.sql · SQL" lineNumbers
+WITH tasks(project, title, done) AS (
+    VALUES
+        ('Cinderfolio', '调整配色', TRUE),
+        ('Cinderfolio', '导出主题', FALSE),
+        ('Pele', '检查图表', FALSE)
+)
+SELECT project, COUNT(*) AS pending
+FROM tasks
+WHERE done = FALSE
+GROUP BY project
+HAVING COUNT(*) > 0
+ORDER BY pending DESC;
+```
+
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+<PageTab label="脚本与构建">
+
+<Tabs>
+
+<Tab value="bash" label={languageLabel("bash")}>
+
+```bash title="themes.sh · Bash" lineNumbers
+#!/usr/bin/env bash
+set -euo pipefail
+
+project="Cinderfolio"
+files=("cf-rspress.css" "cf-pele.css" "cf-shiki-light.json")
+printf '%s：%d 个文件\n' "$project" "${#files[@]}"
+
+for file in "${files[@]}"; do
+    if [[ "$file" == *.json ]]; then
+        printf '主题：%s\n' "$file"
+    else
+        printf '样式：%s\n' "$file"
+    fi
+done
+```
+
+</Tab>
+
+<Tab value="powershell" label={languageLabel("powershell")}>
+
+```powershell title="themes.ps1 · PowerShell" lineNumbers
+param(
+    [string]$ThemePath = "./cinderfolio/dist",
+    [switch]$DarkOnly
+)
+
+$files = Get-ChildItem -Path $ThemePath -Filter "cf-shiki-*.json"
+foreach ($file in $files) {
+    $theme = Get-Content -LiteralPath $file.FullName -Raw |
+        ConvertFrom-Json
+
+    if ($DarkOnly -and $theme.type -ne "dark") {
+        continue
+    }
+
+    # 参数、管道、对象属性与字符串中的子表达式。
+    Write-Output "$($theme.name): $($theme.colors.'editor.background')"
+}
+```
+
+</Tab>
+
+<Tab value="dockerfile" label={languageLabel("dockerfile")}>
+
+```dockerfile title="Dockerfile · Docker" lineNumbers
+# 构建阶段导出独立的配色产物。
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY cinderfolio/ ./cinderfolio/
+RUN node cinderfolio/build.mjs
+
+# 只将导出文件复制到静态服务器。
+FROM nginx:alpine
+COPY --from=build /app/cinderfolio/dist/ /usr/share/nginx/html/
+EXPOSE 80
+```
+
+</Tab>
+
+<Tab value="make" label={languageLabel("make")}>
+
+```make title="Makefile · Make" lineNumbers
+CXX ?= c++
+CXXFLAGS := -std=c++20 -O2 -Wall
+TARGET := vector
+SOURCE := vector.cpp
+
+.PHONY: all clean
+all: $(TARGET)
+
+# 目标、依赖、变量展开与自动变量。
+$(TARGET): $(SOURCE)
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+clean:
+	rm -f $(TARGET)
+```
+
+</Tab>
+
+<Tab value="cmake" label={languageLabel("cmake")}>
+
+```cmake title="CMakeLists.txt · CMake" lineNumbers
+cmake_minimum_required(VERSION 3.20)
+project(VectorDemo VERSION 1.0 LANGUAGES CXX)
+
+add_executable(vector vector.cpp)
+target_compile_features(vector PRIVATE cxx_std_20)
+
+# 命令、目标名、变量与条件分支。
+if(MSVC)
+  target_compile_options(vector PRIVATE /W4)
+else()
+  target_compile_options(vector PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+message(STATUS "Building ${PROJECT_NAME} ${PROJECT_VERSION}")
+```
+
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+<PageTab label="文档与文本">
+
+<Tabs>
+
+<Tab value="text" label={languageLabel("text")}>
+
+```text title="筛选向量 · 不使用语法高亮" lineNumbers
+输入：向量集合 V，阈值 τ = 0.75
+输出：保留集合 R
+
+R ← ∅
+for each v in V:
+    length ← sqrt(Σ v[i]²)
+    if length ≤ τ:
+        R ← R ∪ {v}
+
+return R
+```
+
+</Tab>
+
+<Tab value="markdown" label={languageLabel("markdown")}>
+
+```markdown title="README.md · Markdown" lineNumbers
+# Cinderfolio
+
+## 阅读顺序
+先看 **流程与调用**，再读 *注释与说明*。
+
+> 用同一组颜色表达不同内容。
+
+- [x] 亮暗主题
+- [ ] 导出 JSON
+
+[项目仓库](https://github.com/shikijs/shiki)
+使用 `createShikiTheme(input, "light")` 生成主题。
+
+| 内容 | 字形 |
+| --- | --- |
+| 流程 | 粗体 |
+| 注释 | 斜体 |
+```
+
+</Tab>
+
+<Tab value="latex" label={languageLabel("latex")}>
+
+```latex title="vector.tex · TeX / LaTeX" lineNumbers
+\documentclass{article}
+\usepackage{amsmath,amssymb}
+\newcommand{\vect}[1]{\mathbf{#1}}
+\begin{document}
+
+\section{Vector score}
+% A weighted dot product for two vectors.
+For vectors $\vect{x}, \vect{y} \in \mathbb{R}^n$,
+\begin{equation}
+  s = \alpha \sum_{i=1}^{n} x_i y_i, \qquad \alpha = 0.5.
+  \label{eq:score}
+\end{equation}
+
+See Equation~\eqref{eq:score}.
+\textbf{Read the flow}, \emph{then the details}.
+\end{document}
+```
+
+</Tab>
+
+<Tab value="mmd" label={languageLabel("mmd")}>
+
+{/* mmd 仅展示 Mermaid 源码，mermaid 围栏由本站 Pele 渲染。 */}
+
+```mmd title="pipeline.mmd · Mermaid 源码" lineNumbers
+flowchart LR
+    %% 注释、方向、节点、连线与标签
+    A[读取向量] --> B{满足阈值?}
+    B -->|是| C[保留]
+    B -->|否| D[跳过]
+    C --> E([完成])
+    D --> E
+```
+
+</Tab>
+
+<Tab value="regexp" label={languageLabel("regexp")}>
+
+```regexp title="settings.regex · 正则表达式（Python）" lineNumbers
+(?mx)
+^
+(?P<key>[A-Za-z_]\w*)   # 配置项名称
+[ \t]* = [ \t]*
+(?P<value>[^\#\r\n]+)   # 配置值
+(?: \# [^\r\n]* )?
+$
+```
+
+</Tab>
+
+<Tab value="diff" label={languageLabel("diff")}>
+
+```diff title="阈值调整 · 增删颜色" lineNumbers
+ def keep(length: float) -> bool:
+-    return length < 0.50
++    return length <= 0.75
+```
+
+</Tab>
+
+</Tabs>
+
+</PageTab>
+
+</PageTabs>
+
+<Callout type="details" title="显示职责">
+
+<CinderfolioPreview section="shiki-roles" />
+
+</Callout>

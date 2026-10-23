@@ -16,3 +16,5 @@ export function Layout(props: ComponentProps<typeof OriginalLayout>) {
 export function HomeBackground() {
   return null;
 }
+
+export { languageLabel } from './CinderfolioLanguageLabel';

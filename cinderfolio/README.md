@@ -1,6 +1,6 @@
 # Cinderfolio
 
-统一配色计算与独立 CSS 导出。项目说明维护于 `site/projects/cinderfolio/`，默认使用三个种子：
+统一配色计算与独立 CSS、Shiki 主题 JSON 导出。项目说明维护于 `site/projects/cinderfolio/`，默认使用三个种子：
 
 ```js
 seeds = { ink: '#121212', paper: '#fafaf8', accent: '#f97316' };
@@ -21,12 +21,15 @@ npm run build  # 自动生成配色、构建网站、检查公开产物
 npm test       # 配色与独立导出测试
 ```
 
-`/projects/cinderfolio/preview/`（Cinderfolio-Rspress）提供深色、浅色、品牌色三个选择栏；“默认”只重置对应颜色，彩虹圆轮使用浏览器原生拾色器。选择栏与导航的开关通过 Rspress `ThemeContext` 同步控制亮暗，调色跨页面保留，刷新后重置；保存默认方案时修改 `palette.mjs`。
+Rspress、Pele、Shiki 三个预览页面共用同一调色板，提供深色、浅色、品牌色三个紧凑选择栏；“默认”只重置对应颜色，彩虹圆轮使用浏览器原生拾色器。亮暗切换与下载按钮放在同一操作区，宽度不足时自动换行；调色板随页面正常滚动。选择栏与导航的开关通过 Rspress `ThemeContext` 同步控制亮暗，调色跨页面保留，刷新后重置；保存默认方案时修改 `palette.mjs`。
 
 深色栏复用 `g15` 浅灰底，浅色栏复用 `g1` 深灰底；底色随端点调色更新，亮暗切换不反转。页面以 `g0…g16`、`darker / dark / brand / light / lighter` 标注色阶，`bg` 标记当前背景；混色比例与明度偏移直接显示在色块下。
 
+Pele 页使用四个 `PageTab` 按框线结构、分类实底、透明叠色和强调状态分组，类内用 `Tabs` 切换 32 种图表，每种保留一张精简样例。显示职责默认折叠；饼图覆盖八色，甘特图覆盖普通、进行中、完成和关键任务。
+
 - Cinderfolio-Rspress 页下载 `cf-rspress.css`：当前参数的完整 Rspress 亮暗样式。
 - Pele 页下载 `cf-pele.css`：当前参数的独立 SVG 样式。
+- Shiki 页下载 `cf-shiki-light.json`、`cf-shiki-dark.json`：当前参数的独立亮暗主题。
 - `dist/` 与 `/cinderfolio/` 下的静态文件始终对应源码中的默认方案。
 
 ```html
@@ -49,9 +52,10 @@ const rspressCss = createRspressCss(input);
 ## 文件职责
 
 ```text
-palette.mjs       # 唯一配色源：种子、色阶、职责、亮暗镜像、语法角色
+palette.mjs       # 配色种子、固定色阶、网页职责与亮暗镜像
 oklch.mjs         # 品牌色衍生八色、sRGB 色域处理、色觉模拟与有限校正
 pele.mjs          # Pele 的 18 个颜色职责与实底文字计算
+shiki.mjs         # Shiki 的六个阅读层级、通用 scope、变量主题与 HEX 主题
 css.mjs           # 通用变量与独立 Pele CSS；兼容 Node.js / 浏览器
 rspress.mjs       # Rspress 职责映射与完整 CSS 导出，不包含 Pele 规则
 build.mjs         # 生成器、对比度记录与产物一致性检查
@@ -59,12 +63,47 @@ README.md         # 开发与使用说明
 
 dist/             # 自动生成，已忽略，不手改
   colors.css      # 通用 --cf-* 变量，data-cinderfolio 控制亮暗
-  colors.json     # HEX、规则、语法角色、Pele 配色与对比度记录
+  colors.json     # HEX、规则、Pele / Shiki 配色与对比度记录
   cf-pele.css     # 自包含 Pele 主题
   cf-rspress.css  # 自包含 Rspress 主题，跟随 html.rp-dark
+  cf-shiki-light.json # 独立 Shiki 亮色主题，具体 HEX
+  cf-shiki-dark.json  # 独立 Shiki 暗色主题，具体 HEX
 ```
 
-网站由 `theme/index.tsx` 分别加载两个适配文件，通过 Layout 中的 `CinderfolioProvider` 保持调色状态，并用原生 `useHead` 更新整站颜色变量。`CinderfolioPreview.tsx` 展示选择栏、职责与色阶；MDX 单独放置 `CinderfolioDownload`，使用同一生成接口导出当前参数。图表在 Pele 页查看。
+网站由 `theme/index.tsx` 加载两个 CSS 适配文件，`rspress.config.ts` 加载 Shiki 变量主题。Layout 中的 `CinderfolioProvider` 保持调色状态，通过原生 `useHead` 更新整站色阶变量；Shiki 语法颜色直接引用这些变量。`CinderfolioPreview.tsx` 展示选择栏、职责与色阶；MDX 单独放置 `CinderfolioDownload`，使用同一生成接口导出当前参数。
+
+## Shiki 主题
+
+`shiki.mjs` 按六个阅读层级组织通用 scope；加上 Diff 删除字形，共导出七组 `tokenColors`。背景单独配置，页面、实时主题与两份独立 JSON 共用同一来源。
+
+```js
+// 亮色 / 暗色；灰阶镜像，品牌色复用现有五档。
+navigation = 'darker / light · 粗体'; // 关键字、声明、预处理、标题与标签
+execution  = 'g0 / g16 · 粗体';      // 函数、变量、运算与结构边界
+comment    = 'g0 / g16 · 斜体';      // 注释与强调文本
+content    = 'g0 / g16 · 常规';      // 字符串、数字与正文
+auxiliary  = 'g3 / g13 · 常规';      // 转义、格式与差异标题
+structure  = 'g6 / g10 · 常规';      // 类型、分隔符与引用
+// Diff：新增复用 execution，修改复用 navigation，删除使用 g6 / g10 + 删除线。
+```
+
+```js
+import { createShikiTheme } from './shiki.mjs';
+
+// 可以直接传给 Shiki，或序列化为独立 JSON；不含 CSS 变量。
+const theme = createShikiTheme(input, 'light');
+
+// 网站构建时使用变量主题；调色只更新 --cf-g* / --cf-accent-*，无需重新分词。
+const liveTheme = createShikiTheme(input, 'light', { variables: true });
+```
+
+括号与结构边界统一匹配 `meta.brace`、`punctuation.bracket(s)`、`punctuation.section`、`punctuation.definition` 等通用标记，覆盖调用、定义、分组、数组、捕获、属性及代码块。Python 定义块的冒号也随结构边界加粗；成员、导入和类型路径的连接符统一强调。引号、排版符号、列表标记由更具体的规则归回次级灰色，字符串与注释中的普通括号保持所属文字的样式。
+
+预处理指令复用关键字样式，`#include / #define / #if` 连同 `#` 一起使用品牌色粗体。普通类型保持灰阶，因此只为缺少通用声明子类的 JS、TS、Rust 声明和 Java `var` 保留四条语言后缀规则；其余规则按通用 scope 或上下文匹配。字符串前缀通过 `string storage.type.string` 匹配，避免影响 Go 的 `string` 类型。
+
+新增语言先复用现有主题，检查实际 scope 后再决定是否补充。所有规则都在 JSON 内，网页不额外解析或按字符改色；例如 Mermaid 将图类型关键字、括号和连线共用 `keyword.control.mermaid`，它们仍一起使用导航色。`.tex` 示例使用 `latex` 围栏，基础 `tex` 语法也可复用这套主题。
+
+代码与标题底色沿用画布端点：亮色 `g16`、暗色 `g0`。默认中性语法文字在代码底色上均通过 `4.5:1` 检查。亮色品牌字色 `darker` 对 `g16` 约为 `3.75:1`，只记录对比度，不改变已确认色阶。独立导出仍只需要 Node.js 内置模块；加载与语法验证由网站现有的 Shiki 完成。
 
 ## Pele 配色
 
@@ -114,4 +153,4 @@ controlSelectedBackground = accent;             // 控件选中实底
 
 生成器中止未通过的必要中性文字、控件边界与选中文字对比度检查。品牌实底与邻近背景的对比度单独记录，不改变已确认色阶；默认橙色与浅色画布约 `2.68:1`，与选中文字约 `6.68:1`。默认亮色链接在画布上约 `3.06:1`，在淡橙选区上约 `2.38:1`，不宣称整套方案全部达到 AA。
 
-Shiki 主题和亮暗独立主题色尚未接入；`syntaxRoles` 保留后续语法契约，网页语法 token 继续使用现有主题。
+亮暗独立品牌色尚未接入。
