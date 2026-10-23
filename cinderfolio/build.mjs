@@ -6,6 +6,7 @@ import { parseArgs } from 'node:util';
 import { seeds, recipes, grayDivisions, createGrayScale, accentSteps, createAccentScale, createPalette, contrast } from './palette.mjs';
 import { createColorCss, createPeleCss } from './css.mjs';
 import { createRspressCss } from './rspress.mjs';
+import { createMarpCss } from './marp.mjs';
 import { peleRoles, createPelePalette } from './pele.mjs';
 import { seriesRecipe } from './oklch.mjs';
 import { shikiRoles, createShikiPalette, createShikiTheme } from './shiki.mjs';
@@ -92,6 +93,7 @@ const artifacts = {
   'cf-pele.css': `${header}\n${createPeleCss()}`,
   // 原生主题选择器只存在于 Rspress 产物；Pele 与通用 CSS 不知道 rp-dark。
   'cf-rspress.css': `${header}\n${createRspressCss()}`,
+  'cf-marp.css': `${header}\n${createMarpCss()}`,
   'cf-shiki-light.json': `${JSON.stringify(shikiThemes.light, null, 2)}\n`,
   'cf-shiki-dark.json': `${JSON.stringify(shikiThemes.dark, null, 2)}\n`,
 };
