@@ -1,6 +1,7 @@
 import { render } from 'pele';
 import { bundledLanguagesInfo, createHighlighter } from 'shiki';
 import { createShikiTheme } from '../cinderfolio/shiki.mjs';
+import { marpFonts } from '../cinderfolio/marp.mjs';
 import { vueLanguages } from '../theme/shiki-languages.mjs';
 
 export default {
@@ -34,6 +35,8 @@ export default {
       const { svg } = render(token.content, {
         // token 的行号在一份文档内唯一，多次构建也稳定；Pele 同步处理 ID 与引用。
         idPrefix: `cf-marp-${token.map[0]}`,
+        fontFamily: marpFonts.text,
+        fontFamilyMono: marpFonts.code,
         fontSize: 24,
         maxWidth: 1120,
         autoDirection: false,

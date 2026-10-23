@@ -1,10 +1,11 @@
 import { before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { Marp } from '@marp-team/marp-core';
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
-import { createMarpCss, marpThemeStorageKey, marpThemeVariables } from '../cinderfolio/marp.mjs';
+import { createMarpCss, marpFonts, marpThemeStorageKey, marpThemeVariables } from '../cinderfolio/marp.mjs';
 import { createPeleTheme } from '../cinderfolio/pele.mjs';
 import { createShikiTheme } from '../cinderfolio/shiki.mjs';
 import config from '../scripts/marp.config.mjs';
@@ -42,6 +43,11 @@ test('正式引擎编译四页示例，保留双图、Shiki 高亮、代码缩�
   assert.match(result.css, /--cf-accent-lighter:\s*#fcaf79/);
   assert.match(result.html, /data-marpit-svg/);
   assert.match(result.css, /--shiki-light-font-weight/);
+  assert.ok(result.css.includes(marpFonts.text));
+  assert.ok(result.css.includes(marpFonts.code));
+  const diagrams = elements(tree, node => node.tagName === 'svg' && node.properties?.className?.includes('pele'));
+  assert.ok(diagrams.every(svg => svg.properties.style.includes(marpFonts.text)
+    && svg.properties.style.includes(marpFonts.code)));
   for (const mode of ['light', 'dark']) {
     const { colors, onFill } = createPeleTheme(undefined, mode);
     for (const [key, value] of Object.entries(colors)) assert.ok(css.includes(`--pele-${key}: ${value};`));
@@ -50,6 +56,22 @@ test('正式引擎编译四页示例，保留双图、Shiki 高亮、代码缩�
   // 当前亮暗主题共用字形，CSS 只需读取一套字形变量；颜色仍分别计算。
   const styles = mode => createShikiTheme(undefined, mode).tokenColors.map(rule => rule.settings.fontStyle);
   assert.deepEqual(styles('light'), styles('dark'));
+});
+
+test('Marp 本地字库与来源记录一致，样式仅引用随包 WOFF2', async () => {
+  const directory = new URL('../cinderfolio/fonts/marp/', import.meta.url);
+  const css = await fs.readFile(new URL('font.css', directory), 'utf8');
+  const { fonts } = JSON.parse(await fs.readFile(new URL('SOURCE.json', directory), 'utf8'));
+  assert.doesNotMatch(css, /https?:|local\(/);
+  for (const font of fonts) {
+    const bytes = await fs.readFile(new URL(font.file, directory));
+    assert.equal(bytes.subarray(0, 4).toString(), 'wOF2', font.file);
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), font.sha256, font.file);
+    assert.ok(css.includes(`url("./${font.file}")`), font.file);
+  }
+  for (const license of ['NotoSansSC-OFL.txt', 'Inter-OFL.txt', 'SarasaMonoSC-OFL.txt']) {
+    assert.match(await fs.readFile(new URL(license, directory), 'utf8'), /SIL OPEN FONT LICENSE|SIL Open Font License/);
+  }
 });
 
 test('重复图表的真实 ID 唯一、引用归属正确，多次渲染输出稳定', () => {

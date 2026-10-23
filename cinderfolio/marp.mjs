@@ -4,6 +4,11 @@ import { themeVariables, createPeleAdapterCss } from './css.mjs';
 import { createPeleTheme } from './pele.mjs';
 
 export const marpThemeStorageKey = 'cinderfolio-marp-theme';
+// 字体文件只由 Marp 文档加载，不影响 Rspress 网页；图表与正文共用同一字体栈。
+export const marpFonts = {
+  text: '"Inter", "Noto Sans SC", sans-serif',
+  code: '"Sarasa Mono SC", monospace',
+};
 
 /** 静态 CSS 与网页实时同步共用全部变量，图表也随调色一起更新。 */
 export function marpThemeVariables(input = seeds, mode = 'light') {
@@ -48,7 +53,7 @@ section {
   padding: 64px 80px;
   color: var(--cf-foreground);
   background: var(--cf-background);
-  font: 32px/1.5 system-ui, -apple-system, "Segoe UI", "Noto Sans CJK SC", sans-serif;
+  font: 32px/1.5 ${marpFonts.text};
   overflow-wrap: anywhere;
 }
 
@@ -68,7 +73,7 @@ blockquote { padding: 0.4em 0.75em; border-left: 4px solid var(--cf-accent-brand
 blockquote > :last-child { margin-bottom: 0; }
 hr { width: 100%; border: 0; border-top: 2px solid var(--cf-border-strong); }
 img, svg { max-width: 100%; max-height: 480px; object-fit: contain; }
-code { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 0.85em; }
+code { font-family: ${marpFonts.code}; font-size: 0.85em; }
 :not(pre) > code { padding: 0.1em 0.25em; background: var(--cf-surface); border-radius: 0.15em; }
 pre { padding: 0.75em 1em; border: 1px solid var(--cf-border); border-radius: 0.25em; background: var(--cf-background); line-height: 1.4; overflow: visible; }
 pre code { display: block; }
@@ -79,7 +84,7 @@ pre.shiki span {
   font-style: var(--shiki-light-font-style, normal);
   text-decoration: var(--shiki-light-text-decoration, none);
 }
-figure.cinderfolio-pele { margin: 0 0 0.75em; }
+figure.cinderfolio-pele { margin: 0 0 0.75em; --pele-font: ${marpFonts.text}; --pele-font-mono: ${marpFonts.code}; }
 figure.cinderfolio-pele > svg { display: block; width: 100%; max-height: 360px; margin-inline: auto; }
 table { border-collapse: collapse; font-size: 0.85em; }
 th, td { padding: 0.4em 0.75em; border-bottom: 1px solid var(--cf-border-strong); text-align: left; }
