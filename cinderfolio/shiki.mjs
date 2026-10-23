@@ -18,11 +18,14 @@ export const shikiRoles = {
       'keyword.operator.ternary', 'keyword.operator.arrow.cs',
       'keyword.control punctuation.definition.function', 'keyword.control punctuation.definition.keyword',
       'storage.type.function punctuation.definition.function',
+      // 原生 Vue 的 HTML 回退仍保留属性名上下文；无需注入语法即可识别流程指令。
+      ...['v-if', 'v-else-if', 'v-else', 'v-for'].map(name =>
+        `text.html.vue meta.attribute.unrecognized.${name} entity.other.attribute-name`),
       'markup.changed', 'punctuation.definition.changed',
     ],
   },
   execution: {
-    label: '阅读主体', gray: 0, fontStyle: 'bold', usage: '标识符、表达式、规则、状态与标题',
+    label: '阅读主体', gray: 0, fontStyle: 'bold', usage: '标识符、表达式、模板属性、规则与标题',
     scope: [
       // source 兜底覆盖未细分的代码标识符；类型、字面量和标点由更具体的规则接管。
       'source', 'variable', 'constant.other.caps', 'entity.name.function', 'support.function',
@@ -56,6 +59,10 @@ export const shikiRoles = {
       // 动态指令与事件复用相同层级。
       'meta.attribute.directive entity.other.attribute-name',
       'meta.attribute.event-handler entity.other.attribute-name', 'punctuation.attribute-shorthand.event',
+      // Vue 的 HTML 回退将动态属性与自定义属性统一标为 unrecognized。
+      // 名称和取值整体强调；限定模板 HTML，避免提升 script setup / style scoped。
+      'text.html.vue text.html.derivative meta.attribute.unrecognized entity.other.attribute-name',
+      'text.html.vue text.html.derivative meta.attribute.unrecognized string.quoted',
       'meta.directive keyword.control', 'meta.directive entity.name.type',
       'meta.directive.on punctuation.definition.keyword',
       'meta.special entity.name.type',

@@ -4,12 +4,11 @@ import { createHighlighter } from 'shiki';
 import { seeds } from '../cinderfolio/palette.mjs';
 import { themeVariables } from '../cinderfolio/css.mjs';
 import { shikiRoles, shikiDisplayRoles, createShikiPalette, createShikiTheme } from '../cinderfolio/shiki.mjs';
-import { vueLanguages } from '../theme/shiki-languages.mjs';
 
 let highlighter;
 before(async () => {
   highlighter = await createHighlighter({
-    langs: [...vueLanguages, 'c', 'cpp', 'csharp', 'python', 'javascript', 'typescript', 'rust', 'go', 'java', 'bash', 'powershell', 'json', 'css', 'scss', 'markdown', 'html', 'xml', 'tex', 'latex', 'ruby', 'kotlin', 'swift', 'lua', 'yaml', 'toml', 'sql', 'cmake', 'dockerfile', 'make', 'mermaid', 'diff', 'regexp', 'jsx', 'tsx', 'svelte', 'twig', 'liquid'],
+    langs: ['vue', 'c', 'cpp', 'csharp', 'python', 'javascript', 'typescript', 'rust', 'go', 'java', 'bash', 'powershell', 'json', 'css', 'scss', 'markdown', 'html', 'xml', 'tex', 'latex', 'ruby', 'kotlin', 'swift', 'lua', 'yaml', 'toml', 'sql', 'cmake', 'dockerfile', 'make', 'mermaid', 'diff', 'regexp', 'jsx', 'tsx', 'svelte', 'twig', 'liquid'],
     themes: ['light', 'dark'].map(mode => createShikiTheme(seeds, mode)),
   });
 });
@@ -528,10 +527,10 @@ test('模板语言以流程指令导航，组件属性与数据加粗，标签�
       ['setup', 'auxiliary', 0], ['lang=', 'auxiliary', 0],
       ['ul ', 'content', 0], ['button ', 'content', 0], ['v-if', 'navigation', 2],
       ['v-for', 'navigation', 2], ['v-else-if', 'navigation', 2], ['v-else>', 'navigation', 2],
-      ['pending.length', 'execution', 2], ['task in', 'execution', 2], ['in pending', 'navigation', 2],
+      ['pending.length', 'execution', 2], ['task in', 'execution', 2], ['in pending', 'execution', 2],
       ['@click', 'execution', 2], ['click', 'execution', 2], ['complete', 'execution', 2],
-      ['task.title', 'execution', 2], ['{{', 'execution', 2], [':key', 'structure', 0],
-      // Vue 的动态属性名与事件名共用 scope，统一归数据职责。
+      // 原生 HTML 回退未细分插值正文，保持常规端点色；属性中的表达式整体强调。
+      ['task.title', 'content', 0], ['{{', 'content', 0], [':key', 'execution', 2],
       ['key=', 'execution', 2], ['class=', 'auxiliary', 0], ['"pending', 'structure', 0], ['完成', 'content', 0],
     ]],
     ['svelte', `<section>
@@ -572,17 +571,51 @@ test('模板语言以流程指令导航，组件属性与数据加粗，标签�
   }
 });
 
-test('懒加载其他语言后，Vue 指令与插值仍使用上游的专用语法', async () => {
-  const h = await createHighlighter({ langs: vueLanguages, themes: [createShikiTheme()] });
+test('独立 JSON 配合原生 Vue 保留阅读层级，懒加载其他语言后效果一致', async () => {
+  const themes = ['light', 'dark'].map(mode => JSON.parse(JSON.stringify(createShikiTheme(seeds, mode))));
+  const h = await createHighlighter({ langs: ['vue'], themes });
   try {
-    const code = '<template>\n<p v-if="ready">{{ title }}</p>\n</template>';
+    const code = `<script setup lang="ts">const ready = true;</script>
+<template>
+  <ul v-if="ready" class="tasks" title="Task list" data-id="list">
+    <li v-for="task in pending" :key="task.id">
+      <button @click.stop="complete(task)" v-bind:disabled="task.done">{{ task.title }}</button>
+    </li>
+  </ul>
+  <p v-else-if="loading">读取中</p><p v-else>完成</p>
+  <input v-model="query" custom-prop="label" />
+  <Panel :active="ready" @change="update" />
+</template>
+<style scoped>.tasks { display: grid; }</style>`;
     for (const extra of [null, 'jsx', 'tsx', 'markdown']) {
       if (extra) await h.loadLanguage(extra);
-      const pieces = h.codeToTokens(code, { lang: 'vue', theme: 'cinderfolio-light', includeExplanation: true })
-        .tokens.flat().flatMap(token => token.explanation ?? []);
-      const scopes = text => pieces.find(piece => piece.content === text)?.scopes.map(scope => scope.scopeName) ?? [];
-      assert.ok(scopes('v-if').includes('keyword.control.conditional.vue'), String(extra));
-      assert.ok(scopes('title').includes('variable.other.readwrite.ts'), String(extra));
+      for (const mode of ['light', 'dark']) {
+        const palette = createShikiPalette(seeds, mode);
+        const tokens = h.codeToTokens(code, { lang: 'vue', theme: `cinderfolio-${mode}` }).tokens.flat();
+        for (const [text, role, style] of [
+          ['v-if', 'navigation', 2], ['v-for', 'navigation', 2],
+          ['v-else-if', 'navigation', 2], ['v-else>', 'navigation', 2],
+          ['task in pending', 'execution', 2], [':key', 'execution', 2], ['task.id', 'execution', 2],
+          ['@click.stop', 'execution', 2], ['complete(task)', 'execution', 2],
+          ['v-bind:disabled', 'execution', 2], ['task.done', 'execution', 2],
+          ['v-model', 'execution', 2], ['query', 'execution', 2],
+          ['custom-prop', 'execution', 2], ['label', 'execution', 2],
+          ['active=', 'execution', 2], ['@change', 'execution', 2], ['update', 'execution', 2],
+          ['ul ', 'content', 0], ['Panel ', 'content', 0],
+          ['{{ task.title }}', 'content', 0], ['完成', 'content', 0],
+          ['class=', 'auxiliary', 0], ['title=', 'auxiliary', 0], ['data-id=', 'auxiliary', 0],
+          ['Task list', 'content', 0], ['setup', 'auxiliary', 0], ['lang=', 'auxiliary', 0],
+          ['scoped', 'auxiliary', 0], ['const', 'auxiliary', 0], ['true', 'content', 0],
+          ['"ready', 'structure', 0], ['="ready', 'structure', 0], ['<ul', 'auxiliary', 0],
+        ]) {
+          const index = code.indexOf(text);
+          assert.ok(index >= 0, text);
+          const token = tokens.find(t => t.offset <= index && t.offset + t.content.length > index);
+          const label = `${mode}.${extra ?? 'vue-only'}.${text}`;
+          assert.equal(token.color.toLowerCase(), palette[role].color, label);
+          assert.equal(token.fontStyle, style, label);
+        }
+      }
     }
   } finally {
     h.dispose();
