@@ -216,6 +216,13 @@ html.rp-dark .rp-codeblock .shiki span {
   background: var(--rp-c-bg);
 }
 
+/* 与官方代码块一致：单图面板共用 Tab 外框，正文中的图表保留独立边框。 */
+.rp-tabs__content__item > .sj-mermaid:only-child {
+  margin: 0 -1rem;
+  border: 0;
+  border-radius: 0;
+}
+
 .sj-mermaid__diagram {
   overflow-x: auto;
 }
@@ -226,29 +233,27 @@ html.rp-dark .rp-codeblock .shiki span {
 }
 
 .sj-mermaid__source {
-  margin-top: 0.75rem;
+  margin: 0.75rem -1rem -1rem;
+  border-top: 1px solid var(--rp-c-divider-light);
 }
 
-.sj-mermaid__source .rp-callout--details {
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-}
-
-.sj-mermaid__source .rp-callout__title {
-  margin: 0;
+.sj-mermaid__source > summary {
+  padding: 0.625rem 1rem;
+  color: var(--rp-c-text-2);
   font-size: 0.875rem;
+  cursor: pointer;
 }
 
-.sj-mermaid__source .rp-callout__title::before {
-  left: -0.75rem;
+.sj-mermaid__source > summary:hover {
+  color: var(--rp-c-text-1);
 }
 
-.sj-mermaid__source .rp-callout__content {
-  cursor: auto;
-}
-
+/* 源码与图表共用画布和外框，代码功能仍由官方 CodeBlock 提供。 */
 .sj-mermaid__source .rp-codeblock {
-  margin: 0.75rem 0 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* 弹窗仍在原图的 DOM 下，直接继承 Pele 和网站的主题变量。 */
@@ -272,7 +277,7 @@ html.rp-dark .rp-codeblock .shiki span {
 }
 
 .sj-mermaid__icon-button:focus-visible,
-.sj-mermaid__source .rp-callout__title:focus-visible,
+.sj-mermaid__source > summary:focus-visible,
 .sj-mermaid__canvas button:focus-visible,
 .sj-mermaid__canvas > svg:focus-visible {
   outline: 2px solid var(--rp-c-brand);

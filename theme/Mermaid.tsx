@@ -1,5 +1,4 @@
 import { Children, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Callout } from '@rspress/core/theme-original';
 import { enhanceMermaid } from './mermaid_lifecycle.mjs';
 
 function MermaidDialog({ source, onClose }: { source: string; onClose: () => void }) {
@@ -94,9 +93,10 @@ export default function Mermaid({ source, children }: { source: string; children
         </svg>
       </button>
       {diagram}
-      <div className="sj-mermaid__source">
-        <Callout type="details" title="查看 Mermaid 源码">{code}</Callout>
-      </div>
+      <details className="sj-mermaid__source rp-not-doc">
+        <summary>查看 Mermaid 源码</summary>
+        {code}
+      </details>
       {expanded && <MermaidDialog source={source} onClose={() => setExpanded(false)} />}
     </figure>
   );
