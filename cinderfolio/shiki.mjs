@@ -31,10 +31,9 @@ export const shikiRoles = {
       'meta.embedded', 'meta.interpolation', 'meta.template.expression', 'keyword.operator',
       'punctuation.accessor', 'punctuation.separator.dot-access', 'punctuation.separator.pointer-access',
       'punctuation.separator.period', 'punctuation.other.period', 'punctuation.separator.namespace',
-      // 括号与定义边界统一强调；不再区分调用、定义、分组、数组和捕获。
+      // 圆、方、花括号与定义边界统一强调；尖括号由 structure 接管。
       'meta.brace', 'punctuation.bracket', 'punctuation.brackets', 'punctuation.parenthesis',
       'punctuation.group', 'punctuation.section', 'punctuation.definition', 'punctuation.math',
-      'string.quoted.other.lt-gt punctuation.definition.string',
       // f-string 占位边界使用格式标记，数学命令使用常量标记。
       'meta.fstring constant.character.format.placeholder', 'constant.other.general.math', 'constant.character.math',
       'markup.bold', 'markup.inserted',
@@ -58,11 +57,14 @@ export const shikiRoles = {
     ],
   },
   structure: {
-    label: '结构细节', gray: 6, usage: '类型、分隔符与引用',
+    label: '结构细节', gray: 6, usage: '类型、尖括号、分隔符与引用',
     scope: [
       'entity.name.type', 'entity.name.class', 'entity.name.namespace', 'entity.name.scope-resolution',
       'support.type', 'support.class', 'storage.type', 'storage.modifier', 'storage.type.template.argument',
       'keyword.operator.type', 'keyword.operator.key-value', 'punctuation',
+      // 只匹配语法识别的尖括号；比较、移位等 keyword.operator 仍由 execution 强调。
+      'punctuation.section.angle-brackets', 'punctuation.bracket.angle', 'punctuation.brackets.angle',
+      'punctuation.definition.typeparameters', 'punctuation.definition.tag',
       // 引号、排版符号和列表标记保持次级；其余定义边界使用 execution。
       'punctuation.definition.string', 'punctuation.definition.bold', 'punctuation.definition.italic',
       'punctuation.definition.raw', 'punctuation.definition.quote', 'punctuation.definition.table',

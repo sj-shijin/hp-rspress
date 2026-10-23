@@ -72,7 +72,7 @@ test('C++ 命名空间与类型同层，函数和成员保持粗体，字面量�
   for (const mode of ['light', 'dark']) {
     const palette = createShikiPalette(seeds, mode);
     for (const [text, role, style] of [
-      ['#include', 'navigation', 2], ['#define', 'navigation', 2], ['<span', 'execution', 2], ['>', 'execution', 2], ['span', 'content', 0], ['SCALE', 'execution', 2],
+      ['#include', 'navigation', 2], ['#define', 'navigation', 2], ['<span', 'structure', 0], ['>', 'structure', 0], ['span', 'content', 0], ['SCALE', 'execution', 2],
       ['//', 'comment', 1], ['explanation', 'comment', 1], ['struct', 'navigation', 2],
       ['app {}', 'structure', 0], ['math =', 'structure', 0], ['app;', 'structure', 0], ['std;', 'structure', 0],
       ['std::floating_point', 'structure', 0], ['std::cout', 'structure', 0], ['cout', 'execution', 2],
@@ -233,6 +233,40 @@ test('通用结构规则不把字符串、注释和排版标记变成粗体', ()
   }
 });
 
+test('模板和泛型尖括号使用类型灰阶，比较与移位运算符保留端点粗体', () => {
+  const types = [
+    ['cpp', '#include <vector>\ntemplate <typename T>\nusing Grid = std::vector<std::vector<T>>;'],
+    ['typescript', 'function first<T>(items: Array<T>): T { return items[0]; }'],
+    ['rust', 'struct Box<T> { items: Vec<Vec<T>> }'],
+    ['java', 'class Box<T> { List<List<T>> items; }'],
+    ['swift', 'struct Box<T> { var items: Array<Array<T>> }'],
+    ['html', '<article><span>Title</span></article>'],
+  ];
+  const operators = [
+    ['cpp', 'bool compare(int a, int b) { return a < b && a <= b && b > a && b >= a; }\nint shift(int x) { return (x << 1) >> 1; }'],
+    ...['javascript', 'typescript'].map(lang => [lang, 'const ok = a < b && a <= b && b > a && b >= a; const shift = (x << 1) >> 1;']),
+    ['rust', 'let ok = a < b && a <= b && b > a && b >= a; let shift = (x << 1) >> 1;'],
+    ['java', 'class A { boolean ok = a < b && a <= b && b > a && b >= a; int shift = (x << 1) >> 1; }'],
+    ['swift', 'let ok = a < b && a <= b && b > a && b >= a\nlet shift = (x << 1) >> 1'],
+    ['python', 'ok = a < b and a <= b and b > a and b >= a\nshift = (x << 1) >> 1'],
+    ['go', 'package main\nvar ok = a < b && a <= b && b > a && b >= a\nvar shift = (x << 1) >> 1'],
+    ['kotlin', 'val ok = a < b && a <= b && b > a && b >= a'],
+  ];
+  for (const mode of ['light', 'dark']) {
+    const palette = createShikiPalette(seeds, mode);
+    for (const [samples, role, style] of [[types, 'structure', 0], [operators, 'execution', 2]]) {
+      for (const [lang, code] of samples) {
+        const tokens = highlighter.codeToTokens(code, { lang, theme: `cinderfolio-${mode}` }).tokens.flat();
+        for (const match of code.matchAll(/[<>]/g)) {
+          const token = tokens.find(t => t.offset <= match.index && t.offset + t.content.length > match.index);
+          assert.equal(token.color.toLowerCase(), palette[role].color, `${mode}.${lang}.${match.index}`);
+          assert.equal(token.fontStyle, style, `${mode}.${lang}.${match.index}`);
+        }
+      }
+    }
+  }
+});
+
 test('Python 保留注释斜体与数据粗体，插值边界加粗，格式和字面量保持常规', () => {
   const code = 'MAX_COUNT = 10\n# explanation\n@dataclass\nclass Vector:\n    def describe(self, value: float) -> str:\n        """A docstring."""\n        return f"result: {round(value) + 1:.3f}\\n" if value is not None else True';
   for (const mode of ['light', 'dark']) {
@@ -333,7 +367,7 @@ test('HTML 用标签导航结构，属性加粗，正文、实体与注释保留
   for (const mode of ['light', 'dark']) {
     const palette = createShikiPalette(seeds, mode);
     for (const [text, role, style] of [
-      ['<!--', 'comment', 1], ['explanation', 'comment', 1], ['<article', 'execution', 2],
+      ['<!--', 'comment', 1], ['explanation', 'comment', 1], ['<article', 'structure', 0],
       ['article', 'navigation', 2], ['h1', 'navigation', 2], ['class', 'execution', 2], ['aria-label', 'execution', 2],
       ['card', 'content', 0], ['Example', 'content', 0], ['Title', 'content', 0],
       ['&amp;', 'auxiliary', 0], ['amp;', 'auxiliary', 0], ['; text', 'auxiliary', 0],

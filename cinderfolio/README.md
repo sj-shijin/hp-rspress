@@ -83,7 +83,7 @@ execution  = 'g0 / g16 · 粗体';      // 函数、变量、运算与结构边�
 comment    = 'g0 / g16 · 斜体';      // 注释与强调文本
 content    = 'g0 / g16 · 常规';      // 字符串、数字与正文
 auxiliary  = 'g3 / g13 · 常规';      // 转义、格式与差异标题
-structure  = 'g6 / g10 · 常规';      // 类型、分隔符与引用
+structure  = 'g6 / g10 · 常规';      // 类型、尖括号、分隔符与引用
 // Diff：新增复用 execution，修改复用 navigation，删除使用 g6 / g10 + 删除线。
 ```
 
@@ -97,7 +97,7 @@ const theme = createShikiTheme(input, 'light');
 const liveTheme = createShikiTheme(input, 'light', { variables: true });
 ```
 
-括号与结构边界统一匹配 `meta.brace`、`punctuation.bracket(s)`、`punctuation.section`、`punctuation.definition` 等通用标记，覆盖调用、定义、分组、数组、捕获、属性及代码块。Python 定义块的冒号也随结构边界加粗；成员、导入和类型路径的连接符统一强调。引号、排版符号、列表标记由更具体的规则归回次级灰色，字符串与注释中的普通括号保持所属文字的样式。
+圆、方、花括号与结构边界统一匹配 `meta.brace`、`punctuation.bracket(s)`、`punctuation.section`、`punctuation.definition` 等通用标记，覆盖调用、定义、分组、数组、捕获、属性及代码块。Python 定义块的冒号也随结构边界加粗；成员、导入和类型路径的连接符统一强调。泛型、模板、包含路径与 HTML 标签的尖括号归入类型灰阶，使用常规字重；比较与移位运算符继续使用端点粗体。Kotlin 当前语法未单独标记泛型尖括号，仍沿用默认样式。引号、排版符号、列表标记由更具体的规则归回次级灰色，字符串与注释中的普通括号保持所属文字的样式。
 
 预处理指令复用关键字样式，`#include / #define / #if` 连同 `#` 一起使用品牌色粗体。普通类型保持灰阶，因此只为缺少通用声明子类的 JS、TS、Rust 声明和 Java `var` 保留四条语言后缀规则；其余规则按通用 scope 或上下文匹配。字符串前缀通过 `string storage.type.string` 匹配，避免影响 Go 的 `string` 类型。
 
