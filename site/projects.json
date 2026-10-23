@@ -1,6 +1,6 @@
 [
   {
     "id": "cinderfolio",
-    "pages": ["index", "preview", "pele", "shiki"]
+    "pages": ["index", "preview", "pele", "shiki", "marp"]
   }
 ]

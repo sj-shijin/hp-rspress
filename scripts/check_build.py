@@ -224,8 +224,21 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         require(not parsed.query and not parsed.fragment, 'sitemap 不应包含查询参数或章节锚点')
         sitemap_routes.add(parsed.path)
     public_routes = set()
+    # CLI 生成的独立演示是 iframe 资源，正文入口是 Cinderfolio-Marp 页面。
+    presentation = 'cinderfolio/marp/example.html'
+    has_marp = any(page['url'] == '/projects/cinderfolio/marp/' for page in site_pages)
+    if has_marp:
+        deck = Page(output / presentation)
+        require(deck.has('figure', **{'class': 'cinderfolio-pele'})
+                and deck.has('pre', **{'class': 'shiki shiki-themes cinderfolio-light cinderfolio-dark'}),
+                'Marp 独立演示缺少 Pele 图表或 Shiki 高亮')
+        require(Page(output / 'projects/cinderfolio/marp/index.html').has(
+                    'iframe', src='/' + presentation),
+                'Marp 页面缺少独立演示 iframe')
     for path in output.rglob('*.html'):
         relative = path.relative_to(output).as_posix()
+        if has_marp and relative == presentation:
+            continue
         route = '/' + relative.removesuffix('index.html')
         if relative != '404.html' and route not in aliases:
             public_routes.add(route)

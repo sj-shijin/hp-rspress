@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { createPeleCss } from '../cinderfolio/css.mjs';
 import { createRspressCss } from '../cinderfolio/rspress.mjs';
+import { createMarpCss } from '../cinderfolio/marp.mjs';
 import { createShikiTheme } from '../cinderfolio/shiki.mjs';
 import { useCinderfolio } from './CinderfolioTheme';
 import './cinderfolio.css';
 
 /** 无 JavaScript 时下载默认文件；交互就绪后下载本次浏览的实时配色。 */
-export default function CinderfolioDownload({ target }: { target: 'rspress' | 'pele' | 'shiki-light' | 'shiki-dark' }) {
+export default function CinderfolioDownload({ target }: { target: 'rspress' | 'pele' | 'marp' | 'shiki-light' | 'shiki-dark' }) {
   const { input } = useCinderfolio();
   const [interactive, setInteractive] = useState(false);
   useEffect(() => { setInteractive(true); }, []);
@@ -14,7 +15,7 @@ export default function CinderfolioDownload({ target }: { target: 'rspress' | 'p
   const filename = `cf-${target}.${isShiki ? 'json' : 'css'}`;
   const content = isShiki
     ? JSON.stringify(createShikiTheme(input, target === 'shiki-light' ? 'light' : 'dark'), null, 2) + '\n'
-    : target === 'pele' ? createPeleCss(input) : createRspressCss(input);
+    : target === 'pele' ? createPeleCss(input) : target === 'marp' ? createMarpCss(input) : createRspressCss(input);
   const mime = isShiki ? 'application/json' : 'text/css';
   const href = interactive ? `data:${mime};charset=utf-8,${encodeURIComponent(content)}` : `/cinderfolio/${filename}`;
   // 保留原生 a 的 download 属性，复用 Rspress 中号按钮的尺寸与圆角。

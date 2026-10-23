@@ -21,7 +21,7 @@ npm run build  # 自动生成配色、构建网站、检查公开产物
 npm test       # 配色与独立导出测试
 ```
 
-Rspress、Pele、Shiki 三个预览页面共用同一调色板，提供深色、浅色、品牌色三个紧凑选择栏；“默认”只重置对应颜色，彩虹圆轮使用浏览器原生拾色器。亮暗切换与下载按钮放在同一操作区，宽度不足时自动换行；调色板随页面正常滚动。选择栏与导航的开关通过 Rspress `ThemeContext` 同步控制亮暗，调色跨页面保留，刷新后重置；保存默认方案时修改 `palette.mjs`。
+Rspress、Pele、Shiki、Marp 四个预览页面共用同一调色板，提供深色、浅色、品牌色三个紧凑选择栏；“默认”只重置对应颜色，彩虹圆轮使用浏览器原生拾色器。亮暗切换与下载按钮放在同一操作区，宽度不足时自动换行；调色板随页面正常滚动。选择栏与导航的开关通过 Rspress `ThemeContext` 同步控制亮暗，调色跨页面保留，刷新后重置；保存默认方案时修改 `palette.mjs`。
 
 深色栏复用 `g15` 浅灰底，浅色栏复用 `g1` 深灰底；底色随端点调色更新，亮暗切换不反转。页面以 `g0…g16`、`darker / dark / brand / light / lighter` 标注色阶，`bg` 标记当前背景；混色比例与明度偏移直接显示在色块下。
 
@@ -30,6 +30,7 @@ Pele 页使用两层原生 `Tabs / Tab`：外层按框线结构、分类实底�
 - Cinderfolio-Rspress 页下载 `cf-rspress.css`：当前参数的完整 Rspress 亮暗样式。
 - Pele 页下载 `cf-pele.css`：当前参数的独立 SVG 样式。
 - Shiki 页下载 `cf-shiki-light.json`、`cf-shiki-dark.json`：当前参数的独立亮暗主题。
+- Marp 页下载 `cf-marp.css`：当前参数的独立 Marp 主题，包含亮暗配色、幻灯片排版及 Pele / Shiki 样式。
 - `dist/` 与 `/cinderfolio/` 下的静态文件始终对应源码中的默认方案。
 
 ```html
@@ -56,6 +57,8 @@ palette.mjs       # 配色种子、固定色阶、网页职责与亮暗镜像
 oklch.mjs         # 品牌色衍生八色、sRGB 色域处理、色觉模拟与有限校正
 pele.mjs          # Pele 的 18 个颜色职责与实底文字计算
 shiki.mjs         # Shiki 的六个阅读层级、通用 scope、变量主题与 HEX 主题
+marp.mjs          # 独立 Marp CSS、Pele 变量与 Shiki 字形，静态和实时同步共用
+examples/marp.md  # 正文、双图与代码示例，包含公开的演讲者备注
 css.mjs           # 通用变量与独立 Pele CSS；兼容 Node.js / 浏览器
 rspress.mjs       # Rspress 职责映射与完整 CSS 导出，不包含 Pele 规则
 build.mjs         # 生成器、对比度记录与产物一致性检查
@@ -68,9 +71,35 @@ dist/             # 自动生成，已忽略，不手改
   cf-rspress.css  # 自包含 Rspress 主题，跟随 html.rp-dark
   cf-shiki-light.json # 独立 Shiki 亮色主题，具体 HEX
   cf-shiki-dark.json  # 独立 Shiki 暗色主题，具体 HEX
+  cf-marp.css         # 独立 Marp 主题，跟随外层或系统亮暗
+  marp/example.html   # Marp CLI 生成的独立 Bespoke 演示
 ```
 
 网站由 `theme/index.tsx` 加载两个 CSS 适配文件，`rspress.config.ts` 加载 Shiki 变量主题。Layout 中的 `CinderfolioProvider` 保持调色状态，通过原生 `useHead` 更新整站色阶变量；Shiki 语法颜色直接引用这些变量。`CinderfolioPreview.tsx` 展示选择栏、职责与色阶；MDX 单独放置 `CinderfolioDownload`，使用同一生成接口导出当前参数。
+
+## Marp 主题与网页嵌入
+
+```sh
+npm run colors # 导出 cf-marp.css；配色导出仍只依赖 Node.js 内置模块
+npm run marp   # 使用已安装的 Marp CLI 生成示例 HTML，不需要浏览器
+```
+
+`npm run dev`、`npm run build` 会依次执行上述步骤。示例源文件是 `examples/marp.md`，页面 `/projects/cinderfolio/marp/` 通过同源 iframe 加载 `/cinderfolio/marp/example.html`。翻页、全屏、概览和演讲者模式沿用 CLI 的 Bespoke 模板；iframe 显式允许全屏，不重做播放器。
+
+`cf-marp.css` 是自包含样式，供 Marp Core / CLI 加载，主题名为 `cinderfolio`。Pele 的 18 个颜色职责、实底文字适配和 Shiki 字形规则也在其中，无需再加载 `cf-pele.css` 或 `colors.css`。亮暗通过 `prefers-color-scheme` 选择，嵌入时可跟随外层的 `color-scheme`。
+
+```sh
+# 在本仓库中转换其他演示，复用相同渲染器。
+npx marp slides.md --config-file scripts/marp.config.mjs --theme-set ./cinderfolio/dist/cf-marp.css -o slides.html
+```
+
+`scripts/marp.config.mjs` 使用 CLI 的异步 `engine` 扩展：`mermaid` 围栏通过 Pele 生成 SVG，其他围栏通过 Shiki 高亮，保留 Marp 的代码自动缩放。Shiki 在构建期加载内置语言，并复用网站的 Vue 语法适配；未知语言按纯文本显示。主题直接调用 `createShikiTheme(..., { variables: true })`，没有第二份配色配置。亮暗字形相同，颜色使用 `light-dark()` 读取现有色阶变量。
+
+每张图以 Markdown 行号生成稳定的 `idPrefix`，Pele 同时处理标题、描述的真实 `id` 和可访问性引用。普通节点的 `data-id` 属于图内数据标记，可以在不同图中重复；不做无差别的字符串替换。编译测试核验重复图表的真实 ID 唯一、引用有效和输出稳定。
+
+渲染扩展需要构建依赖 Marp CLI、Pele 与 Shiki；独立分享 CSS 只提供主题和排版，不会为默认 CLI 自动增加渲染能力。生成的 HTML 已包含 SVG 和高亮代码，浏览时不再加载这两个渲染库。
+
+网站示例额外包含 `scripts/marp_theme_sync.mjs`：`CinderfolioMarp` 将当前配色写入同源本地存储，iframe、演讲者窗口和下一页预览监听更新，只替换变量、不重载 HTML，保留当前页码。备注来自 Markdown 注释，会进入公开 HTML。全屏与弹出演讲者窗口由用户操作触发，窗口同步需要可用的同源本地存储；单独分享 CSS 不需要同步脚本。
 
 ## Shiki 主题
 

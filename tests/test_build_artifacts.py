@@ -157,6 +157,7 @@ class BuildArtifactTests(unittest.TestCase):
             ('knowledge/unapproved/index.html', '<h1>未允许公开</h1>', '网页范围'),
             ('knowledge/unapproved.md', '未允许的下载文件', '文件范围'),
             ('projects/unapproved/index.html', '<h1>未允许项目</h1>', '网页范围'),
+            ('cinderfolio/marp/example.html', '<h1>未登记的演示</h1>', 'sitemap 页面范围'),
             ('projects/raw/unapproved.md', '未允许的项目下载文件', '原始 Markdown'),
             ('llms-full.txt', '遗漏正文', 'llms-full'),
         ]
