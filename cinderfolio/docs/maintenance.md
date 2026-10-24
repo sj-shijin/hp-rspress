@@ -72,12 +72,12 @@ g[i] = mix(paper, ink, i * 100 / 16); // i = 0…16
 accentSteps = { darker: -10, dark: -5, brand: 0, light: 10, lighter: 20 };
 
 selection = mix(accent, background, 25);          // 文字选区，保留原字色
-selectedBackground = mix(accent, background, 15); // 当前导航底色
+selectedBackground = mix(accent, background, 15); // 当前导航与代码高亮行底色
 controlSelectedBackground = accent;             // 控件选中实底
 // 控件选中文字与滑块，从 ink / paper 中选择与选中实底对比更高的一端。
 ```
 
-默认背景三层为亮色 `g16 / g15 / g14`、暗色 `g0 / g1 / g2`。主题色 `brand` 用于交互、焦点与控件选中实底；亮色链接取 `dark`，暗色链接取 `light`。通用 `diagramStroke` 角色保留品牌色 `darker / light`，Pele 的普通描边独立使用上述中性灰。文字选区使用 `color: currentColor`。搜索当前项和亮暗切换按钮复用控件选中职责，默认橙色实底上的文字与滑块均取 `g0`。
+默认背景三层为亮色 `g16 / g15 / g14`、暗色 `g0 / g1 / g2`。主题色 `brand` 用于交互、焦点与控件选中实底；亮色链接取 `dark`，暗色链接取 `light`。通用 `diagramStroke` 角色保留品牌色 `darker / light`，Pele 的普通描边独立使用上述中性灰。文字选区使用 `color: currentColor`。搜索输入框使用控件边界灰，结果当前项保持画布底色，以品牌色边框强调，普通文字与图标取正文端点色，匹配词始终保持品牌色；亮暗切换按钮复用控件选中职责，默认橙色实底上的滑块取 `g0`。
 
 生成器中止未通过的必要中性文字、控件边界与选中文字对比度检查。品牌实底与邻近背景的对比度单独记录，不改变已确认色阶；默认橙色与浅色画布约 `2.68:1`，与选中文字约 `6.68:1`。默认亮色链接在画布上约 `3.06:1`，在淡橙选区上约 `2.38:1`，不宣称整套方案全部达到 AA。
 

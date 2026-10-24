@@ -150,19 +150,29 @@ html .rp-overview-group__grid-item:hover {
   box-shadow: 0 4px 6px var(--cf-shadow-soft);
 }
 
-/* 搜索当前项使用控件选中职责；侧栏当前项使用淡品牌色底。 */
+/* 搜索输入框使用中性边界，结果当前项仅用品牌色边框强调。 */
+html .rp-search-panel__input-form {
+  border-color: var(--cf-control-border);
+}
+
 html .rp-suggest-item .rp-suggest-item__link {
+  border: 1px solid transparent;
   box-shadow: var(--rp-shadow-1);
 }
 
 html .rp-suggest-item--current .rp-suggest-item__link {
-  color: var(--cf-control-selected-foreground);
-  background: var(--cf-control-selected-background);
+  color: var(--cf-foreground);
+  background: var(--cf-background);
+  border-color: var(--cf-interaction);
 }
 
 html .rp-suggest-item--current .rp-suggest-item__container .rp-suggest-item__icon,
-html .rp-suggest-item--current .rp-suggest-item__container .rp-suggest-item__content :is(.rp-suggest-item__statement, .rp-suggest-item__mark, .rp-suggest-item__title) {
-  color: var(--cf-control-selected-foreground);
+html .rp-suggest-item--current .rp-suggest-item__container .rp-suggest-item__content :is(.rp-suggest-item__statement, .rp-suggest-item__title) {
+  color: var(--cf-foreground);
+}
+
+html .rp-suggest-item--current .rp-suggest-item__container .rp-suggest-item__content .rp-suggest-item__mark {
+  color: var(--rp-c-brand);
 }
 
 `;
