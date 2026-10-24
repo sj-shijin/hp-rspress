@@ -4,7 +4,7 @@ import { seeds, createGrayScale, grayIndex, createAccentScale } from './palette.
 export const shikiRoles = {
   background: { label: '代码底色', gray: 16 },
   navigation: {
-    label: '流程导航', accent: { light: 'darker', dark: 'light' }, fontStyle: 'bold', usage: '分支、循环、声明与指令',
+    label: '流程导航', accent: { light: 'darker', dark: 'light' }, fontStyle: 'bold', usage: '分支、循环、声明、指令与提前返回',
     scope: [
       'keyword', 'punctuation.definition.directive',
       'storage.type.class', 'storage.type.struct', 'storage.type.enum', 'storage.type.interface', 'storage.type.record',
@@ -27,7 +27,7 @@ export const shikiRoles = {
     ],
   },
   execution: {
-    label: '阅读主体', gray: 0, fontStyle: 'bold', usage: '函数、变量、属性、表达式与规则',
+    label: '阅读主体', gray: 0, fontStyle: 'bold', usage: '函数、变量、属性、名称标签与表达式',
     scope: [
       // 按明确职责强调；source 默认常规，不再让新语言的未分类内容全部加粗。
       'variable', 'entity.name.variable', 'entity.name.label', 'support.variable', 'meta.object-literal.key',
@@ -112,7 +112,7 @@ export const shikiRoles = {
     ],
   },
   auxiliary: {
-    label: '辅助信息', gray: 3, usage: '类型约束、修饰符、声明附注与参数标签',
+    label: '辅助信息', gray: 3, usage: '类型及其边界、修饰符、声明附注与参数标签',
     scope: [
       'entity.name.type', 'entity.name.namespace', 'entity.name.scope-resolution',
       'support.type', 'storage.type', 'storage.modifier', 'storage.type.template.argument', 'keyword.operator.type',
@@ -170,7 +170,7 @@ export const shikiRoles = {
     ],
   },
   structure: {
-    label: '结构细节', gray: 6, usage: '分隔符、引号、排版边界与引用',
+    label: '结构细节', gray: 6, usage: '分隔符、字符串引号、排版边界与引用',
     scope: [
       'keyword.operator.key-value', 'punctuation',
       // 引号、排版符号和列表标记保持次级；其余定义边界使用 execution。
