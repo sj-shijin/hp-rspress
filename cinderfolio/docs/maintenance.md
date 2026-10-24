@@ -14,7 +14,7 @@ rspress.mjs              # 通用 Rspress 职责映射，不包含使用方组�
 css.mjs                  # 通用变量与独立 Pele CSS
 license.mjs              # 浏览器生成 CSS 时附带 MIT 全文；测试与 LICENSE 核对
 build.mjs                # 纯 Node.js 主题导出、对比度记录与产物检查
-marp-engine.mjs          # Marp CLI 通用配置：Pele 图表、Shiki 高亮
+marp-engine.mjs          # Marp CLI 通用配置：Pele 图表、Shiki 高亮、封面标题分组
 scripts/build_marp.mjs   # 独立构建样张与字体、图片资源
 scripts/prepare_marp_fonts.py # 字体维护工具，日常构建不运行
 examples/                # 通用内容排版样张与图片
@@ -31,7 +31,7 @@ npm ci
 npm run build            # 默认会清空 dist/，修改源文件后重新生成
 npm run check            # 生成结果与来源一致，必要对比度通过
 npm test                 # 真实分词、SVG ID、字体哈希、无依赖导出
-npm run marp             # 生成两种比例的九页 HTML 样张
+npm run marp             # 生成两种比例的 HTML 样张：封面、过渡页与九页内容
 npm pack --dry-run       # 检查分发清单；不发布 npm 包
 ```
 
@@ -41,7 +41,125 @@ npm pack --dry-run       # 检查分发清单；不发布 npm 包
 
 `marp.mjs` 提供同一份自包含 CSS，含 Pele 的 18 个颜色变量、实底字色和 Shiki 字形。16:9 为 1280×720、正文 32px；4:3 为 960×720、正文 28px。通过 Marp 原生 `data-size` 选择间距，字体与颜色共用；浏览器窗口大小不改变比例。
 
-每页以 `#` 页题开头，正文上对齐；页题下方细品牌色线，`header / footer` 与页码在底部信息栏。普通 `strong` 只加粗。样张覆盖 `h1`–`h6`、正文行内元素、列表、引用、表格、图片、公式、代码和 SVG；`---` 显式分页，备注记录标签，不添加样张专用 CSS。
+正文页以 `#` 页题开头，内容上对齐；页题下方是贯穿全页的 2px 品牌色线，文字仍与正文对齐。页题行框到 header 下边缘、到品牌色线的距离均使用 `--cf-marp-block-space`：16:9 为 24px、4:3 为 20px；线条到正文的间距分别为 16px、20px。原生 `header / footer` 分别位于上下 32px 灰栏，16px 文字的 20px 行框垂直居中，页码与页脚对齐。信息栏取 `surface`（亮色 g15 / 暗色 g1）。header 按章节数量等分整页宽度，文字居中、整块链接可点击；用 `strong` 标出的当前章采用画布底色，并移除底部分隔线，与正文区域连接。当前章文字继承信息栏灰色，以底色和字重区分。普通正文 `strong` 仍只加粗。两种画幅的正文上下内边距相等，同样通过 `--cf-marp-block-space` 设置与信息栏的距离。
+
+`header` 从设置的当前页起沿用到后续页面；在下一章节首页更新一次即可。`_header` 只覆盖当前页，封面使用 `_header: ""` 隐藏章节栏。
+
+```markdown
+<!-- header: '**[引言](#1)** [方法](#2)' -->
+<!-- footer: 研究汇报 · 作者 -->
+
+# 研究问题
+
+---
+
+<!-- header: '[引言](#1) **[方法](#2)**' -->
+
+# 方法
+```
+
+样张覆盖 `h1`–`h6`、正文行内元素、列表、引用、表格、图片、公式、代码和 SVG；`---` 显式分页，备注记录标签，不添加样张专用 CSS。
+
+图文混排使用 `cf-cols` 与 `cf-col`；标签与 Markdown 之间保留空行。默认等宽、左上对齐，列间距复用 `--cf-marp-block-space`。空列（只有空白或注释）自动隐藏，剩余列重新分配全部宽度；整组为空时不留间距。`cf-col` 独立使用时是一组全宽内容，上下总述与结论可分别设置对齐，空组同样收起；不需要对齐时也可直接写普通段落。
+
+- 比例：`cf-cols` 内的每栏用 `cf-w1`–`cf-w5` 指定权重，`cf-w3` 与 `cf-w2` 即为 3:2，比例在扣除列间距后计算。不写默认为 1；独立单栏不使用宽度权重，也不会自动瓜分页面的剩余高度。
+- 对齐：每栏使用一个 `cf-align-*` 类，默认 `cf-align-tl`，可省略。先纵向 `t / m / b`（上／中／下），再横向 `l / c / r`（左／中／右）；文字、图片和图注共用位置。整栏内容作为一个整体垂直对齐。
+
+```text
+cf-align-tl  cf-align-tc  cf-align-tr
+cf-align-ml  cf-align-mc  cf-align-mr
+cf-align-bl  cf-align-bc  cf-align-br
+```
+
+```markdown
+<div class="cf-col cf-align-tc">
+
+总述。
+
+</div>
+
+<div class="cf-cols">
+
+<div class="cf-col cf-w3 cf-align-ml">
+
+左侧说明。
+
+</div>
+<div class="cf-col cf-w2 cf-align-tc">
+
+![图示](./assets/figure.png)
+
+</div>
+</div>
+
+<div class="cf-col cf-align-tr">
+
+**结论：** 一句话归纳。
+
+</div>
+```
+
+任意比例或额外高度使用 Marp 原生局部样式。默认 HTML 允许列表会移除标签上的 `style` 属性，因此写入 `<style scoped>`；不需要更改 CLI 参数或引擎配置。
+
+```html
+<style scoped>
+/* 对应 class="cf-col wide"，与默认另一栏组成 2.5:1。 */
+.cf-col.wide { flex-grow: 2.5; }
+/* 对应 class="cf-cols tall"，需要额外纵向空间时再设置。 */
+.cf-cols.tall { min-height: 320px; }
+/* 独立单栏使用 class="cf-col summary cf-align-ml"，在 120px 区域内垂直居中、靠左。 */
+.cf-col.summary { min-height: 120px; }
+</style>
+```
+
+单栏或各栏内容等高时，垂直对齐没有额外空间可分配；需要时再指定组的最小高度。图片在栏内和全页均无固定高度上限，仅保留 `max-width: 100%` 与 `object-fit: contain`；用 Marp 原生 `w:` / `h:` 选择尺寸，不自动按整页剩余高度缩小。多图合计高度仍由作者控制。图注使用 `figcaption` 并跟随水平对齐。Pele 图表与代码保留独立缩放规则，双栏内仍为 260px / 240px。
+
+```markdown
+# 图片
+
+<div class="cf-col cf-align-tc">
+
+![h:500 整页图示](./assets/figure.png)
+
+</div>
+```
+
+`h:500` 是单行页题下适用于当前两种画幅的示例尺寸，不是主题上限；增加标题行数或其他正文后需相应调整。
+
+封面使用单页 `_class: cover`：`h1` 为标题、紧随的可选 `h2` 为副标题，作者、单位、日期各用一个普通段落，任意一项都可省略。主标题容纳一至两行，自动均衡断行，也可用 `<br>` 指定断点；主标题自身在品牌线上方垂直居中，副标题排在主标题下方 24px 处，不参与主标题定位。整页宽的 2px 品牌色线与过渡页统一在距顶部 400px 处，共用 `--cf-marp-divider-top`；两种画幅均为 720px 高，单行或双行主标题的行框中心均为 200px，增删副标题不移动主标题。下方汇报信息组中心为 560px，段落间距统一为 8px；删除任意信息段落后，该组自动重新居中，不保留空位，也不影响主标题。16:9 / 4:3 的标题为 80px / 70px，副标题为 32px / 28px，汇报信息为 20px / 17.5px，颜色与字体继续共用主题。示例用原生指令清空封面页眉、页脚并跳过编号，正文从 1 开始；章节链接仍指向实际幻灯片序号。
+
+`marp-engine.mjs` 在编译时将封面的标题组包为 `div.cf-marp-cover-title`，仍使用下方的普通 Markdown 写法，无需浏览器脚本。只使用独立 CSS 的其他渲染入口，需提供同名标题容器。
+
+```markdown
+<!--
+_class: cover
+_paginate: skip
+_header: ""
+_footer: ""
+-->
+
+# 面向异构计算的<br>算法设计与性能优化
+
+## 研究范围或报告场合（可省略）
+
+作者
+
+单位
+
+日期
+```
+
+过渡页使用单页 `_class: transition`。章节标题必填，前面的普通段落为编号，后面的普通段落为一句引导，两者均可删除。两种画幅的 2px 品牌色线均距顶部 400px，与封面共用 `--cf-marp-divider-top`。删除编号、引导句或页眉页脚，标题与品牌线均保持原位。编号到标题、标题到线、线到引导句的间距分别为 24px / 20px。16:9 / 4:3 的标题为 64px / 56px，支持自动换行或 `<br>` 手动换行；两行标题向上扩展，品牌线保持固定。页眉与页脚沿用正文，过渡页计入页数；章节链接指向过渡页。只需独立 CSS，不依赖引擎扩展。
+
+```markdown
+<!-- _class: transition -->
+
+02
+
+# 研究方法
+
+如何把研究问题转化为可验证的方案？
+```
 
 `marp-engine.mjs` 使用 CLI 异步 `engine` 扩展：`mermaid` 围栏交给 Pele，其他围栏交给 Shiki，保留 Marp 原生代码自动缩放。内置语言仅构建时加载，未知语言按纯文本转义。Shiki 调用同一份 `createShikiTheme(..., { variables: true })`，亮暗字形相同，颜色由 `light-dark()` 选择。生成 HTML 不再加载两个渲染库。
 

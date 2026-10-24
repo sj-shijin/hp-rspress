@@ -104,7 +104,7 @@ npm run marp   # 生成 dist/marp/，包含 16:9、4:3 HTML、字体和图片
 npm test       # 配色、独立导出、真实 Shiki 语法与 Marp 渲染测试
 ```
 
-`examples/marp.md` 是九页内容元素排版样张。生成的 HTML 保留 Marp 官方播放器，可整体复制 `dist/marp/` 分享。字体固定为 Inter、Noto Sans SC、Sarasa Mono SC，本地 WOFF2 随示例分发。
+`examples/marp.md` 包含一页 `cover` 封面、一页 `transition` 过渡页与九页内容元素排版样张。生成的 HTML 保留 Marp 官方播放器，可整体复制 `dist/marp/` 分享。字体固定为 Inter、Noto Sans SC、Sarasa Mono SC，本地 WOFF2 随示例分发。
 
 ```yaml
 ---
