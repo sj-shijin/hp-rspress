@@ -38,11 +38,49 @@ html:not(.rp-dark), html.rp-dark {
   --rp-c-text-code: var(--cf-foreground);
   --rp-c-text-code-bg: var(--cf-surface);
   --rp-c-text-code-border: var(--cf-border);
+
+  /* 提示容器已有浅层底色，行内代码回到画布色；details 悬停时仍能区分。 */
+  --rp-container-note-code-bg: var(--cf-background);
+  --rp-container-details-code-bg: var(--cf-background);
+
+  /* 阴影始终取深色端点，透明度按十六等分选取，保留原生位移与模糊半径。 */
+  --cf-shadow-soft: color-mix(in srgb, var(--cf-g0) 6.25%, transparent);
+  --cf-shadow-medium: color-mix(in srgb, var(--cf-g0) 12.5%, transparent);
+  --cf-shadow-strong: color-mix(in srgb, var(--cf-g0) 18.75%, transparent);
+  --rp-shadow-1: 0 1px 2px var(--cf-shadow-soft), 0 1px 0 var(--cf-shadow-soft);
+  --rp-shadow-2: 0 3px 12px var(--cf-shadow-soft), 0 1px 4px var(--cf-shadow-soft);
+  --rp-shadow-3: 0 12px 32px var(--cf-shadow-medium), 0 2px 6px var(--cf-shadow-soft);
+  --rp-shadow-4: 0 14px 44px var(--cf-shadow-medium), 0 3px 9px var(--cf-shadow-medium);
+  --rp-shadow-5: 0 18px 56px var(--cf-shadow-strong), 0 4px 12px var(--cf-shadow-strong);
 }
 
 html ::selection {
   color: currentColor;
   background: var(--cf-selection);
+}
+
+/* 页面与内容滚动条共用灰阶；保留原生宽度和透明轨道。 */
+html,
+html:root .rp-scrollbar {
+  scrollbar-color: var(--cf-border) transparent;
+}
+
+html:root .rp-scrollbar:hover {
+  scrollbar-color: var(--cf-border-strong) transparent;
+}
+
+html::-webkit-scrollbar-thumb,
+html:root .rp-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--cf-border);
+}
+
+html::-webkit-scrollbar-thumb:hover,
+html:root .rp-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--cf-border-strong);
+}
+
+html .rp-search-panel__mask {
+  background: color-mix(in srgb, var(--cf-g0) 37.5%, transparent);
 }
 
 /* 代码容器复用网页职责；Shiki token 通过同一色阶变量实时更新。 */
@@ -96,6 +134,20 @@ html .rp-llms-copy-button--success .rp-llms-copy-button__icon-success {
 html .rp-llms-copy-button--success.rp-llms-copy-button {
   color: var(--cf-interaction);
   border-color: currentColor;
+}
+
+/* 补齐原生组件中未使用 --rp-shadow-* 的中性阴影。 */
+html .rp-llms-button:hover:not(:active) {
+  box-shadow: 0 2px 6px var(--cf-shadow-soft);
+}
+
+html .rp-llms-view-options__menu {
+  box-shadow: 0 4px 20px -4px var(--cf-shadow-strong), 0 0 2px var(--cf-shadow-soft);
+}
+
+html .rp-overview-group__item:hover,
+html .rp-overview-group__grid-item:hover {
+  box-shadow: 0 4px 6px var(--cf-shadow-soft);
 }
 
 /* 搜索当前项使用控件选中职责；侧栏当前项使用淡品牌色底。 */

@@ -68,14 +68,14 @@ export function createAccentScale(accent = seeds.accent) {
  * 主题色保留已确认的明度步长、用途与选中底色公式。
  */
 export const recipes = {
-  background: { label: '画布', gray: 16, usage: '页面、导航、侧栏、代码块与图表节点' },
+  background: { label: '画布', gray: 16, usage: '页面、导航、侧栏、代码块、提示框内行内代码与图表节点' },
   surface: { label: '浅层底色', gray: 15, usage: '行内代码、提示区域、轻底色容器与卡片渐变' },
   surfaceHover: { label: '悬浮与分组底色', gray: 14, usage: '未选中项悬浮、图表分组' },
   foreground: { label: '正文与标题', gray: 0, usage: '正文、标题、主图标、图表文字与连线' },
   textMuted: { label: '次要文字', gray: 3, usage: '摘要、说明与侧栏目录' },
   textSubtle: { label: '辅助文字', gray: 5, usage: '时间、路径、行号与元信息' },
-  border: { label: '淡分隔线', gray: 14, usage: '导航底线、表格、卡片与图表外框' },
-  borderStrong: { label: '强分隔线', gray: 12, usage: '弹窗外框与需要明确边界的分组' },
+  border: { label: '淡分隔线', gray: 14, usage: '导航底线、表格、卡片、图表外框与滚动条' },
+  borderStrong: { label: '强分隔线', gray: 12, usage: '弹窗外框、明确分组与滚动条悬停' },
   controlBorder: { label: '控件边界', gray: 5, usage: '次要按钮与切换按钮的边界' },
   controlSelectedBackground: { label: '控件选中底色', accent: 'brand', usage: '切换按钮与搜索当前项的品牌色实底' },
   controlSelectedForeground: { label: '控件选中文字', contrast: 'controlSelectedBackground', usage: '选中项文字与滑块，自动选择对比更高的端点' },

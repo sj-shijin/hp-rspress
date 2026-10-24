@@ -304,7 +304,7 @@ html.rp-dark .rp-codeblock .shiki span {
   color: var(--rp-c-text-1);
   font-family: var(--rp-font-family-base);
   line-height: 1.5;
-  box-shadow: 0 20px 80px rgb(0 0 0 / 0.25);
+  box-shadow: 0 20px 80px color-mix(in srgb, var(--cf-g0) 25%, transparent);
 }
 
 .sj-mermaid__modal[open] {
@@ -313,7 +313,7 @@ html.rp-dark .rp-codeblock .shiki span {
 }
 
 .sj-mermaid__modal::backdrop {
-  background: rgb(0 0 0 / 0.55);
+  background: color-mix(in srgb, var(--cf-g0) 56.25%, transparent);
 }
 
 .sj-mermaid__modal-header {
