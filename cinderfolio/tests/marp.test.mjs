@@ -13,7 +13,8 @@ import config from '../marp-engine.mjs';
 const parser = unified().use(rehypeParse, { fragment: true });
 let marp;
 before(async () => {
-  marp = await config.engine({ marp: new Marp({ html: false }) });
+  // 与 CLI 一致，保留 Marp 默认的安全 HTML 允许列表。
+  marp = await config.engine({ marp: new Marp() });
   marp.themeSet.add(createMarpCss());
 });
 
@@ -59,17 +60,39 @@ test('正式引擎编译排版样张，保留双图、Shiki 高亮、代码缩�
   assert.deepEqual(styles('light'), styles('dark'));
 });
 
-test('同一份主题识别两种 size，并生成对应的 SVG 画布与尺寸标记', async () => {
+test('两种 size 共用封面与过渡页预设，正文分页与章节跳转保持对应', async () => {
   const source = await fs.readFile(new URL('../examples/marp.md', import.meta.url), 'utf8');
   for (const [size, width] of [['16:9', 1280], ['4:3', 960]]) {
     const { html } = marp.render(source.replace(/^size: 16:9$/m, `size: ${size}`));
     const tree = parser.parse(html);
     const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
     const canvases = elements(tree, node => node.tagName === 'svg' && node.properties?.dataMarpitSvg !== undefined);
-    assert.equal(slides.length, 9);
+    assert.equal(slides.length, 11);
     assert.equal(canvases.length, slides.length);
     assert.ok(slides.every(slide => slide.properties.dataSize === size));
     assert.ok(canvases.every(svg => svg.properties.viewBox === `0 0 ${width} 720`));
+    const [cover, ...body] = slides;
+    assert.ok(cover.properties.className.includes('cover'));
+    assert.equal(cover.properties.dataPaginate, 'skip');
+    assert.equal(elements(cover, node => ['header', 'footer'].includes(node.tagName)).length, 0);
+    assert.ok(body.every(slide => !slide.properties.className?.includes('cover')));
+    assert.deepEqual(body.map(slide => slide.properties.dataMarpitPagination), Array.from({ length: 10 }, (_, i) => String(i + 1)));
+    assert.ok(body.every(slide => slide.properties.dataMarpitPaginationTotal === '10'));
+    const transitions = slides.filter(slide => slide.properties.className?.includes('transition'));
+    assert.equal(transitions.length, 1);
+    assert.equal(transitions[0].properties.id, '4');
+    assert.deepEqual(transitions[0].children.filter(node => node.tagName && !['header', 'footer'].includes(node.tagName))
+      .map(node => node.tagName), ['p', 'h1', 'p']);
+    const chapters = { '#2': '标题层级 · Heading 1', '#4': '正文表达', '#7': '表格', '#10': '代码', '#11': '图表' };
+    for (const header of elements(tree, node => node.tagName === 'header')) {
+      const links = elements(header, node => node.tagName === 'a');
+      assert.deepEqual(links.map(link => link.properties.href), Object.keys(chapters));
+      for (const link of links) {
+        const slide = slides.find(item => `#${item.properties.id}` === link.properties.href);
+        const title = elements(slide, node => node.tagName === 'h1')[0];
+        assert.equal(elements(title, node => node.type === 'text').map(node => node.value).join(''), chapters[link.properties.href]);
+      }
+    }
   }
 });
 
@@ -79,11 +102,27 @@ test('排版样张覆盖常用内容标签与公式，图片资源可独立分�
   for (const tag of [
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'strong', 'em', 's', 'a', 'code',
     'ul', 'ol', 'li', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-    'img', 'pre', 'mjx-container', 'figure', 'svg', 'header', 'footer',
+    'img', 'pre', 'mjx-container', 'figure', 'figcaption', 'svg', 'header', 'footer',
   ]) {
     assert.ok(elements(tree, node => node.tagName === tag).length, tag);
   }
   assert.ok(elements(tree, node => node.tagName === 'pre' && !node.properties?.className?.includes('shiki')).length > 0);
+
+  // 原生 HTML 容器内仍解析 Markdown，上下单栏与中间双栏保持同级。
+  const columns = elements(tree, node => node.properties?.className?.includes('cf-cols'));
+  assert.equal(columns.length, 1);
+  const slide = elements(tree, node => node.tagName === 'section' && node.children.includes(columns[0]))[0];
+  assert.deepEqual(slide.children.filter(node => node.tagName && !['header', 'footer'].includes(node.tagName))
+    .map(node => node.tagName), ['h1', 'div', 'div', 'div']);
+  const singleColumns = slide.children.filter(node => node.properties?.className?.includes('cf-col'));
+  assert.deepEqual(singleColumns.map(node => node.properties.className), [['cf-col', 'cf-align-tc'], ['cf-col', 'cf-align-tr']]);
+  const cells = columns[0].children.filter(node => node.properties?.className?.includes('cf-col'));
+  assert.equal(cells.length, 2);
+  assert.deepEqual(cells[0].properties.className, ['cf-col', 'cf-w3', 'cf-align-ml']);
+  assert.deepEqual(cells[1].properties.className, ['cf-col', 'cf-w2', 'cf-align-tc']);
+  assert.ok(elements(cells[0], node => node.tagName === 'strong').length > 0);
+  assert.equal(elements(cells[1], node => node.tagName === 'img').length, 1);
+  assert.equal(elements(cells[1], node => node.tagName === 'figcaption').length, 1);
 
   const directory = new URL('../examples/assets/', import.meta.url);
   const assets = JSON.parse(await fs.readFile(new URL('SOURCE.json', directory), 'utf8'));
@@ -92,6 +131,27 @@ test('排版样张覆盖常用内容标签与公式，图片资源可独立分�
     const bytes = await fs.readFile(new URL(asset.file, directory));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256);
     assert.ok(asset.author && asset.source && asset.license);
+  }
+});
+
+test('封面按实际标题组成一组，保留手动换行、可选副标题和独立信息段落', () => {
+  for (const size of ['16:9', '4:3']) {
+    // 同时覆盖 Markdown 原生手动换行。
+    for (const title of ['# 简洁标题', '面向异构计算的  \n算法设计与性能优化\n========']) {
+      for (const subtitle of ['', '## 从研究问题到清晰结论']) {
+        const source = `---\ntheme: cinderfolio\nsize: ${size}\n---\n\n<!-- _class: cover -->\n\n${title}\n\n${subtitle}\n\n作者\n\n日期\n\n---\n\n# 正文\n\n## 正文副标题`;
+        const tree = parser.parse(marp.render(source).html);
+        const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
+        const groups = elements(tree, node => node.properties?.className?.includes('cf-marp-cover-title'));
+        assert.equal(groups.length, 1);
+        assert.ok(slides[0].children.includes(groups[0]));
+        assert.deepEqual(groups[0].children.filter(node => node.tagName).map(node => node.tagName),
+          subtitle ? ['h1', 'h2'] : ['h1']);
+        assert.equal(elements(groups[0], node => node.tagName === 'br').length, title.includes('\n') ? 1 : 0);
+        assert.equal(slides[0].children.filter(node => node.tagName === 'p').length, 2);
+        assert.equal(slides[1].children.filter(node => ['h1', 'h2'].includes(node.tagName)).length, 2);
+      }
+    }
   }
 });
 

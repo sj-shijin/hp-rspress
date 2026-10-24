@@ -45,13 +45,19 @@ ${variables('dark')}
 }
 
 section {
+  --cf-marp-bar-height: 32px;
+  --cf-marp-inline-space: 80px;
+  --cf-marp-block-space: 24px;
+  --cf-marp-divider-width: 2px;
+  --cf-marp-divider-top: 400px; /* 封面与过渡页共用的品牌线位置。 */
+  --cf-marp-column-media-height: 260px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   width: 1280px;
   height: 720px;
-  padding: 32px 80px 64px;
+  padding: calc(var(--cf-marp-bar-height) + var(--cf-marp-block-space)) var(--cf-marp-inline-space);
   color: var(--cf-foreground);
   background: var(--cf-background);
   font: 32px/1.5 ${marpFonts.text};
@@ -60,7 +66,13 @@ section {
 
 /* 每页以一个一级标题开头，页题与正文共用固定的起点。 */
 h1, h2, h3, h4, h5, h6 { margin: 0 0 0.65em; line-height: 1.25; font-weight: 700; }
-h1 { margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--cf-accent-brand); font-size: 1.5em; letter-spacing: -0.025em; }
+h1 { margin-bottom: 16px; padding-bottom: var(--cf-marp-block-space); font-size: 1.5em; letter-spacing: -0.025em; }
+/* 页题上下留白共用 block-space；边框贯穿画布，文字与正文对齐。 */
+section:not(.cover) > h1 {
+  margin-inline: calc(-1 * var(--cf-marp-inline-space));
+  padding-inline: var(--cf-marp-inline-space);
+  border-bottom: var(--cf-marp-divider-width) solid var(--cf-accent-brand);
+}
 h2 { font-size: 1.25em; }
 h3 { font-size: 1.1em; }
 h4 { font-size: 1em; }
@@ -69,7 +81,7 @@ h6 { font-size: 0.8em; }
 p, ul, ol, blockquote, pre, table { margin: 0 0 0.75em; }
 ul, ol { padding-left: 1.25em; }
 li + li { margin-top: 0.25em; }
-section > :last-child { margin-bottom: 0; }
+section > :last-child, section > .cf-col:has(+ footer) { margin-bottom: 0; }
 a { color: var(--cf-link); text-underline-offset: 0.15em; }
 a:hover { color: var(--cf-accent-brand); }
 strong { font-weight: 700; }
@@ -77,12 +89,59 @@ em { color: var(--cf-text-muted); }
 blockquote { padding: 0.4em 0.75em; border-left: 4px solid var(--cf-accent-brand); color: var(--cf-text-muted); background: var(--cf-surface); }
 blockquote > :last-child { margin-bottom: 0; }
 hr { width: 100%; border: 0; border-top: 2px solid var(--cf-border-strong); }
-img, svg { max-width: 100%; max-height: 480px; object-fit: contain; }
+/* 图片只限制宽度；高度由原始比例或 Markdown 的 w: / h: 决定。 */
+img, svg { max-width: 100%; object-fit: contain; }
+svg { max-height: 480px; }
 code { font-family: ${marpFonts.code}; font-size: 0.85em; }
 :not(pre) > code { padding: 0.1em 0.25em; background: var(--cf-surface); border-radius: 0.15em; }
 pre { padding: 0.75em 1em; border: 1px solid var(--cf-border); border-radius: 0.25em; background: var(--cf-background); line-height: 1.4; overflow: visible; }
 pre code { display: block; }
 pre::part(auto-scaling) { max-height: 460px; }
+/* 默认等宽；cf-w1…cf-w5 按权重分配列宽，空列隐藏后其余列自动铺满。 */
+.cf-cols {
+  display: flex;
+  align-items: stretch;
+  gap: var(--cf-marp-block-space);
+  margin: 0 0 0.75em;
+}
+.cf-col {
+  --cf-col-media-start: 0;
+  --cf-col-media-end: auto;
+  /* 独立使用时是一组全宽内容，不自动瓜分页面的剩余高度。 */
+  flex: 0 0 auto;
+  margin: 0 0 0.75em;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  text-align: left;
+}
+.cf-cols > .cf-col { flex: 1 1 0; margin: 0; }
+.cf-cols > .cf-col.cf-w1 { flex-grow: 1; }
+.cf-cols > .cf-col.cf-w2 { flex-grow: 2; }
+.cf-cols > .cf-col.cf-w3 { flex-grow: 3; }
+.cf-cols > .cf-col.cf-w4 { flex-grow: 4; }
+.cf-cols > .cf-col.cf-w5 { flex-grow: 5; }
+/* 九宫格：先纵向 t/m/b，再横向 l/c/r；默认 tl。文字、图片和图注共用位置。 */
+.cf-col:is(.cf-align-tl, .cf-align-ml, .cf-align-bl) { text-align: left; --cf-col-media-start: 0; --cf-col-media-end: auto; }
+.cf-col:is(.cf-align-tc, .cf-align-mc, .cf-align-bc) { text-align: center; --cf-col-media-start: auto; --cf-col-media-end: auto; }
+.cf-col:is(.cf-align-tr, .cf-align-mr, .cf-align-br) { text-align: right; --cf-col-media-start: auto; --cf-col-media-end: 0; }
+.cf-col:is(.cf-align-tl, .cf-align-tc, .cf-align-tr) { justify-content: flex-start; }
+.cf-col:is(.cf-align-ml, .cf-align-mc, .cf-align-mr) { justify-content: center; }
+.cf-col:is(.cf-align-bl, .cf-align-bc, .cf-align-br) { justify-content: flex-end; }
+.cf-col > :last-child { margin-bottom: 0; }
+/* Markdown 内容会生成元素；空白和注释不算内容，也不留下组间距。 */
+.cf-col:not(:has(> *)), .cf-cols:not(:has(> .cf-col > *)) { display: none; }
+.cf-col img, .cf-col > figure.cinderfolio-pele > svg {
+  display: block;
+  width: auto;
+  margin-inline: var(--cf-col-media-start) var(--cf-col-media-end);
+}
+.cf-col > figure:not(.cinderfolio-pele) { margin: 0; }
+.cf-col > figure:not(.cinderfolio-pele) > p { margin: 0; }
+.cf-col figcaption { margin-top: 0.5em; font-size: 0.75em; color: var(--cf-text-muted); }
+.cf-cols > .cf-col > figure.cinderfolio-pele > svg { max-height: var(--cf-marp-column-media-height); }
+.cf-cols > .cf-col pre::part(auto-scaling) { max-height: var(--cf-marp-column-media-height); }
 /* Shiki 的颜色由 light-dark() 跟随 color-scheme；亮暗主题共用同一套字形。 */
 pre.shiki span {
   font-weight: var(--shiki-light-font-weight, normal);
@@ -95,21 +154,104 @@ table { border-collapse: collapse; font-size: 0.85em; }
 th, td { padding: 0.4em 0.75em; border-bottom: 1px solid var(--cf-border-strong); text-align: left; }
 th { font-weight: 600; background: var(--cf-surface); }
 tr:nth-child(even) { background: var(--cf-surface); }
-/* 原生 header / footer 收到同一页脚：左侧演示名，右侧短说明与页码。 */
-section::before { content: ''; position: absolute; left: 80px; right: 80px; bottom: 48px; border-top: 1px solid var(--cf-border); }
-header, footer, section::after { position: absolute; bottom: 16px; color: var(--cf-text-subtle); font-size: 16px; line-height: 1.5; }
-header { left: 80px; }
-footer { right: 144px; text-align: right; }
-section::after { right: 80px; padding: 0; }
+/* 原生 header / footer：上下等高，20px 行框在 32px 灰栏中各留 6px。
+ * header 按章节数量等分；strong 标出的当前章与画布连接，整块链接可点击。
+ */
+header, footer, section::after {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: var(--cf-marp-bar-height);
+  color: var(--cf-text-subtle);
+  font-size: 16px;
+  line-height: 20px;
+}
+header, footer {
+  left: 0;
+  right: 0;
+  justify-content: center;
+  padding: 0 var(--cf-marp-inline-space);
+  background: var(--cf-surface);
+}
+header {
+  top: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch;
+  padding: 0;
+}
+header > * { min-width: 0; box-shadow: inset 0 -1px var(--cf-border); }
+header a { display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 100%; padding: 0 12px; color: inherit; text-decoration: none; }
+header > strong { background: var(--cf-background); box-shadow: none; font-weight: 600; }
+header > strong a:hover { color: inherit; }
+footer { bottom: 0; padding-inline: calc(var(--cf-marp-inline-space) + 80px); box-shadow: inset 0 1px var(--cf-border); }
+section::after { bottom: 0; right: var(--cf-marp-inline-space); padding: 0; font-variant-numeric: tabular-nums; }
+section[data-marpit-pagination]::after { content: attr(data-marpit-pagination) ' / ' attr(data-marpit-pagination-total); }
 
-/* 默认 16:9 压缩纵向留白；4:3 按原生 size 标记使用较舒展的间距。 */
-section[data-size='4:3'] { padding: 48px 56px 72px; font-size: 28px; }
-section[data-size='4:3'] h1 { margin-bottom: 28px; padding-bottom: 16px; }
-section[data-size='4:3']::before { left: 56px; right: 56px; bottom: 56px; }
-section[data-size='4:3'] :is(header, footer), section[data-size='4:3']::after { bottom: 20px; }
-section[data-size='4:3'] header { left: 56px; }
-section[data-size='4:3'] footer { right: 120px; }
-section[data-size='4:3']::after { right: 56px; }
+/* 两种画幅均上下对称；4:3 收紧标题区，为正文保留更多纵向空间。 */
+section[data-size='4:3'] { --cf-marp-inline-space: 56px; --cf-marp-block-space: 20px; --cf-marp-column-media-height: 240px; font-size: 28px; }
+section[data-size='4:3'] h1 { margin-bottom: 20px; }
+
+/* _class: transition；标题前的段落为可选章节编号，标题后为可选引导句。
+ * 品牌线与封面共用固定基准，辅助段落不参与标题与品牌线的定位。
+ */
+section.transition {
+  justify-content: flex-end;
+  gap: var(--cf-marp-block-space);
+  padding-bottom: calc(720px - var(--cf-marp-divider-top) - var(--cf-marp-divider-width));
+  text-align: center;
+}
+section.transition > h1 {
+  margin: 0 calc(-1 * var(--cf-marp-inline-space));
+  padding: 0 var(--cf-marp-inline-space) var(--cf-marp-block-space);
+  font-size: 2em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+section.transition > p { margin: 0; color: var(--cf-text-muted); font-size: 0.875em; text-wrap: balance; }
+section.transition > p:has(+ h1) { font-size: 0.75em; letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
+section.transition > h1 + p {
+  position: absolute;
+  top: calc(var(--cf-marp-divider-top) + var(--cf-marp-divider-width) + var(--cf-marp-block-space));
+  left: var(--cf-marp-inline-space);
+  right: var(--cf-marp-inline-space);
+}
+
+/* _class: cover；h1 标题、可选 h2 副标题，作者、单位和日期用普通段落。
+ * 主标题自身在品牌线上方居中，副标题跟在其下方，不参与主标题定位。
+ * 作者、单位和日期仍作为一组在品牌线下方居中。
+ */
+section.cover {
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: var(--cf-marp-divider-top) var(--cf-marp-inline-space) 0;
+  text-align: center;
+}
+section.cover::before { content: ''; position: absolute; top: var(--cf-marp-divider-top); left: 0; right: 0; height: var(--cf-marp-divider-width); background: var(--cf-accent-brand); }
+section.cover > .cf-marp-cover-title {
+  position: absolute;
+  top: calc(var(--cf-marp-divider-top) / 2);
+  left: var(--cf-marp-inline-space);
+  right: var(--cf-marp-inline-space);
+  transform: translateY(-50%);
+}
+section.cover .cf-marp-cover-title > h1 { margin: 0; padding: 0; border: 0; font-size: 2.5em; line-height: 1.2; text-wrap: balance; }
+section.cover .cf-marp-cover-title > h2 {
+  position: absolute;
+  top: calc(100% + 24px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  color: var(--cf-text-muted);
+  font-size: 1em;
+  line-height: 1.5;
+  font-weight: 400;
+}
+section.cover > p { margin: 0; color: var(--cf-text-muted); font-size: 0.625em; line-height: 1.5; }
+section.cover > p:nth-of-type(3) { color: var(--cf-text-subtle); }
 ::selection { color: currentColor; background: var(--cf-selection); }
 
 ${createPeleAdapterCss()}

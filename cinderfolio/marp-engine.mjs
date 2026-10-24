@@ -25,6 +25,40 @@ export default {
       },
     });
 
+    // 将封面的 h1 与紧随的可选 h2 组成一组；作者仍使用普通 Markdown。
+    marp.markdown.core.ruler.before('marpit_collect', 'cinderfolio_cover_title', state => {
+      const grouped = [];
+      let cover = false;
+      for (let index = 0; index < state.tokens.length; index += 1) {
+        const token = state.tokens[index];
+        if (token.type === 'marpit_slide_open') {
+          cover = (token.attrGet('class') || '').split(/\s+/).includes('cover');
+        }
+        if (cover && token.type === 'heading_open' && token.tag === 'h1') {
+          const open = new state.Token('cinderfolio_cover_title_open', 'div', 1);
+          open.attrSet('class', 'cf-marp-cover-title');
+          open.block = true;
+          open.level = token.level;
+          grouped.push(open);
+          do {
+            const heading = state.tokens[index++];
+            heading.level += 1;
+            grouped.push(heading);
+          } while (state.tokens[index - 1].type !== 'heading_close'
+            || (state.tokens[index]?.type === 'heading_open' && state.tokens[index].tag === 'h2'));
+          const close = new state.Token('cinderfolio_cover_title_close', 'div', -1);
+          close.block = true;
+          close.level = open.level;
+          grouped.push(close);
+          index -= 1;
+          cover = false;
+        } else {
+          grouped.push(token);
+        }
+      }
+      state.tokens = grouped;
+    });
+
     // 其余围栏保留 Marp 原生渲染流程，包括代码块的自动缩放。
     const fence = marp.markdown.renderer.rules.fence;
     marp.markdown.renderer.rules.fence = (tokens, position, options, env, renderer) => {
