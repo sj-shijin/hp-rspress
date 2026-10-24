@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { defineConfig } from '@rspress/core';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
+import { transformerNotationHighlight } from '@shikijs/transformers';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkMermaid from './scripts/remark_mermaid.mjs';
@@ -108,6 +109,7 @@ export default defineConfig({
         dark: createShikiTheme(undefined, 'dark', { variables: true }),
       },
       defaultColor: false,
+      transformers: [transformerNotationHighlight()],
     },
     remarkPlugins: [remarkMath, remarkMathBlocks, remarkMermaid],
     rehypePlugins: [[rehypeKatex, { strict: 'ignore', throwOnError: true }]],

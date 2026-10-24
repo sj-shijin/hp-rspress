@@ -21,6 +21,7 @@
     "@marp-team/marp-cli": "4.5.1",
     "@rspress/core": "2.0.23",
     "@rspress/plugin-sitemap": "2.0.23",
+    "@shikijs/transformers": "4.5.0",
     "cinderfolio": "file:./cinderfolio",
     "katex": "^0.16.22",
     "pele": "1.6.0",

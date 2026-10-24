@@ -40,7 +40,7 @@ static size_t visit(const Task tasks[], size_t count, Predicate accept) {
     size_t shown = 0;
     for (size_t i = 0; i < count; ++i) {
         const Task *task = &tasks[i];
-        if (!accept(task)) continue;
+        if (!accept(task)) continue; // [!code highlight]
         printf("%zu. %s\n", shown + 1, task->title);
         if (++shown == MAX_SHOWN) break;
     }
