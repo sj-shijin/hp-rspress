@@ -22,6 +22,8 @@ html:not(.rp-dark), html.rp-dark {
   --rp-c-bg-alt: var(--cf-background);
   --rp-c-bg-soft: var(--cf-surface);
   --rp-c-bg-mute: var(--cf-surface-hover);
+  /* 保留卡片的 135° 半透明渐变，亮暗统一复用浅层底色。 */
+  --rp-home-feature-bg: linear-gradient(135deg, transparent, color-mix(in srgb, var(--cf-surface) 50%, transparent));
   --rp-c-text-0: var(--cf-foreground);
   --rp-c-text-1: var(--cf-foreground);
   --rp-c-text-2: var(--cf-text-muted);
@@ -58,6 +60,12 @@ html .rp-codeblock__content--line-numbers code .line::before {
   color: var(--cf-text-subtle);
 }
 
+/* 普通行高亮复用淡品牌色底与交互强调，错误和警告保留各自的语义色。 */
+html .shiki.has-highlighted .line.highlighted:not(.error):not(.warning) {
+  background-color: var(--cf-selected-background);
+  box-shadow: inset 2px 0 var(--cf-interaction);
+}
+
 html .rp-button--brand {
   color: var(--cf-background);
   background: var(--cf-foreground);
@@ -77,6 +85,17 @@ html .rp-button--alt, html.rp-dark .rp-button--alt {
 html .rp-button--alt:hover {
   background: var(--cf-surface-hover);
   opacity: 1;
+}
+
+/* 复制完成作为品牌色反馈，不改变警告、错误等语义状态。 */
+html .rp-code-copy-button--copied .rp-code-copy-button__icon--success,
+html .rp-llms-copy-button--success .rp-llms-copy-button__icon-success {
+  color: var(--cf-interaction);
+}
+
+html .rp-llms-copy-button--success.rp-llms-copy-button {
+  color: var(--cf-interaction);
+  border-color: currentColor;
 }
 
 /* 搜索当前项使用控件选中职责；侧栏当前项使用淡品牌色底。 */

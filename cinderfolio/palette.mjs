@@ -69,7 +69,7 @@ export function createAccentScale(accent = seeds.accent) {
  */
 export const recipes = {
   background: { label: '画布', gray: 16, usage: '页面、导航、侧栏、代码块与图表节点' },
-  surface: { label: '浅层底色', gray: 15, usage: '行内代码、提示区域与轻底色容器' },
+  surface: { label: '浅层底色', gray: 15, usage: '行内代码、提示区域、轻底色容器与卡片渐变' },
   surfaceHover: { label: '悬浮与分组底色', gray: 14, usage: '未选中项悬浮、图表分组' },
   foreground: { label: '正文与标题', gray: 0, usage: '正文、标题、主图标、图表文字与连线' },
   textMuted: { label: '次要文字', gray: 3, usage: '摘要、说明与侧栏目录' },
@@ -79,11 +79,11 @@ export const recipes = {
   controlBorder: { label: '控件边界', gray: 5, usage: '次要按钮与切换按钮的边界' },
   controlSelectedBackground: { label: '控件选中底色', accent: 'brand', usage: '切换按钮与搜索当前项的品牌色实底' },
   controlSelectedForeground: { label: '控件选中文字', contrast: 'controlSelectedBackground', usage: '选中项文字与滑块，自动选择对比更高的端点' },
-  interaction: { label: '交互提示', accent: 'brand', usage: '导航强调、悬浮提示与焦点' },
+  interaction: { label: '交互提示', accent: 'brand', usage: '导航强调、悬浮提示、焦点、代码高亮线与复制成功提示' },
   link: { label: '链接与当前项目文字', accent: { light: 'dark', dark: 'light' }, usage: '正文链接、当前项目文字与语法关键词' },
   diagramStroke: { label: '图表描边', accent: { light: 'darker', dark: 'light' }, usage: '图表节点与分组描边' },
   selection: { label: '文字选区底色', mix: ['accent', 'background', 25], usage: '鼠标或键盘选择文字；正文、说明与链接保留原字色' },
-  selectedBackground: { label: '当前项目底色', mix: ['accent', 'background', 15], usage: '当前导航或项目的淡品牌色底' },
+  selectedBackground: { label: '当前项目底色', mix: ['accent', 'background', 15], usage: '当前导航、项目与代码高亮行的淡品牌色底' },
 };
 
 export function createPalette(input = seeds) {
