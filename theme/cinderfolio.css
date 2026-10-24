@@ -42,6 +42,8 @@
 .cf-swatch__name small { margin-left: auto; }
 .rp-doc .cf-swatch code { padding: 0; border: 0; background: none; color: var(--cf-text-muted); font-size: 0.75rem; white-space: nowrap; }
 .cf-role-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 1.5rem; margin-block: 1rem; }
+/* 职责中的色阶与 HEX 是数据标签，透明底色随所在容器显示。 */
+.rp-doc :is(.cf-role-groups, .cf-shiki-roles) code { background: transparent; }
 .cf-role-group { min-width: 0; }
 .cf-role-stack { display: grid; align-content: start; gap: 1.25rem; min-width: 0; }
 .cf-role-group--series .cf-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0.75rem; }
