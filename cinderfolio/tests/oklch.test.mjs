@@ -39,18 +39,21 @@ test('色觉校正有界、确定，并降低多种品牌色共用八色的冲�
     assert.equal(new Set(Object.values(result.colors)).size, 8);
     assert.ok(result.vision.after.loss < result.vision.before.loss, accent);
     assert.ok(result.vision.after.models.normal.minimum >= seriesRecipe.distance.normal);
-    assert.equal(result.series['series-1'].correction.h, 0);
     for (const [key, value] of Object.entries(result.series)) {
       assert.ok(Math.abs(value.correction.h) <= 12);
       assert.ok(Math.abs(value.correction.l) <= 0.06);
       assert.ok(value.correction.c >= -0.02 && value.correction.c <= 0);
       const fill = result.colors[key];
       assert.ok(contrast(fill, input.ink) >= seriesRecipe.textContrast);
+      // 校正与 HEX 量化后仍避开品牌色相；允许不足 1° 的量化误差。
+      const hueGap = Math.abs((toOklch(fill).h - toOklch(accent).h + 540) % 360 - 180);
+      assert.ok(hueGap >= 27, `${accent}.${key}: ${hueGap}`);
     }
   }
 });
 
-test('保持固定色相槽位，中性品牌色采用已说明的默认色相', () => {
+test('九等分排除品牌色相，保持八个固定槽位，中性品牌色采用默认色相', () => {
+  assert.deepEqual(seriesRecipe.hueOffsets, [40, 80, 120, 160, 200, 240, 280, 320]);
   const original = createCategoricalPalette(seeds);
   assert.deepEqual(Object.values(original.series).map(s => s.hueOffset), seriesRecipe.hueOffsets);
   const neutral = createCategoricalPalette({ ...seeds, accent: '#808080' });

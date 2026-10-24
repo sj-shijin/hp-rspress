@@ -47,6 +47,8 @@ test('正式引擎编译排版样张，保留双图、Shiki 高亮、代码缩�
   const diagrams = elements(tree, node => node.tagName === 'svg' && node.properties?.className?.includes('pele'));
   assert.ok(diagrams.every(svg => svg.properties.style.includes(marpFonts.text)
     && svg.properties.style.includes(marpFonts.code)));
+  const flowchart = diagrams.find(svg => svg.properties.className.includes('pele-flowchart'));
+  assert.ok(elements(flowchart, node => node.properties?.className?.includes('cf-pele-edge-hit')).length > 0);
   for (const mode of ['light', 'dark']) {
     const { colors, onFill } = createPeleTheme(undefined, mode);
     for (const [key, value] of Object.entries(colors)) assert.ok(css.includes(`--pele-${key}: ${value};`));

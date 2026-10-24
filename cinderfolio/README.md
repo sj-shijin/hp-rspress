@@ -68,6 +68,15 @@ Pele 渲染后的内联 SVG 可以直接加载导出的 CSS：
 
 类名与主题属性也可放在 SVG 根元素上。通过 `<img>` 引用的外部 SVG，需要在 SVG 自身文档中包含样式。
 
+需要扩大连线的鼠标命中范围时，在插入 SVG 前调用同包的辅助函数。它添加连续的透明命中层，配合 `cf-pele.css` 覆盖线条两侧和虚线空隙，保留默认显示线宽：
+
+```js
+import { render } from 'pele';
+import { withPeleHitAreas } from 'cinderfolio/pele';
+
+const svg = withPeleHitAreas(render(source).svg);
+```
+
 ## Marp
 
 ```sh

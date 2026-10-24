@@ -3,9 +3,12 @@ import { seeds, contrast } from './palette.mjs';
 
 export const seriesRecipe = {
   space: 'oklch',
-  hueOffsets: [0, 180, 90, 270, 45, 225, 135, 315],
+  // 色相环九等分；0° 留给品牌强调，其余八个槽位用于分类。
+  hueOffsets: [40, 80, 120, 160, 200, 240, 280, 320],
   lightness: 0.74,
+  darkLightnessOffset: -0.04,
   textContrast: 7,
+  darkTextContrast: 4.5,
   chroma: 0.16,
   lightnessStep: 0.01,
   correction: { hue: [0, -6, 6, -12, 12], lightness: [0, -0.03, 0.03, -0.06, 0.06], chroma: [0, -0.02], passes: 3 },
@@ -107,7 +110,7 @@ export function checkColorVision(colors) {
   return { loss: Number(loss.toFixed(6)), models };
 }
 
-export function createCategoricalPalette(input = seeds) {
+export function createCategoricalPalette(input = seeds, mode = 'light') {
   const brand = toOklch(input.accent);
   // 中性品牌色缺少稳定色相，沿用默认品牌色的色相作为确定的起点。
   const anchor = brand.c < 0.01 ? toOklch(seeds.accent).h : brand.h;
@@ -119,7 +122,7 @@ export function createCategoricalPalette(input = seeds) {
   const initial = seriesRecipe.hueOffsets.map(offset => {
     const point = { l: seriesRecipe.lightness, c: seriesRecipe.chroma, h: wrapHue(anchor + offset) };
     let best = sample(point);
-    // 亮暗共用八色，以深色文字为参照；只沿 L 向上适配。
+    // 先生成亮色基准八色，以深色文字为参照；只沿 L 向上适配。
     for (let step = 0; step <= 100; step++) {
       const l = clamp(point.l + step * seriesRecipe.lightnessStep);
       const current = sample({ ...point, l });
@@ -131,10 +134,10 @@ export function createCategoricalPalette(input = seeds) {
   });
   const before = checkColorVision(initial.map(value => value.hex));
   const floor = Math.min(seriesRecipe.distance.normal, before.models.normal.minimum);
-  const options = initial.map((point, index) => {
+  const options = initial.map(point => {
     const candidates = new Map();
-    // 第一色锚定品牌色色相；其他槽位最多偏移 12°，不交换类别顺序。
-    for (const dh of index === 0 ? [0] : seriesRecipe.correction.hue) {
+    // 每个槽位最多偏移 12°，与品牌色相仍至少间隔 28°，不交换类别顺序。
+    for (const dh of seriesRecipe.correction.hue) {
       for (const dl of seriesRecipe.correction.lightness) for (const dc of seriesRecipe.correction.chroma) {
         const current = sample({ l: clamp(point.l + dl), c: point.c + dc, h: wrapHue(point.h + dh) });
         if (quality(current.hex) >= 1) candidates.set(current.hex, current);
@@ -158,16 +161,24 @@ export function createCategoricalPalette(input = seeds) {
     }
     if (!changed) break;
   }
+  // 暗色只降低已校正颜色的明度，保留类别顺序、色相与彩度；超出色域时仍按原规则降低 C。
+  const display = value => {
+    if (mode !== 'dark') return value;
+    const color = toOklch(value.hex);
+    return sample({ ...color, l: clamp(color.l + seriesRecipe.darkLightnessOffset) });
+  };
   const colors = {}, series = {};
-  selected.forEach((value, index) => {
+  selected.map(display).forEach((value, index) => {
     const key = `series-${index + 1}`;
     const actual = toOklch(value.hex);
     colors[key] = value.hex;
     series[key] = {
       hueOffset: seriesRecipe.hueOffsets[index],
       l: Number(actual.l.toFixed(5)), c: Number(actual.c.toFixed(5)), h: Number(actual.h.toFixed(3)),
-      correction: { l: Number((value.l - initial[index].l).toFixed(3)), c: Number((value.c - initial[index].c).toFixed(3)), h: Number((wrapHue(value.h - initial[index].h + 180) - 180).toFixed(3)) },
+      // 校正量记录基准八色的有限校正，暗色明度偏移单独维护在 seriesRecipe。
+      correction: { l: Number((selected[index].l - initial[index].l).toFixed(3)), c: Number((selected[index].c - initial[index].c).toFixed(3)), h: Number((wrapHue(selected[index].h - initial[index].h + 180) - 180).toFixed(3)) },
     };
   });
-  return { colors, series, vision: { model: 'Machado 2009 / severity 100', anchor: Number(anchor.toFixed(3)), neutralBrand: brand.c < 0.01, before, after: checkColorVision(Object.values(colors)) } };
+  const displayedBefore = mode === 'dark' ? checkColorVision(initial.map(display).map(value => value.hex)) : before;
+  return { colors, series, vision: { model: 'Machado 2009 / severity 100', anchor: Number(anchor.toFixed(3)), neutralBrand: brand.c < 0.01, before: displayedBefore, after: checkColorVision(Object.values(colors)) } };
 }

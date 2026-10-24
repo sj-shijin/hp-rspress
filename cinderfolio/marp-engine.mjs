@@ -2,6 +2,7 @@ import { render } from 'pele';
 import { bundledLanguagesInfo, createHighlighter } from 'shiki';
 import { createShikiTheme } from './shiki.mjs';
 import { marpFonts } from './marp.mjs';
+import { withPeleHitAreas } from './pele-svg.mjs';
 
 export default {
   lang: 'zh-CN',
@@ -40,7 +41,7 @@ export default {
         maxWidth: 1120,
         autoDirection: false,
       });
-      return `<figure class="cinderfolio-pele">${svg}</figure>`;
+      return `<figure class="cinderfolio-pele">${withPeleHitAreas(svg)}</figure>`;
     };
     return marp;
   },

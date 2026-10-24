@@ -13,7 +13,7 @@ test('无 node_modules 时仍可独立导出所有主题，分发产物带有 MI
   const root = await fs.mkdtemp(path.join(tmpdir(), 'cinderfolio-export-'));
   try {
     const source = new URL('../', import.meta.url);
-    for (const name of ['palette', 'oklch', 'pele', 'shiki', 'css', 'build', 'rspress', 'marp', 'license']) {
+    for (const name of ['palette', 'oklch', 'pele', 'pele-svg', 'shiki', 'css', 'build', 'rspress', 'marp', 'license']) {
       await fs.copyFile(new URL(`${name}.mjs`, source), path.join(root, `${name}.mjs`));
     }
     const output = path.join(root, 'exported');
@@ -37,7 +37,8 @@ test('无 node_modules 时仍可独立导出所有主题，分发产物带有 MI
     assert.ok(pele.includes('[data-cinderfolio="dark"]'));
     for (const declaration of ['--cf-background: #121212', '--pele-border: #787877', '--pele-border: #959593',
       '--pele-critical: #f97316', '--pele-critical: #fcaf79']) assert.ok(pele.includes(declaration));
-    assert.equal(pele.split('--pele-series-1: #ffa475').length - 1, 2);
+    assert.equal(pele.split('--pele-series-1: #cf9600').length - 1, 1);
+    assert.equal(pele.split('--pele-series-1: #c08b00').length - 1, 1);
     assert.equal(pele.split('--pele-accent: #fa9148').length - 1, 2);
     assert.doesNotMatch(pele, /--cf-pele-fill-/);
     assert.doesNotMatch(await read('cf-rspress.css'), /--pele-/);

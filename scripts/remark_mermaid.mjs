@@ -1,6 +1,7 @@
 /** 构建期渲染 Mermaid；Rspress 的 SSG-MD 不执行自定义 Remark 插件，保留原始代码。 */
 import { createHash } from 'node:crypto';
 import { render } from 'pele';
+import { withPeleHitAreas } from 'cinderfolio/pele';
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 
@@ -33,7 +34,7 @@ export default function remarkMermaid() {
         // 使用 MDX 节点，避免普通 .md 的 rehype-raw 将组件名转为小写 HTML 标签。
         // 图表与源码按顺序传给 Mermaid；源码由组件中的官方 Callout 包裹。
         const parts = [
-          element('div', 'sj-mermaid__diagram', html.parse(svg).children),
+          element('div', 'sj-mermaid__diagram', html.parse(withPeleHitAreas(svg)).children),
           { type: 'element', tagName: 'pre', properties: {}, children: [
             element('code', 'language-mermaid', [{ type: 'text', value: node.value + '\n' }]),
           ] },

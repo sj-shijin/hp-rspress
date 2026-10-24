@@ -1,6 +1,7 @@
 /** Pele 专用职责；分类色由品牌色色相扩展，结构色复用固定灰阶。 */
 import { seeds, createGrayScale, grayIndex, createAccentScale, contrast } from './palette.mjs';
 import { seriesRecipe, createCategoricalPalette } from './oklch.mjs';
+export { withPeleHitAreas } from './pele-svg.mjs';
 
 export const peleRoles = {
   bg: { label: '画布', gray: 16, usage: 'SVG 画布' },
@@ -31,7 +32,7 @@ function textOn(fill, input) {
 export function createPeleTheme(input = seeds, mode = 'light') {
   const gray = createGrayScale(input);
   const accent = createAccentScale(input.accent);
-  const generated = createCategoricalPalette(input);
+  const generated = createCategoricalPalette(input, mode);
   const colors = {}, onFill = {};
   for (const [key, role] of Object.entries(peleRoles)) {
     if ('gray' in role) colors[key] = gray[`g${grayIndex(role.gray, mode)}`];
