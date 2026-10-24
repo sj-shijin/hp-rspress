@@ -16,6 +16,8 @@ export const shikiRoles = {
       'meta.function.powershell storage.type.powershell',
       'keyword.operator.expression', 'keyword.operator.wordlike', 'keyword.operator.new', 'keyword.operator.delete',
       'keyword.operator.ternary', 'keyword.operator.arrow.cs',
+      // Rust 的分支箭头与错误传播参与执行路径，返回类型箭头由 auxiliary 接管。
+      'keyword.operator.arrow.fat.rust', 'keyword.operator.question.rust',
       'keyword.control punctuation.definition.function', 'keyword.control punctuation.definition.keyword',
       'storage.type.function punctuation.definition.function',
       // 原生 Vue 的 HTML 回退仍保留属性名上下文；无需注入语法即可识别流程指令。
@@ -28,7 +30,7 @@ export const shikiRoles = {
     label: '阅读主体', gray: 0, fontStyle: 'bold', usage: '函数、变量、属性、表达式与规则',
     scope: [
       // 按明确职责强调；source 默认常规，不再让新语言的未分类内容全部加粗。
-      'variable', 'entity.name.variable', 'support.variable', 'meta.object-literal.key',
+      'variable', 'entity.name.variable', 'entity.name.label', 'support.variable', 'meta.object-literal.key',
       'constant.other.caps', 'entity.name.function', 'support.function',
       // 调用、函数体与 record 声明内未细分的标识符局部兜底，内层类型和字面量仍接管。
       'meta.function-call', 'meta.method-call', 'meta.function.call',
@@ -119,11 +121,14 @@ export const shikiRoles = {
       'source.cs keyword.type',
       // 类型箭头、可选属性和 satisfies 不承担运行时流程；可选链与实际函数箭头保持强调。
       'meta.type storage.type.function.arrow', 'keyword.control.satisfies', 'keyword.operator.optional',
+      'keyword.operator.arrow.skinny.rust',
       // Go / Lua 的绑定声明与 const / let / var 使用同一层级。
       'keyword.var.go', 'keyword.const.go', 'keyword.local.lua',
       // C++ 属性属于声明附注，属性边界不继承表达式括号的粗体。
       'support.other.attribute', 'support.other.attribute entity.other.attribute',
       'support.other.attribute punctuation.section.attribute',
+      // Rust 属性只弱化边界；未细分的 derive / cfg 名称保持常规端点色。
+      'meta.attribute.rust punctuation.definition', 'meta.attribute.rust punctuation.brackets',
       // SQL 的 AS 与 CMake 的 PRIVATE / VERSION 等参数标签不承担流程导航。
       'keyword.other.alias.sql', 'entity.source.cmake',
       // 类型上下文优先于通用括号规则；调用、下标和代码块保持原有层级。
@@ -170,6 +175,8 @@ export const shikiRoles = {
       'keyword.operator.key-value', 'punctuation',
       // 引号、排版符号和列表标记保持次级；其余定义边界使用 execution。
       'punctuation.definition.string', 'punctuation.definition.char', 'punctuation.definition.bold', 'punctuation.definition.italic',
+      // f-string 的引号标记在字符串外层，需覆盖内层 string；插值和正文仍用原层级。
+      'meta.fstring punctuation.definition.string string',
       'punctuation.definition.raw', 'punctuation.definition.quote', 'punctuation.definition.table',
       'punctuation.definition.heading',
       'punctuation.definition.keyword', 'punctuation.definition.lifetime', 'markup.list punctuation.definition.list',

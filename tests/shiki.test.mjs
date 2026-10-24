@@ -88,9 +88,11 @@ test('未分类的源码使用常规端点色，局部兜底保留 C 与 Python 
   }
 });
 
-test('通用变量、内置属性和对象键不依赖源码粗体兜底', () => {
+test('通用变量、内置属性、对象键和名称标签不依赖源码粗体兜底', () => {
   const samples = [
     ...['javascript', 'typescript'].map(lang => [lang, 'const item = { title: "Task", limit: 3 }; const count = item.length;', ['title:', 'limit:', 'length']]),
+    ...['javascript', 'typescript'].map(lang => [lang, 'outer: for (const value of items) { if (value) break outer; }', ['outer:', 'outer;']]),
+    ...['typescript', 'tsx'].map(lang => [lang, 'type Event = [id: number, label: string];', ['id:', 'label:']]),
     ['csharp', 'class Job { static int Run(int count) { var value = count; return value; } }', ['count)', 'value =']],
     ['java', 'record Task(String title) {}\nclass Job { void run() { var pending = load(); consume(pending); } }', ['title)', 'pending =']],
   ];
@@ -227,7 +229,7 @@ test('类型括号使用辅助信息，表达式、调用、捕获和代码块�
       ['int[3]', 0], ['int (*)(int)', 0], ['decltype(read(0))', [0, 2, 2, 0]], ['(*callback)(int)', 0],
     ]],
     ['rust', '#[derive(Debug)]\nfn run(values: &[i32]) { let list = [1, 2]; let value = values[0]; call((x + y)); }', [
-      ['#[derive(Debug)]', 2], ['run(values: &[i32])', 2], ['[1, 2]', 2], ['values[0]', 2], ['call((x + y))', 2],
+      ['#[derive(Debug)]', 0], ['run(values: &[i32])', 2], ['[1, 2]', 2], ['values[0]', 2], ['call((x + y))', 2],
     ]],
     ['go', 'package main\nfunc run(values []int) { list := []int{1, 2}; value := values[0]; fn((value + 1)) }', [
       ['run(values []int)', 2], ['[]int{1, 2}', 2], ['values[0]', 2], ['fn((value + 1))', 2],
@@ -317,7 +319,7 @@ test('模板、泛型和标签尖括号跟随类型使用辅助信息，比较�
   }
 });
 
-test('Python 保留注释斜体与数据粗体，插值边界加粗，格式和字面量保持常规', () => {
+test('Python 保留注释斜体与数据粗体，插值边界加粗，f-string 引号使用结构细节', () => {
   const code = 'MAX_COUNT = 10\n# explanation\n@dataclass\nclass Vector:\n    def describe(self, value: float) -> str:\n        """A docstring."""\n        return f"result: {round(value) + 1:.3f}\\n" if value is not None else True';
   for (const mode of ['light', 'dark']) {
     const palette = createShikiPalette(seeds, mode);
@@ -325,6 +327,7 @@ test('Python 保留注释斜体与数据粗体，插值边界加粗，格式和�
       ['MAX_COUNT', 'execution', 2], ['#', 'comment', 1], ['explanation', 'comment', 1],
       ['dataclass', 'execution', 2], ['class Vector', 'navigation', 2], ['def', 'navigation', 2], ['Vector', 'execution', 2], ['describe', 'execution', 2], ['value: float', 'execution', 2],
       ['"""', 'comment', 1], ['A docstring.', 'comment', 1], ['result:', 'content', 0], ['{round', 'execution', 2],
+      ['"result:', 'structure', 0], ['" if value', 'structure', 0], ['f"result:', 'content', 0],
       ['round', 'execution', 2], ['value) +', 'execution', 2], ['+', 'execution', 2], ['\\n', 'auxiliary', 0], [':.3f', 'auxiliary', 0],
       ['float', 'auxiliary', 0], ['None', 'content', 0], ['True', 'content', 0],
     ]) {
@@ -932,14 +935,34 @@ test('C++ 声明属性使用辅助信息，lambda 捕获和下标保持阅读主
   }
 });
 
-test('Rust 结果和选项变体使用阅读主体，类型保持辅助信息，字符引号保持结构细节', () => {
-  const code = 'fn choose(x: Option<i32>) -> Result<i32, String> {\n  match x { Some(n) => Ok(n), None => Err("missing".into()) }\n}\nlet comma = \',\';';
+test('Rust 分支和提前返回使用导航色，返回类型箭头使用辅助信息，结果变体保持阅读主体', () => {
+  const code = 'fn choose(x: Option<i32>) -> Result<i32, String> {\n  let value = x.ok_or("missing")?;\n  match x { Some(n) => Ok(n), None => Err("missing?".into()) }\n}\nlet comma = \',\';';
   for (const mode of ['light', 'dark']) {
     const palette = createShikiPalette(seeds, mode);
     for (const [text, role, style] of [
       ['Some', 'execution', 2], ['None', 'execution', 2], ['Ok', 'execution', 2], ['Err', 'execution', 2],
       ['Option', 'auxiliary', 0], ['Result', 'auxiliary', 0], ['String', 'auxiliary', 0],
+      ['->', 'auxiliary', 0], ['=>', 'navigation', 2], ['?;', 'navigation', 2], ['?".into()', 'content', 0],
       ["',", 'structure', 0], ["';", 'structure', 0], [",';", 'content', 0], ['match', 'navigation', 2],
+    ]) {
+      const token = tokenAt(code, 'rust', mode, text);
+      assert.equal(token.color.toLowerCase(), palette[role].color, `${mode}.${text}`);
+      assert.equal(token.fontStyle, style, `${mode}.${text}`);
+    }
+  }
+});
+
+test('Rust 属性只弱化边界，属性名称、字符串和运行时表达式保持原层级', () => {
+  const code = '#[derive(Debug)]\nstruct Item;\n#[cfg(feature = "fast")]\nfn run(values: &[i32]) { call(values[0]); }';
+  for (const mode of ['light', 'dark']) {
+    const palette = createShikiPalette(seeds, mode);
+    checkBrackets(code, 'rust', mode, [
+      ['#[derive(Debug)]', 0], ['#[cfg(feature = "fast")]', 0], ['call(values[0])', 2],
+    ]);
+    for (const [text, role, style] of [
+      ['#', 'auxiliary', 0], ['derive', 'content', 0], ['cfg', 'content', 0],
+      ['Debug', 'auxiliary', 0], ['feature', 'content', 0], ['=', 'execution', 2],
+      ['"fast', 'structure', 0], ['fast', 'content', 0], ['fn', 'navigation', 2], ['call', 'execution', 2],
     ]) {
       const token = tokenAt(code, 'rust', mode, text);
       assert.equal(token.color.toLowerCase(), palette[role].color, `${mode}.${text}`);
