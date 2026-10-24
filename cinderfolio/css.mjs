@@ -1,6 +1,7 @@
 /** CSS 导出仅依赖配色计算，可在 Node.js 和浏览器中复用。 */
 import { seeds, createGrayScale, createAccentScale, createPalette, cssName } from './palette.mjs';
 import { createPeleTheme, peleRoles } from './pele.mjs';
+import { licenseComment } from './license.mjs';
 
 export function themeVariables(input = seeds, mode = 'light') {
   return Object.fromEntries([
@@ -85,7 +86,7 @@ ${solidLabels}
 
 /** 单文件包含全部颜色和图表规则，复制后无需加载 colors.css 或 Rspress。 */
 export function createPeleCss(input = seeds) {
-  return createColorCss(input, {
+  return licenseComment + createColorCss(input, {
     light: '[data-cinderfolio="light"]',
     dark: '[data-cinderfolio="dark"]',
   }) + '\n' + createPeleColorCss(input) + '\n' + createPeleAdapterCss();

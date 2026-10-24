@@ -1,6 +1,7 @@
 /** 独立 Rspress CSS 导出；Node.js 与网页下载使用同一个入口。 */
 import { seeds } from './palette.mjs';
 import { createColorCss } from './css.mjs';
+import { licenseComment } from './license.mjs';
 
 export const rspressSelectors = {
   light: ':where(html:not(.rp-dark))',
@@ -96,5 +97,5 @@ html .rp-suggest-item--current .rp-suggest-item__container .rp-suggest-item__con
 `;
 
 export function createRspressCss(input = seeds) {
-  return createColorCss(input, rspressSelectors) + '\n' + rules;
+  return licenseComment + createColorCss(input, rspressSelectors) + '\n' + rules;
 }

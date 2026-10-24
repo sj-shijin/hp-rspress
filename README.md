@@ -15,8 +15,8 @@ sh scripts/install.sh  # 首次安装依赖
 npm run dev           # 开发预览；修改内容或公开清单后需重启
 npm run build         # 导出、构建、校正 Markdown 并检查产物
 npm run preview       # 预览已构建的静态网站
-npm run colors        # 单独导出 Cinderfolio 通用、Pele 与 Rspress CSS
-npm test              # 使用独立临时知识库运行测试
+npm run colors        # 单独导出 Cinderfolio 的 CSS 与 Shiki JSON
+npm test              # 独立主题测试，以及临时知识库与网站集成测试
 npm run check:build   # 单独检查现有构建产物
 ```
 
@@ -30,19 +30,22 @@ site/                   # 个人主页、知识库与项目入口等网站专属
   knowledge/index.md    # /knowledge/
   projects/index.md     # /projects/
   projects.json         # 网站专属项目的显式页面清单
-  projects/cinderfolio/ # Cinderfolio 概览、Rspress 配色、Pele 与 Shiki 说明
+  projects/cinderfolio/ # Cinderfolio 概览及四种主题的网页展示
 theme/                  # 样式、字体与标识资源
-cinderfolio/            # 独立配色源与 CSS 导出；不包含预览页面
+cinderfolio/            # 独立主题项目，含自己的构建、测试、文档与 MIT 许可
 knowledge/publish.json  # 知识库笔记与附件的唯一公开清单
 knowledge-vault/        # 私有知识库的固定版本子模块
 scripts/                # 内容导出、Markdown 校正与产物检查
+.generated/cinderfolio/ # 本站使用的主题与 Marp HTML，不提交
 .generated/docs/        # 生成的 Rspress 输入，不提交
 .generated/site/        # 唯一发布产物，不提交
 .runtime/               # 本地日志，不提交
 ```
 
 开发约定见 [AGENTS.md](AGENTS.md)，框架与主题用法见 `.agents/skills/`。
-网站默认使用 [Cinderfolio](cinderfolio/README.md)；`dev` / `build` 会自动生成配色，网页与 Pele 共用职责色。
+网站通过本地包依赖使用 [Cinderfolio](cinderfolio/README.md)；`dev` / `build` 会自动生成主题和 Marp 示例。
+网页组件、调色同步与下载资源的维护见 [网站集成文档](docs/cinderfolio.md)，算法和主题内部规则见 [Cinderfolio 维护文档](cinderfolio/docs/maintenance.md)。
+[Cinderfolio 的 MIT 许可](cinderfolio/LICENSE) 仅覆盖该子项目的原创内容，不扩展到个人网站或知识库；字体和图片保留各自授权。
 项目技能来自 [rstackjs/agent-skills](https://github.com/rstackjs/agent-skills)，
 通过 Skills Manager 导出为项目副本；更新时先更新共享库，再重新导出，不做全局部署。
 

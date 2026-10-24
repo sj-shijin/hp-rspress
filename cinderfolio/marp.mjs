@@ -2,6 +2,7 @@
 import { seeds } from './palette.mjs';
 import { themeVariables, createPeleAdapterCss } from './css.mjs';
 import { createPeleTheme } from './pele.mjs';
+import { licenseComment } from './license.mjs';
 
 export const marpThemeStorageKey = 'cinderfolio-marp-theme';
 // 字体文件只由 Marp 文档加载，不影响 Rspress 网页；图表与正文共用同一字体栈。
@@ -24,7 +25,7 @@ export function createMarpCss(input = seeds) {
   const variables = mode => Object.entries(marpThemeVariables(input, mode))
     .map(([key, value]) => `  ${key}: ${value};`).join('\n');
 
-  return `/*
+  return licenseComment + `/*
  * @theme cinderfolio
  * @size 16:9 1280px 720px
  * @auto-scaling true

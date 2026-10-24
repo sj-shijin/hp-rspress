@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /** 独立生成 CSS / JSON；仅使用 Node.js 内置模块，不依赖 Pele 或 Rspress。 */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -10,6 +11,7 @@ import { createMarpCss } from './marp.mjs';
 import { peleRoles, createPelePalette } from './pele.mjs';
 import { seriesRecipe } from './oklch.mjs';
 import { shikiRoles, createShikiPalette, createShikiTheme } from './shiki.mjs';
+import { licenseText, licenseComment } from './license.mjs';
 
 const directory = new URL('./', import.meta.url);
 const { values } = parseArgs({ options: { check: { type: 'boolean' }, 'out-dir': { type: 'string' } } });
@@ -86,14 +88,14 @@ for (const [mode, c] of Object.entries(themes)) {
   });
 }
 
-const header = '/* 由 Cinderfolio 配色源生成；请修改来源后运行 node cinderfolio/build.mjs。 */';
 const artifacts = {
+  LICENSE: licenseText,
   'colors.json': `${JSON.stringify({ name: 'cinderfolio', neutralColorSpace: 'srgb', accentColorSpace: 'hsl', seeds, grayDivisions, grayScale, accentSteps, accentScale, recipes, themes, checks, pele: { seriesRecipe, roles: peleRoles, themes: peleThemes, checks: peleChecks }, shiki: { roles: shikiRoles, themes: shikiThemes, checks: shikiChecks } }, null, 2)}\n`,
-  'colors.css': `${header}\n${createColorCss()}`,
-  'cf-pele.css': `${header}\n${createPeleCss()}`,
+  'colors.css': licenseComment + createColorCss(),
+  'cf-pele.css': createPeleCss(),
   // 原生主题选择器只存在于 Rspress 产物；Pele 与通用 CSS 不知道 rp-dark。
-  'cf-rspress.css': `${header}\n${createRspressCss()}`,
-  'cf-marp.css': `${header}\n${createMarpCss()}`,
+  'cf-rspress.css': createRspressCss(),
+  'cf-marp.css': createMarpCss(),
   'cf-shiki-light.json': `${JSON.stringify(shikiThemes.light, null, 2)}\n`,
   'cf-shiki-dark.json': `${JSON.stringify(shikiThemes.dark, null, 2)}\n`,
 };

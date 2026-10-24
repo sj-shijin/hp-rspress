@@ -12,13 +12,13 @@ class CinderfolioExportTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp(prefix='cinderfolio-export-'))
         try:
             source = Path(__file__).resolve().parents[1] / 'cinderfolio'
-            for name in ['palette.mjs', 'oklch.mjs', 'pele.mjs', 'shiki.mjs', 'css.mjs', 'build.mjs', 'rspress.mjs', 'marp.mjs']:
+            for name in ['palette.mjs', 'oklch.mjs', 'pele.mjs', 'shiki.mjs', 'css.mjs', 'build.mjs', 'rspress.mjs', 'marp.mjs', 'license.mjs']:
                 shutil.copyfile(source / name, root / name)
             command = ['node', str(root / 'build.mjs'), '--out-dir', str(root / 'exported')]
             subprocess.run(command, check=True, capture_output=True, text=True)
             output = root / 'exported'
             self.assertEqual({path.name for path in output.iterdir()},
-                             {'colors.css', 'colors.json', 'cf-pele.css', 'cf-rspress.css', 'cf-marp.css',
+                             {'LICENSE', 'colors.css', 'colors.json', 'cf-pele.css', 'cf-rspress.css', 'cf-marp.css',
                               'cf-shiki-light.json', 'cf-shiki-dark.json'})
             pele = (output / 'cf-pele.css').read_text()
             self.assertNotRegex(pele, r'@import|--rp-|rp-dark|sj-mermaid')
