@@ -1,7 +1,7 @@
 {
   "name": "cinderfolio",
   "version": "0.1.0",
-  "description": "统一配色与 Rspress、Pele、Shiki、Marp 主题生成",
+  "description": "统一配色与 Rspress、Pele、Mermaid、Shiki、Marp 主题生成",
   "type": "module",
   "license": "MIT",
   "author": "ShiJin",
@@ -11,6 +11,7 @@
     "./oklch": "./oklch.mjs",
     "./css": "./css.mjs",
     "./pele": "./pele.mjs",
+    "./mermaid": "./mermaid.mjs",
     "./rspress": "./rspress.mjs",
     "./shiki": "./shiki.mjs",
     "./marp": "./marp.mjs",

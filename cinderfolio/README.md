@@ -1,6 +1,6 @@
 # Cinderfolio
 
-以深色、浅色和品牌色三个输入生成统一配色，导出 Rspress、Pele、Shiki 与 Marp 主题。包含十六等分灰阶、五档品牌色、亮暗职责映射和品牌衍生的八个分类色。
+以深色、浅色和品牌色三个输入生成统一配色，导出 Rspress、Pele、Mermaid、Shiki 与 Marp 主题。包含十六等分灰阶、五档品牌色、亮暗职责映射和品牌衍生的八个分类色。
 
 ```js
 const input = { ink: '#121212', paper: '#fafaf8', accent: '#f97316' };
@@ -22,6 +22,8 @@ dist/
   colors.json            # 色阶、职责、HEX 与对比度记录
   cf-rspress.css         # Rspress 主题，跟随 html.rp-dark
   cf-pele.css            # 独立 Pele SVG 主题
+  cf-mermaid-light.json  # Mermaid 官方渲染器亮色配置
+  cf-mermaid-dark.json   # Mermaid 官方渲染器暗色配置
   cf-shiki-light.json    # Shiki 亮色主题，具体 HEX
   cf-shiki-dark.json     # Shiki 暗色主题，具体 HEX
   cf-marp.css            # Marp 主题，包含 Pele / Shiki 样式
@@ -45,6 +47,7 @@ npm install /path/to/cinderfolio
 import { createRspressCss } from 'cinderfolio/rspress';
 import { createPeleCss } from 'cinderfolio/css';
 import { createShikiTheme } from 'cinderfolio/shiki';
+import { createMermaidTheme } from 'cinderfolio/mermaid';
 import { createMarpCss } from 'cinderfolio/marp';
 
 const input = { ink: '#121212', paper: '#fafaf8', accent: '#f97316' };
@@ -53,6 +56,8 @@ const peleCss = createPeleCss(input);
 const marpCss = createMarpCss(input);
 const shikiLight = createShikiTheme(input, 'light');
 const shikiDark = createShikiTheme(input, 'dark');
+const mermaidLight = createMermaidTheme(input, 'light');
+const mermaidDark = createMermaidTheme(input, 'dark');
 ```
 
 Rspress 主题入口中加载 `cinderfolio/themes/cf-rspress.css`，Shiki 配置使用上述亮暗主题对象。需要实时调色时，`createShikiTheme(input, mode, { variables: true })` 可生成引用通用色阶变量的主题；独立 JSON 默认使用 HEX。
@@ -76,6 +81,20 @@ import { withPeleHitAreas } from 'cinderfolio/pele';
 
 const svg = withPeleHitAreas(render(source).svg);
 ```
+
+## Mermaid
+
+两份 `cf-mermaid-*.json` 是 Mermaid 官方的完整主题配置，使用 `base` 与 `classic`，颜色均为具体 HEX。使用方安装 Mermaid 后直接传给初始化入口：
+
+```js
+import mermaid from 'mermaid';
+import { createMermaidTheme } from 'cinderfolio/mermaid';
+
+mermaid.initialize({ ...createMermaidTheme(input, 'light'), startOnLoad: false });
+const { svg } = await mermaid.render('diagram-id', source);
+```
+
+也可读取导出的 JSON 代替生成函数。切换亮暗后由使用方应用对应配置并重新渲染；生成主题本身不依赖 Mermaid、DOM 或网站代码。适配以 Mermaid 12.2.0 验证，渲染器需要 Node.js 22.12+；纯主题导出的 Node.js 要求不变。通用主题不附带字体文件。
 
 ## Marp
 
@@ -109,7 +128,7 @@ npx --no-install marp slides.md --config-file ./marp-engine.mjs --theme-set ./di
 
 模块职责、算法、语法规则和字体更新见 [维护文档](docs/maintenance.md)。
 
-原创代码、主题和文档使用 [MIT 许可](LICENSE)。CSS 导出包含许可文本；分享 Shiki JSON 或其他产物时同时附带 `LICENSE`。
+原创代码、主题和文档使用 [MIT 许可](LICENSE)。CSS 导出包含许可文本；分享 Shiki、Mermaid JSON 或其他产物时同时附带 `LICENSE`。
 
 - 字体保留各自的 SIL Open Font License，许可证、来源与哈希位于 `fonts/marp/`，不改授 MIT。
 - 示例图片的作者、来源与授权链接见 `examples/assets/SOURCE.json`，图片不在 MIT 授权范围内。

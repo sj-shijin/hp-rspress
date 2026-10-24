@@ -8,12 +8,13 @@ import { licenseText, licenseComment } from '../license.mjs';
 import { createPeleCss } from '../css.mjs';
 import { createRspressCss } from '../rspress.mjs';
 import { createMarpCss } from '../marp.mjs';
+import { createMermaidTheme } from '../mermaid.mjs';
 
 test('无 node_modules 时仍可独立导出所有主题，分发产物带有 MIT 许可', async () => {
   const root = await fs.mkdtemp(path.join(tmpdir(), 'cinderfolio-export-'));
   try {
     const source = new URL('../', import.meta.url);
-    for (const name of ['palette', 'oklch', 'pele', 'pele-svg', 'shiki', 'css', 'build', 'rspress', 'marp', 'license']) {
+    for (const name of ['palette', 'oklch', 'pele', 'pele-svg', 'mermaid', 'shiki', 'css', 'build', 'rspress', 'marp', 'license']) {
       await fs.copyFile(new URL(`${name}.mjs`, source), path.join(root, `${name}.mjs`));
     }
     const output = path.join(root, 'exported');
@@ -23,6 +24,7 @@ test('无 node_modules 时仍可独立导出所有主题，分发产物带有 MI
     assert.deepEqual((await fs.readdir(output)).sort(), [
       'LICENSE', 'colors.css', 'colors.json', 'cf-pele.css', 'cf-rspress.css', 'cf-marp.css',
       'cf-shiki-light.json', 'cf-shiki-dark.json',
+      'cf-mermaid-light.json', 'cf-mermaid-dark.json',
     ].sort());
     assert.equal(licenseText, await fs.readFile(new URL('LICENSE', source), 'utf8'));
     assert.equal(await read('LICENSE'), licenseText);
@@ -43,6 +45,9 @@ test('无 node_modules 时仍可独立导出所有主题，分发产物带有 MI
     assert.doesNotMatch(pele, /--cf-pele-fill-/);
     assert.doesNotMatch(await read('cf-rspress.css'), /--pele-/);
     const colors = JSON.parse(await read('colors.json'));
+    for (const mode of ['light', 'dark']) {
+      assert.deepEqual(JSON.parse(await read(`cf-mermaid-${mode}.json`)), createMermaidTheme(undefined, mode));
+    }
     assert.equal(colors.themes.light.selection, '#fad8c0');
     assert.equal(colors.pele.seriesRecipe.space, 'oklch');
     assert.equal(colors.pele.roles.critical.accent.light, 'brand');

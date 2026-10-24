@@ -9,6 +9,7 @@ import { createColorCss, createPeleCss } from './css.mjs';
 import { createRspressCss } from './rspress.mjs';
 import { createMarpCss } from './marp.mjs';
 import { peleRoles, createPelePalette } from './pele.mjs';
+import { createMermaidTheme } from './mermaid.mjs';
 import { seriesRecipe } from './oklch.mjs';
 import { shikiRoles, createShikiPalette, createShikiTheme } from './shiki.mjs';
 import { licenseText, licenseComment } from './license.mjs';
@@ -98,6 +99,8 @@ const artifacts = {
   'cf-marp.css': createMarpCss(),
   'cf-shiki-light.json': `${JSON.stringify(shikiThemes.light, null, 2)}\n`,
   'cf-shiki-dark.json': `${JSON.stringify(shikiThemes.dark, null, 2)}\n`,
+  'cf-mermaid-light.json': `${JSON.stringify(createMermaidTheme(seeds, 'light'), null, 2)}\n`,
+  'cf-mermaid-dark.json': `${JSON.stringify(createMermaidTheme(seeds, 'dark'), null, 2)}\n`,
 };
 
 // --check 只核对产物与来源一致，并重新检查实际使用组合的对比度。
