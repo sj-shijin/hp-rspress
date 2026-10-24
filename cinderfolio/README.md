@@ -104,7 +104,7 @@ npm run marp   # 生成 dist/marp/，包含 16:9、4:3 HTML、字体和图片
 npm test       # 配色、独立导出、真实 Shiki 语法与 Marp 渲染测试
 ```
 
-`examples/marp.md` 包含一页 `cover` 封面、一页 `transition` 过渡页与九页内容元素排版样张。生成的 HTML 保留 Marp 官方播放器，可整体复制 `dist/marp/` 分享。字体固定为 Inter、Noto Sans SC、Sarasa Mono SC，本地 WOFF2 随示例分发。
+`examples/marp.md` 是 Cinderfolio-Marp 使用演示，分为快速开始、特性展示和高级 Marp：介绍 CLI 与 VS Code 两条使用路线，实际展示封面、过渡页、分栏、常规与紧凑正文，以及公式、表格、图片和分步列表。生成的 HTML 保留 Marp 官方播放器，可整体复制 `dist/marp/` 分享。字体固定为 Inter、Noto Sans SC、Sarasa Mono SC，本地 WOFF2 随示例分发。
 
 ```yaml
 ---
@@ -116,6 +116,18 @@ size: 16:9 # 或 4:3
 
 `cf-marp.css` 可由 Marp Core / CLI 加载，亮暗随 `prefers-color-scheme`，嵌入时可继承外层的 `color-scheme`。单独 CSS 不内嵌字体；其他渲染入口还需加载 `fonts/marp/font.css` 及同目录 WOFF2。
 
+标题约定：封面 `#`、封面副标题 `######`、正文与过渡页页题 `##`、页内小标题 `###`；分页仍使用 `---`。副标题使用独立样式，标题层级不决定其视觉字号。
+
+正文默认使用常规布局；单页添加 `compact` 收紧正文，标题、品牌线和正文起点不动，分栏继续使用 `cf-cols / cf-col`：
+
+```markdown
+<!-- _class: compact -->
+
+## 页标题
+
+正文内容。
+```
+
 在本项目内转换其他文稿，使用通用渲染扩展启用 Pele 与 Shiki：
 
 ```sh
@@ -123,6 +135,8 @@ npx --no-install marp slides.md --config-file ./marp-engine.mjs --theme-set ./di
 ```
 
 其他项目可通过 `cinderfolio/marp-engine` 引用该配置，或通过 `cinderfolio/marp-build` 的 `buildMarpExample(outputDirectory)` 构建随包样张。这两个入口需要使用方安装 Marp CLI、Pele 和 Shiki；它们不参与纯主题导出。
+
+[Marp for VS Code](https://github.com/marp-team/marp-vscode#use-custom-theme-css) 可通过 `markdown.marp.themes` 加载 `dist/cf-marp.css`。当前官方扩展未提供自定义引擎配置入口，加载 CSS 不会接入 Pele、Shiki、封面标题自动分组或本地字体。完整预览与导出仍在集成终端运行上述 CLI 路线；编辑器内的进一步适配尚未接入。
 
 ## 维护与许可
 
