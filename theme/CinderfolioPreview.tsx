@@ -1,8 +1,8 @@
 import { useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { ThemeContext } from '@rspress/core/runtime';
-import { seeds, recipes, grayDivisions, grayIndex, accentSteps, createGrayScale, createAccentScale, createPalette } from '../cinderfolio/palette.mjs';
-import { peleRoles, peleRoleGroups, createPeleTheme } from '../cinderfolio/pele.mjs';
-import { shikiRoles, shikiDisplayRoles, createShikiPalette } from '../cinderfolio/shiki.mjs';
+import { seeds, recipes, grayDivisions, grayIndex, accentSteps, createGrayScale, createAccentScale, createPalette } from 'cinderfolio/palette';
+import { peleRoles, peleRoleGroups, createPeleTheme } from 'cinderfolio/pele';
+import { shikiRoles, shikiDisplayRoles, createShikiPalette } from 'cinderfolio/shiki';
 import { useCinderfolio, type CinderfolioSeeds } from './CinderfolioTheme';
 import './cinderfolio.css';
 

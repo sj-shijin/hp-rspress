@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react';
 import { ThemeContext } from '@rspress/core/runtime';
-import { marpThemeVariables, marpThemeStorageKey } from '../cinderfolio/marp.mjs';
+import { marpThemeVariables } from 'cinderfolio/marp';
+import { marpThemeStorageKey } from '../scripts/marp_theme_sync.mjs';
 import { useCinderfolio } from './CinderfolioTheme';
 import './cinderfolio.css';
 

@@ -225,19 +225,20 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         sitemap_routes.add(parsed.path)
     public_routes = set()
     # CLI 生成的独立演示是 iframe 资源，正文入口是 Cinderfolio-Marp 页面。
-    presentation = 'cinderfolio/marp/example.html'
+    presentations = ('cinderfolio/marp/example.html', 'cinderfolio/marp/example-4-3.html')
     has_marp = any(page['url'] == '/projects/cinderfolio/marp/' for page in site_pages)
     if has_marp:
-        deck = Page(output / presentation)
-        require(deck.has('figure', **{'class': 'cinderfolio-pele'})
-                and deck.has('pre', **{'class': 'shiki shiki-themes cinderfolio-light cinderfolio-dark'}),
-                'Marp 独立演示缺少 Pele 图表或 Shiki 高亮')
+        for presentation in presentations:
+            deck = Page(output / presentation)
+            require(deck.has('figure', **{'class': 'cinderfolio-pele'})
+                    and deck.has('pre', **{'class': 'shiki shiki-themes cinderfolio-light cinderfolio-dark'}),
+                    f'Marp 独立演示缺少 Pele 图表或 Shiki 高亮：{presentation}')
         require(Page(output / 'projects/cinderfolio/marp/index.html').has(
-                    'iframe', src='/' + presentation),
+                    'iframe', src='/' + presentations[0]),
                 'Marp 页面缺少独立演示 iframe')
     for path in output.rglob('*.html'):
         relative = path.relative_to(output).as_posix()
-        if has_marp and relative == presentation:
+        if has_marp and relative in presentations:
             continue
         route = '/' + relative.removesuffix('index.html')
         if relative != '404.html' and route not in aliases:

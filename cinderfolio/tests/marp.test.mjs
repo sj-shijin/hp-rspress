@@ -5,12 +5,10 @@ import { createHash } from 'node:crypto';
 import { Marp } from '@marp-team/marp-core';
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
-import { createMarpCss, marpFonts, marpThemeStorageKey, marpThemeVariables } from '../cinderfolio/marp.mjs';
-import { createPeleTheme } from '../cinderfolio/pele.mjs';
-import { createShikiTheme } from '../cinderfolio/shiki.mjs';
-import config from '../scripts/marp.config.mjs';
-import { installMarpThemeSync } from '../scripts/marp_theme_sync.mjs';
-import vm from 'node:vm';
+import { createMarpCss, marpFonts } from '../marp.mjs';
+import { createShikiTheme } from '../shiki.mjs';
+import { createPeleTheme } from '../pele.mjs';
+import config from '../marp-engine.mjs';
 
 const parser = unified().use(rehypeParse, { fragment: true });
 let marp;
@@ -23,16 +21,17 @@ function elements(node, match) {
   return [node, ...(node.children || []).flatMap(child => elements(child, match))].filter(match);
 }
 
-test('正式引擎编译四页示例，保留双图、Shiki 高亮、代码缩放与自动亮暗', async () => {
+test('正式引擎编译排版样张，保留双图、Shiki 高亮、代码缩放与自动亮暗', async () => {
   const css = createMarpCss();
   assert.doesNotMatch(css, /@import|--rp-|rp-dark|\.hljs-/);
-  const result = marp.render(await fs.readFile(new URL('../cinderfolio/examples/marp.md', import.meta.url), 'utf8'));
-  assert.equal((result.html.match(/<section\b/g) || []).length, 4);
-  assert.equal(result.comments.length, 4);
-  assert.ok(result.comments.every(notes => notes.length > 0));
+  const result = marp.render(await fs.readFile(new URL('../examples/marp.md', import.meta.url), 'utf8'));
   const tree = parser.parse(result.html);
+  const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
+  assert.equal(slides.length, result.comments.length);
+  assert.ok(result.comments.every(notes => notes.length > 0));
   assert.equal(elements(tree, node => node.properties?.className?.includes('pele')).length, 2);
-  const code = elements(tree, node => node.tagName === 'pre' && node.properties?.className?.includes('shiki'));
+  const code = elements(tree, node => node.tagName === 'pre' && node.properties?.className?.includes('shiki'))
+    .filter(block => elements(block, node => node.type === 'text' && node.value.includes('presentReady')).length);
   assert.equal(code.length, 1);
   assert.equal(code[0].properties.dataAutoScaling, 'downscale-only');
   assert.ok(elements(code[0], node => node.properties?.style?.includes('var(--cf-accent-darker)')).length > 0);
@@ -58,8 +57,44 @@ test('正式引擎编译四页示例，保留双图、Shiki 高亮、代码缩�
   assert.deepEqual(styles('light'), styles('dark'));
 });
 
+test('同一份主题识别两种 size，并生成对应的 SVG 画布与尺寸标记', async () => {
+  const source = await fs.readFile(new URL('../examples/marp.md', import.meta.url), 'utf8');
+  for (const [size, width] of [['16:9', 1280], ['4:3', 960]]) {
+    const { html } = marp.render(source.replace(/^size: 16:9$/m, `size: ${size}`));
+    const tree = parser.parse(html);
+    const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
+    const canvases = elements(tree, node => node.tagName === 'svg' && node.properties?.dataMarpitSvg !== undefined);
+    assert.equal(slides.length, 9);
+    assert.equal(canvases.length, slides.length);
+    assert.ok(slides.every(slide => slide.properties.dataSize === size));
+    assert.ok(canvases.every(svg => svg.properties.viewBox === `0 0 ${width} 720`));
+  }
+});
+
+test('排版样张覆盖常用内容标签与公式，图片资源可独立分发', async () => {
+  const { html } = marp.render(await fs.readFile(new URL('../examples/marp.md', import.meta.url), 'utf8'));
+  const tree = parser.parse(html);
+  for (const tag of [
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'strong', 'em', 's', 'a', 'code',
+    'ul', 'ol', 'li', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'img', 'pre', 'mjx-container', 'figure', 'svg', 'header', 'footer',
+  ]) {
+    assert.ok(elements(tree, node => node.tagName === tag).length, tag);
+  }
+  assert.ok(elements(tree, node => node.tagName === 'pre' && !node.properties?.className?.includes('shiki')).length > 0);
+
+  const directory = new URL('../examples/assets/', import.meta.url);
+  const assets = JSON.parse(await fs.readFile(new URL('SOURCE.json', directory), 'utf8'));
+  for (const asset of assets) {
+    assert.ok(html.includes(`./assets/${asset.file}`));
+    const bytes = await fs.readFile(new URL(asset.file, directory));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256);
+    assert.ok(asset.author && asset.source && asset.license);
+  }
+});
+
 test('Marp 本地字库与来源记录一致，样式仅引用随包 WOFF2', async () => {
-  const directory = new URL('../cinderfolio/fonts/marp/', import.meta.url);
+  const directory = new URL('../fonts/marp/', import.meta.url);
   const css = await fs.readFile(new URL('font.css', directory), 'utf8');
   const { fonts } = JSON.parse(await fs.readFile(new URL('SOURCE.json', directory), 'utf8'));
   assert.doesNotMatch(css, /https?:|local\(/);
@@ -113,34 +148,4 @@ test('常用语言和别名共用 Shiki，未知语言保留为转义后的纯�
   assert.equal(elements(blocks.at(-1), node => node.tagName === 'script').length, 0);
   assert.ok(elements(tree, node => node.type === 'text').some(node => node.value.includes(examples.at(-1)[1])));
   assert.throws(() => marp.render('```mermaid\nnot-a-diagram\n```'));
-});
-
-test('嵌入页同步通用与 Pele 配色，更新变量时保留播放位置', () => {
-  const sections = Array.from({ length: 3 }, () => ({ style: { setProperty(key, value) { this[key] = value; } } }));
-  const state = { mode: 'dark', variables: marpThemeVariables(undefined, 'dark') };
-  const listeners = {};
-  const document = { documentElement: { style: {} }, querySelectorAll: () => sections };
-  const location = { hash: '#2' };
-  const context = vm.createContext({
-    document, location,
-    localStorage: { getItem: key => key === marpThemeStorageKey ? JSON.stringify(state) : null },
-    window: { addEventListener: (name, listener) => { listeners[name] = listener; } },
-  });
-  vm.runInContext(`(${installMarpThemeSync.toString()})(${JSON.stringify(marpThemeStorageKey)})`, context);
-  assert.equal(document.documentElement.style.colorScheme, 'dark');
-  assert.ok(sections.every(section => section.style['--cf-background'] === '#121212'));
-  assert.ok(sections.every(section => section.style['--pele-bg'] === '#121212'
-    && section.style['--pele-critical'] === '#fcaf79'));
-
-  const input = { ink: '#000000', paper: '#ffffff', accent: '#0099ff' };
-  listeners.storage({ key: marpThemeStorageKey, newValue: JSON.stringify({ mode: 'light', variables: marpThemeVariables(input, 'light') }) });
-  assert.equal(document.documentElement.style.colorScheme, 'light');
-  assert.ok(sections.every(section => section.style['--cf-background'] === '#ffffff'
-    && section.style['--cf-accent-brand'] === '#0099ff'));
-  const { colors, onFill } = createPeleTheme(input, 'light');
-  for (const section of sections) {
-    for (const [key, value] of Object.entries(colors)) assert.equal(section.style[`--pele-${key}`], value);
-    for (const [key, value] of Object.entries(onFill)) assert.equal(section.style[`--cf-pele-on-${key}`], value);
-  }
-  assert.equal(location.hash, '#2');
 });

@@ -1,7 +1,7 @@
 import { render } from 'pele';
 import { bundledLanguagesInfo, createHighlighter } from 'shiki';
-import { createShikiTheme } from '../cinderfolio/shiki.mjs';
-import { marpFonts } from '../cinderfolio/marp.mjs';
+import { createShikiTheme } from './shiki.mjs';
+import { marpFonts } from './marp.mjs';
 
 export default {
   lang: 'zh-CN',
@@ -9,7 +9,7 @@ export default {
   async engine({ marp }) {
     const highlighter = await createHighlighter({
       themes: ['light', 'dark'].map(mode => createShikiTheme(undefined, mode, { variables: true })),
-      // 仅在构建期加载内置语法，与网站和独立主题 JSON 一致。
+      // 仅在构建期加载内置语法，与独立主题 JSON 一致。
       langs: bundledLanguagesInfo.map(lang => lang.id),
     });
     const languages = new Set(highlighter.getLoadedLanguages());

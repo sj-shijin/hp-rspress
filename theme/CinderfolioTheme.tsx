@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useHead } from '@rspress/core/runtime';
-import { seeds } from '../cinderfolio/palette.mjs';
-import { createColorCss, createPeleColorCss } from '../cinderfolio/css.mjs';
+import { seeds } from 'cinderfolio/palette';
+import { createColorCss, createPeleColorCss } from 'cinderfolio/css';
 
 export type CinderfolioSeeds = typeof seeds;
 type ThemeState = { input: CinderfolioSeeds; setInput: Dispatch<SetStateAction<CinderfolioSeeds>> };

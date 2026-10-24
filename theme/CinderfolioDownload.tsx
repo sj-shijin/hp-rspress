@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { createPeleCss } from '../cinderfolio/css.mjs';
-import { createRspressCss } from '../cinderfolio/rspress.mjs';
-import { createMarpCss } from '../cinderfolio/marp.mjs';
-import { createShikiTheme } from '../cinderfolio/shiki.mjs';
+import { createPeleCss } from 'cinderfolio/css';
+import { createRspressCss } from 'cinderfolio/rspress';
+import { createMarpCss } from 'cinderfolio/marp';
+import { createShikiTheme } from 'cinderfolio/shiki';
 import { useCinderfolio } from './CinderfolioTheme';
 import './cinderfolio.css';
 

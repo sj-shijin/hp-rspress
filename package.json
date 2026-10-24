@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "export": ".venv/bin/python scripts/export_knowledge.py",
-    "colors": "node cinderfolio/build.mjs",
+    "colors": "cinderfolio-build",
     "marp": "node scripts/build_marp.mjs",
     "predev": "npm run colors && npm run marp",
     "dev": "npm run export && rspress dev --host 127.0.0.1 --port 1320",
@@ -13,7 +13,7 @@
     "build": "npm run export && rspress build",
     "postbuild": ".venv/bin/python scripts/finalize_markdown.py && npm run check:build",
     "preview": "rspress preview --host 127.0.0.1 --port 1320",
-    "test": ".venv/bin/python -m unittest discover -s tests -v && node --test tests/*.test.mjs",
+    "test": "npm --prefix cinderfolio test && .venv/bin/python -m unittest discover -s tests -v && node --test tests/*.test.mjs",
     "check:build": ".venv/bin/python scripts/check_build.py",
     "check:afdocs": ".venv/bin/python scripts/check_afdocs.py"
   },
@@ -21,6 +21,7 @@
     "@marp-team/marp-cli": "4.5.1",
     "@rspress/core": "2.0.23",
     "@rspress/plugin-sitemap": "2.0.23",
+    "cinderfolio": "file:./cinderfolio",
     "katex": "^0.16.22",
     "pele": "1.6.0",
     "react": "19.3.1",

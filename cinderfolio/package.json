@@ -1,0 +1,65 @@
+{
+  "name": "cinderfolio",
+  "version": "0.1.0",
+  "description": "统一配色与 Rspress、Pele、Shiki、Marp 主题生成",
+  "type": "module",
+  "license": "MIT",
+  "author": "ShiJin",
+  "exports": {
+    ".": "./palette.mjs",
+    "./palette": "./palette.mjs",
+    "./oklch": "./oklch.mjs",
+    "./css": "./css.mjs",
+    "./pele": "./pele.mjs",
+    "./rspress": "./rspress.mjs",
+    "./shiki": "./shiki.mjs",
+    "./marp": "./marp.mjs",
+    "./marp-engine": "./marp-engine.mjs",
+    "./marp-build": "./scripts/build_marp.mjs",
+    "./themes/*": "./dist/*",
+    "./fonts/*": "./fonts/*",
+    "./examples/*": "./examples/*",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "cinderfolio-build": "./build.mjs"
+  },
+  "files": [
+    "*.mjs",
+    "dist/*.css",
+    "dist/*.json",
+    "dist/LICENSE",
+    "scripts",
+    "examples",
+    "fonts",
+    "docs"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node build.mjs --check",
+    "marp": "node scripts/build_marp.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "@marp-team/marp-cli": "^4.5.1",
+    "pele": "^1.6.0",
+    "shiki": "^4.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@marp-team/marp-cli": { "optional": true },
+    "pele": { "optional": true },
+    "shiki": { "optional": true }
+  },
+  "devDependencies": {
+    "@marp-team/marp-cli": "4.5.1",
+    "@marp-team/marp-core": "4.4.0",
+    "pele": "1.6.0",
+    "rehype-parse": "9.0.1",
+    "shiki": "4.5.0",
+    "unified": "11.0.5"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

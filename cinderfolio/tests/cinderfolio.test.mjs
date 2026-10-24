@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { seeds, recipes, createGrayScale, adjustLightness, createAccentScale, createPalette, contrast } from '../cinderfolio/palette.mjs';
-import { themeVariables, createColorCss, createPeleCss, createPeleColorCss } from '../cinderfolio/css.mjs';
-import { peleRoles, peleRoleGroups, createPeleTheme, createPelePalette } from '../cinderfolio/pele.mjs';
-import { createRspressCss } from '../cinderfolio/rspress.mjs';
+import { seeds, recipes, createGrayScale, adjustLightness, createAccentScale, createPalette, contrast } from '../palette.mjs';
+import { themeVariables, createColorCss, createPeleCss, createPeleColorCss } from '../css.mjs';
+import { peleRoles, peleRoleGroups, createPeleTheme, createPelePalette } from '../pele.mjs';
+import { createRspressCss } from '../rspress.mjs';
 
 test('ink 到 paper 十六等分，两个端点和十五个中间灰保持固定步长', () => {
   assert.deepEqual(createGrayScale(), {

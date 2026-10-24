@@ -1,14 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { defineConfig } from '@rspress/core';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkMermaid from './scripts/remark_mermaid.mjs';
 import { renderLlmsTxt } from './scripts/render_llms.mjs';
-import { createShikiTheme } from './cinderfolio/shiki.mjs';
+import { createShikiTheme } from 'cinderfolio/shiki';
 
 const generated = path.resolve('.generated');
+const require = createRequire(import.meta.url);
 const siteOrigin = process.env.SITE_ORIGIN || '';
 const navigation = JSON.parse(
   fs.readFileSync(path.join(generated, 'theme-config.json'), 'utf-8'),
@@ -79,7 +81,7 @@ export default defineConfig({
       buildCache: {
         cacheDigest: [siteOrigin],
         // MDX 高亮结果依赖主题，变更后不能复用旧代码块。
-        buildDependencies: [path.resolve('cinderfolio/shiki.mjs')],
+        buildDependencies: [require.resolve('cinderfolio/shiki')],
       },
     },
     output: {
@@ -89,7 +91,7 @@ export default defineConfig({
           to: 'fonts/lxgw-wenkai-mono-gb/OFL.txt',
         },
         { from: path.resolve('theme/brand'), to: 'brand' },
-        { from: path.resolve('cinderfolio/dist'), to: 'cinderfolio' },
+        { from: path.join(generated, 'cinderfolio'), to: 'cinderfolio' },
       ],
     },
   },

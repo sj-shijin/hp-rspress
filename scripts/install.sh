@@ -12,4 +12,6 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 # 安装缓存保留在本项目，不改动全局 npm 配置或缓存权限。
 npm install --cache .runtime/npm-cache --no-audit --no-fund
+# 本地 file: 包的开发依赖由独立项目自行安装。
+npm ci --prefix cinderfolio --cache .runtime/npm-cache --no-audit --no-fund
 printf '\n安装完成。预览命令：npm run dev\n'

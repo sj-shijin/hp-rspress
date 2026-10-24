@@ -1,0 +1,18 @@
+[
+  {
+    "file": "landscape.jpg",
+    "author": "Go Wild",
+    "source": "https://unsplash.com/photos/V0yAek6BgGk",
+    "download": "https://picsum.photos/id/29/1200/900",
+    "license": "https://unsplash.com/license",
+    "sha256": "8f79386493848a858473b652419f48ac0b2fe1c5559144dda514817cdfac1172"
+  },
+  {
+    "file": "workspace.jpg",
+    "author": "Aleks Dorohovich",
+    "source": "https://unsplash.com/photos/nJdwUHmaY8A",
+    "download": "https://picsum.photos/id/20/1200/900",
+    "license": "https://unsplash.com/license",
+    "sha256": "32f0cb4960906d435ba34040831c2eb512dc27e1b29aed3f1ea37a1293705778"
+  }
+]

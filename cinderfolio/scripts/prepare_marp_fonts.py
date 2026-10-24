@@ -8,7 +8,6 @@ import shutil
 
 from fontTools import subset
 from fontTools.ttLib import TTFont
-from prepare_fonts import unicode_ranges
 
 
 # Source URL、版本、原始文件哈希与许可证随资源一起记录；日常构建只复制产物。
@@ -29,6 +28,17 @@ FONTS = [
      '207819db06e13541387112d9b6c81fdc3067a24dee39313d3d663a5cbf6346e5'),
 ]
 LICENSES = ['NotoSansSC-OFL.txt', 'Inter-OFL.txt', 'SarasaMonoSC-OFL.txt']
+
+
+def unicode_ranges(points):
+    """合并连续码点，供浏览器按 unicode-range 选择字体分片。"""
+    runs = []
+    for point in sorted(points):
+        if runs and point == runs[-1][1] + 1:
+            runs[-1][1] = point
+        else:
+            runs.append([point, point])
+    return ','.join(f'U+{a:X}' if a == b else f'U+{a:X}-{b:X}' for a, b in runs)
 
 
 def prepare(source: Path, output: Path):
@@ -108,6 +118,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('source', type=Path, help='官方字体、三份许可证与 sources.json 所在目录')
     parser.add_argument('--output', type=Path,
-                        default=Path(__file__).resolve().parents[1] / 'cinderfolio/fonts/marp')
+                        default=Path(__file__).resolve().parents[1] / 'fonts/marp')
     args = parser.parse_args()
     prepare(args.source, args.output)

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { createHighlighter } from 'shiki';
-import { seeds } from '../cinderfolio/palette.mjs';
-import { themeVariables } from '../cinderfolio/css.mjs';
-import { shikiRoles, shikiDisplayRoles, createShikiPalette, createShikiTheme } from '../cinderfolio/shiki.mjs';
+import { seeds } from '../palette.mjs';
+import { themeVariables } from '../css.mjs';
+import { shikiRoles, shikiDisplayRoles, createShikiPalette, createShikiTheme } from '../shiki.mjs';
 
 let highlighter;
 before(async () => {

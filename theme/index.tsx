@@ -1,7 +1,7 @@
 import 'katex/dist/katex.min.css';
 import './index.css';
-import '../cinderfolio/dist/cf-rspress.css';
-import '../cinderfolio/dist/cf-pele.css';
+import 'cinderfolio/themes/cf-rspress.css';
+import 'cinderfolio/themes/cf-pele.css';
 import { Layout as OriginalLayout } from '@rspress/core/theme-original';
 import { CinderfolioProvider } from './CinderfolioTheme';
 import type { ComponentProps } from 'react';

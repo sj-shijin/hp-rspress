@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { seeds, contrast } from '../cinderfolio/palette.mjs';
-import { toOklch, fromOklch, simulateColorVision, checkColorVision, createCategoricalPalette, seriesRecipe } from '../cinderfolio/oklch.mjs';
+import { seeds, contrast } from '../palette.mjs';
+import { toOklch, fromOklch, simulateColorVision, checkColorVision, createCategoricalPalette, seriesRecipe } from '../oklch.mjs';
 
 test('OKLCH 转换核对标准红色，并保持 sRGB 往返与色域内输出', () => {
   const red = toOklch('#ff0000');

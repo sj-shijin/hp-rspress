@@ -1,4 +1,4 @@
-/** 唯一手调的三个颜色。修改后运行 node cinderfolio/build.mjs。 */
+/** 唯一手调的三个颜色。修改后在项目目录运行 npm run build。 */
 export const seeds = {
   ink: '#121212',   // 炭黑：沿用原站暗色画布，兼作中性轴的深色端。
   paper: '#fafaf8', // 微暖白：中性轴的浅色端，兼作亮色画布。

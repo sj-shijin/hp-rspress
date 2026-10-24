@@ -1,25 +1,20 @@
-/** CLI 只生成 HTML，不启动浏览器、不下载 Chromium。 */
+/** 网站集成：准备下载资源，并在独立 Marp HTML 中接入同源调色同步。 */
 import fs from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { marpCli } from '@marp-team/marp-cli';
-import { marpThemeStorageKey } from '../cinderfolio/marp.mjs';
-import { installMarpThemeSync } from './marp_theme_sync.mjs';
+import { buildMarpExample } from 'cinderfolio/marp-build';
+import { installMarpThemeSync, marpThemeStorageKey } from './marp_theme_sync.mjs';
 
-const source = fileURLToPath(new URL('../cinderfolio/examples/marp.md', import.meta.url));
-const theme = fileURLToPath(new URL('../cinderfolio/dist/cf-marp.css', import.meta.url));
-const config = fileURLToPath(new URL('./marp.config.mjs', import.meta.url));
-const directory = new URL('../cinderfolio/dist/marp/', import.meta.url);
-const output = fileURLToPath(new URL('example.html', directory));
-await fs.mkdir(directory, { recursive: true });
-// 字体与示例一起发布，HTML 使用相对路径，独立打开或整体搬移时仍可加载。
-await fs.cp(new URL('../cinderfolio/fonts/marp/', import.meta.url), new URL('fonts/', directory), { recursive: true });
-const status = await marpCli([source, '--theme-set', theme, '--config-file', config, '--output', output]);
-if (status !== 0) throw new Error(`Marp HTML 生成失败：${status}`);
+const directory = new URL('../.generated/cinderfolio/', import.meta.url);
+const themes = new URL('./', import.meta.resolve('cinderfolio/themes/cf-marp.css'));
+await fs.rm(directory, { recursive: true, force: true });
+await fs.cp(themes, directory, { recursive: true });
 
-// 在独立 HTML 中执行，不把脚本塞入 React / MDX；保留官方 Bespoke 播放器。
+const slides = new URL('marp/', directory);
+await buildMarpExample(slides);
+// 脚本只进入本站 HTML，Cinderfolio 的独立产物不依赖本地存储或网站组件。
 const sync = `<script>(${installMarpThemeSync.toString()})(${JSON.stringify(marpThemeStorageKey)});</script>`;
-const html = await fs.readFile(output, 'utf8');
-await fs.writeFile(output, html
-  .replace('</head>', '<link rel="stylesheet" href="./fonts/font.css"></head>')
-  .replace('</body>', `${sync}</body>`));
-console.log('Cinderfolio-Marp：已生成示例，包含 Pele 图表、Shiki 高亮与同源主题同步。');
+for (const filename of ['example.html', 'example-4-3.html']) {
+  const target = new URL(filename, slides);
+  const html = await fs.readFile(target, 'utf8');
+  await fs.writeFile(target, html.replace('</body>', `${sync}</body>`));
+}
+console.log('Cinderfolio-Marp：网站资源已生成，包含 16:9 / 4:3 示例和同源主题同步。');
