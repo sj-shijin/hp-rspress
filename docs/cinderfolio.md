@@ -10,6 +10,8 @@ theme/CinderfolioTheme.tsx      # Rspress Layout 中的配色状态与全站变�
 theme/CinderfolioPreview.tsx    # 三栏选择器、色阶和显示职责
 theme/CinderfolioDownload.tsx   # 按当前参数生成 CSS / JSON 下载
 theme/CinderfolioMarp.tsx       # iframe、比例、当前页与底栏操作
+theme/CinderfolioMermaid.tsx    # 官方 Mermaid 的实时渲染与源码折叠
+theme/cinderfolio_mermaid.mjs   # 懒加载、串行配置与绘图，跳过过期请求
 theme/cinderfolio.css           # 本站预览组件布局
 theme/index.tsx                 # 通过包入口加载 Rspress / Pele CSS
 site/projects/cinderfolio/     # 本站 MDX 展示页，保留现有网址
@@ -44,13 +46,19 @@ Cinderfolio 源码 → cinderfolio/dist/（纯主题，带许可证）
 
 ## 预览状态与下载
 
-四个适配页面共用 `CinderfolioProvider`。深色、浅色、品牌色选择器通过 `useHead` 更新全站变量；Shiki 直接引用变量，无需重新分词。调色跨页面保留，刷新后重置；默认方案仍维护在子项目 `palette.mjs`。
+五个适配页面共用 `CinderfolioProvider`。深色、浅色、品牌色选择器通过 `useHead` 更新全站变量；Shiki 直接引用变量，无需重新分词。调色跨页面保留，刷新后重置；默认方案仍维护在子项目 `palette.mjs`。
 
 深色栏使用 `g15` 浅底，浅色栏使用 `g1` 深底，亮暗切换不反转。亮暗开关与导航共用 Rspress `ThemeContext`。显示职责与选择器的布局属于网站，通用职责定义来自 Cinderfolio。
 
 MDX 单独放置 `CinderfolioDownload`。CSS / JSON 下载使用当前颜色，`/cinderfolio/` 静态文件使用默认种子；CSS 自带 MIT 全文，分享 JSON 时附上 `/cinderfolio/LICENSE`。
 
 Shiki 和 Pele 使用原生双层 Tabs，仅保留必要间距、窄屏换行及选中项画布底色。Mermaid 源码用原生 `details / summary`，与图表共用底色；Pele 的渲染和源码折叠属于网站组件，不进入独立主题项目。
+
+## Mermaid 官方渲染器
+
+网站锁定 Mermaid 12.2.0，Node.js 要求为 22.12+；Cinderfolio 纯主题生成仍支持原来的 Node.js 版本。`mermaid` 围栏默认由 Pele 处理，只有标注 `renderer=mermaid` 才交给 `CinderfolioMermaid`。示例使用原生双层 Tabs 的 `keepDOM={false}`，只挂载当前图表；源码保留原生代码块和折叠样式。
+
+渲染器在组件挂载后懒加载。调色与亮暗变化使用同一 `createMermaidTheme()` 重新绘图，初始化和绘制串行执行，过期请求跳过或丢弃结果。传入实际容器供甘特图等按嵌入宽度排版。正文预览沿用网站字体，独立 JSON 不携带网站字体。下载按钮导出当前配色，静态下载提供默认亮暗配置；无 JavaScript 时仍保留源码与静态下载入口。
 
 ## Marp 集成
 

@@ -1,0 +1,275 @@
+---
+title: Cinderfolio-Mermaid
+description: 使用 Mermaid 官方渲染器预览常用图表，复用 Cinderfolio 灰阶、品牌色与分类色，下载亮暗主题 JSON。
+outline: false
+---
+
+import { Callout, Tab, Tabs } from '@rspress/core/theme';
+
+# Cinderfolio-Mermaid
+
+[Mermaid](https://github.com/mermaid-js/mermaid) 将文本绘制为图表。选择图例后调整配色，下载对应的亮暗主题。
+
+<CinderfolioPreview section="controls">
+  <CinderfolioDownload target="mermaid-light" />
+  <CinderfolioDownload target="mermaid-dark" />
+</CinderfolioPreview>
+
+<Tabs className="cf-mermaid-categories" keepDOM={false}>
+
+<Tab label="框线与结构">
+
+<Tabs keepDOM={false}>
+
+<Tab label="流程图">
+
+```mermaid renderer=mermaid
+flowchart LR
+    accTitle: 文档发布流程
+    A[文稿] --> B{检查}
+    subgraph build[构建]
+        B -->|通过| C[生成页面]
+        C --> D[(归档)]
+    end
+    B -.->|修改| A
+    D --> E[发布]
+```
+
+</Tab>
+
+<Tab label="时序图">
+
+```mermaid renderer=mermaid
+sequenceDiagram
+    participant R as 读者
+    participant S as 服务
+    R->>S: 请求文档
+    activate S
+    Note over R,S: 返回前检查版本
+    alt 文档存在
+        S-->>R: 页面内容
+    else 尚未发布
+        S-->>R: 状态提示
+    end
+    deactivate S
+```
+
+</Tab>
+
+<Tab label="类图">
+
+```mermaid renderer=mermaid
+classDiagram
+    class Document {
+        +String title
+        +render()
+    }
+    class Article {
+        +String author
+    }
+    class Collection {
+        +add(Document)
+    }
+    Document <|-- Article
+    Collection o-- Document
+```
+
+</Tab>
+
+<Tab label="状态图">
+
+```mermaid renderer=mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> 草稿
+    草稿 --> 审阅: 提交
+    state 审阅 {
+        校验 --> 确认
+    }
+    审阅 --> 草稿: 退回
+    审阅 --> 发布: 通过
+    发布 --> [*]
+```
+
+</Tab>
+
+<Tab label="实体关系图">
+
+```mermaid renderer=mermaid
+erDiagram
+    AUTHOR ||--o{ ARTICLE : writes
+    ARTICLE }o--o{ TAG : contains
+    AUTHOR {
+        int id PK
+        string name
+    }
+    ARTICLE {
+        int id PK
+        string title
+        int author_id FK
+    }
+    TAG {
+        int id PK
+        string label
+    }
+```
+
+</Tab>
+
+</Tabs>
+
+</Tab>
+
+<Tab label="分类与数据">
+
+<Tabs keepDOM={false}>
+
+<Tab label="饼图">
+
+```mermaid renderer=mermaid
+pie
+    title 八个分类
+    "1" : 1
+    "2" : 1
+    "3" : 1
+    "4" : 1
+    "5" : 1
+    "6" : 1
+    "7" : 1
+    "8" : 1
+```
+
+</Tab>
+
+<Tab label="Git 提交图">
+
+```mermaid renderer=mermaid
+gitGraph
+    commit id: "初稿"
+    branch feature
+    commit id: "功能"
+    checkout main
+    branch docs
+    commit id: "说明"
+    checkout main
+    merge feature id: "合并"
+    merge docs id: "发布" tag: "v1"
+```
+
+</Tab>
+
+<Tab label="思维导图">
+
+```mermaid renderer=mermaid
+mindmap
+    root((研究))
+        问题
+            背景
+            假设
+        方法
+            数据
+            实验
+        结果
+            分析
+            讨论
+```
+
+</Tab>
+
+<Tab label="XY 图">
+
+```mermaid renderer=mermaid
+xychart
+    title "实验结果"
+    x-axis [A, B, C, D]
+    y-axis "分数" 0 --> 10
+    bar [3, 6, 4, 8]
+    line [5, 4, 7, 6]
+```
+
+</Tab>
+
+<Tab label="象限图">
+
+```mermaid renderer=mermaid
+quadrantChart
+    x-axis 成本低 --> 成本高
+    y-axis 收益低 --> 收益高
+    quadrant-1 规划
+    quadrant-2 优先
+    quadrant-3 观察
+    quadrant-4 调整
+    方案A: [0.3, 0.7]
+    方案B: [0.7, 0.6]
+    方案C: [0.4, 0.3]
+```
+
+</Tab>
+
+</Tabs>
+
+</Tab>
+
+<Tab label="进度与状态">
+
+<Tabs keepDOM={false}>
+
+<Tab label="甘特图">
+
+```mermaid renderer=mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %m-%d
+    todayMarker off
+    section 研究
+        调研 :done, a, 2026-01-01, 3d
+        实验 :active, b, after a, 4d
+    section 交付
+        整理 :c, after b, 3d
+        汇报 :crit, d, after c, 2d
+```
+
+</Tab>
+
+<Tab label="用户旅程图">
+
+```mermaid renderer=mermaid
+journey
+    title 阅读与发布
+    section 阅读
+        浏览: 5: 读者
+        标注: 3: 读者, 作者
+    section 发布
+        修改: 4: 作者
+        提交: 5: 作者
+```
+
+</Tab>
+
+<Tab label="时间线">
+
+```mermaid renderer=mermaid
+timeline
+    title 研究计划
+    section 准备
+        一月 : 调研 : 确定问题
+    section 实施
+        二月 : 实验 : 分析数据
+        三月 : 汇报
+```
+
+</Tab>
+
+</Tabs>
+
+</Tab>
+
+</Tabs>
+
+<Callout type="details" title="显示职责">
+
+分类色复用品牌衍生的 [OKLCH](https://developer.mozilla.org/zh-CN/docs/Web/CSS/color_value/oklch) 八色，亮暗保持类别顺序。下载内容可直接传给 `mermaid.initialize()`。
+
+<CinderfolioPreview section="mermaid-roles" />
+
+</Callout>

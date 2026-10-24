@@ -7,7 +7,7 @@ ShiJin 的个人网站，使用 Rspress 2 构建，包含个人主页、知识�
 
 ## 本地使用
 
-需要 Node.js 20.19+／22.12+、Python 3 和 Pandoc；CI 固定使用 Pandoc 3.12.1。
+需要 Node.js 22.12+（Mermaid 12 的要求）、Python 3 和 Pandoc；CI 固定使用 Node.js 24 与 Pandoc 3.12.1。
 本机未安装 Pandoc 时先执行 `brew install pandoc`（macOS），其他系统使用 [官方安装包](https://github.com/jgm/pandoc/releases/tag/3.12.1)。
 
 ```sh

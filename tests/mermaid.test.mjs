@@ -59,6 +59,16 @@ test('普通代码及行内代码保持原样', async () => {
   assert.equal(tree.children[1].value, 'print("hello")');
 });
 
+test('显式官方渲染标记使用独立组件，默认 Mermaid 围栏仍由 Pele 渲染', async () => {
+  const source = 'flowchart LR\n A[文稿] --> B[发布]';
+  const tree = await compile('```mermaid renderer=mermaid\n' + source + '\n```\n\n```mermaid\n' + source + '\n```');
+  assert.equal(tree.children[0].name, 'CinderfolioMermaid');
+  assert.equal(descendants(tree.children[0], node => node.tagName === 'svg').length, 0);
+  assert.equal(descendants(tree.children[0], node => node.tagName === 'code')[0].children[0].value, source + '\n');
+  assert.equal(tree.children[1].name, 'Mermaid');
+  assert.equal(descendants(tree.children[1], node => node.tagName === 'svg').length, 1);
+});
+
 test('错误图在编译时失败并带出文件与行号', async () => {
   await assert.rejects(compile('# 标题\n\n```mermaid\nnot-a-diagram\n```'), error => {
     assert.match(error.message, /Mermaid \/ Pele/);
