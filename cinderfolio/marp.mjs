@@ -48,6 +48,8 @@ section {
   --cf-marp-bar-height: 32px;
   --cf-marp-inline-space: 80px;
   --cf-marp-block-space: 24px;
+  --cf-marp-body-space: 24px;
+  --cf-marp-column-gap: 24px;
   --cf-marp-divider-width: 2px;
   --cf-marp-divider-top: 400px; /* 封面与过渡页共用的品牌线位置。 */
   --cf-marp-column-media-height: 260px;
@@ -64,23 +66,21 @@ section {
   overflow-wrap: anywhere;
 }
 
-/* 每页以一个一级标题开头，页题与正文共用固定的起点。 */
+/* 封面 h1、页题 h2、页内标题 h3 起；封面副标题单独使用 h6。 */
 h1, h2, h3, h4, h5, h6 { margin: 0 0 0.65em; line-height: 1.25; font-weight: 700; }
-h1 { margin-bottom: 16px; padding-bottom: var(--cf-marp-block-space); font-size: 1.5em; letter-spacing: -0.025em; }
-/* 页题上下留白共用 block-space；边框贯穿画布，文字与正文对齐。 */
-section:not(.cover) > h1 {
-  margin-inline: calc(-1 * var(--cf-marp-inline-space));
-  padding-inline: var(--cf-marp-inline-space);
+/* 每页第一个顶层 h2 为页题；边框贯穿画布，文字与正文对齐。 */
+section:not(.cover) > h2:first-of-type {
   border-bottom: var(--cf-marp-divider-width) solid var(--cf-accent-brand);
+  letter-spacing: -0.025em;
 }
-h2 { font-size: 1.25em; }
-h3 { font-size: 1.1em; }
-h4 { font-size: 1em; }
-h5 { font-size: 0.9em; }
-h6 { font-size: 0.8em; }
-p, ul, ol, blockquote, pre, table { margin: 0 0 0.75em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1.1em; }
+h5 { font-size: 1em; }
+h6 { font-size: 0.9em; }
+p, ul, ol, blockquote, pre, table { margin: 0 0 var(--cf-marp-body-space); }
 ul, ol { padding-left: 1.25em; }
-li + li { margin-top: 0.25em; }
+li + li { margin-top: calc(var(--cf-marp-body-space) / 3); }
 section > :last-child, section > .cf-col:has(+ footer) { margin-bottom: 0; }
 a { color: var(--cf-link); text-underline-offset: 0.15em; }
 a:hover { color: var(--cf-accent-brand); }
@@ -101,15 +101,15 @@ pre::part(auto-scaling) { max-height: 460px; }
 .cf-cols {
   display: flex;
   align-items: stretch;
-  gap: var(--cf-marp-block-space);
-  margin: 0 0 0.75em;
+  gap: var(--cf-marp-column-gap);
+  margin: 0 0 var(--cf-marp-body-space);
 }
 .cf-col {
   --cf-col-media-start: 0;
   --cf-col-media-end: auto;
   /* 独立使用时是一组全宽内容，不自动瓜分页面的剩余高度。 */
   flex: 0 0 auto;
-  margin: 0 0 0.75em;
+  margin: 0 0 var(--cf-marp-body-space);
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -148,7 +148,7 @@ pre.shiki span {
   font-style: var(--shiki-light-font-style, normal);
   text-decoration: var(--shiki-light-text-decoration, none);
 }
-figure.cinderfolio-pele { margin: 0 0 0.75em; --pele-font: ${marpFonts.text}; --pele-font-mono: ${marpFonts.code}; }
+figure.cinderfolio-pele { margin: 0 0 var(--cf-marp-body-space); --pele-font: ${marpFonts.text}; --pele-font-mono: ${marpFonts.code}; }
 figure.cinderfolio-pele > svg { display: block; width: 100%; max-height: 360px; margin-inline: auto; }
 table { border-collapse: collapse; font-size: 0.85em; }
 th, td { padding: 0.4em 0.75em; border-bottom: 1px solid var(--cf-border-strong); text-align: left; }
@@ -190,9 +190,58 @@ footer { bottom: 0; padding-inline: calc(var(--cf-marp-inline-space) + 80px); bo
 section::after { bottom: 0; right: var(--cf-marp-inline-space); padding: 0; font-variant-numeric: tabular-nums; }
 section[data-marpit-pagination]::after { content: attr(data-marpit-pagination) ' / ' attr(data-marpit-pagination-total); }
 
-/* 两种画幅均上下对称；4:3 收紧标题区，为正文保留更多纵向空间。 */
-section[data-size='4:3'] { --cf-marp-inline-space: 56px; --cf-marp-block-space: 20px; --cf-marp-column-media-height: 240px; font-size: 28px; }
-section[data-size='4:3'] h1 { margin-bottom: 20px; }
+section[data-size='4:3'] {
+  --cf-marp-inline-space: 56px;
+  --cf-marp-block-space: 20px;
+  --cf-marp-body-space: 20px;
+  --cf-marp-column-gap: 20px;
+  --cf-marp-column-media-height: 240px;
+  font-size: 28px;
+}
+
+/* 正文页：标题区独立于正文密度；三处 16px 均按文字行框边缘计算。
+ * inline-space 继续用于页眉页脚、封面和过渡页，不随正文边距调整。
+ */
+section:not(.cover, .transition) {
+  --cf-marp-content-inset: 64px;
+  --cf-marp-title-size: 40px;
+  --cf-marp-title-gap: 16px;
+  padding: calc(var(--cf-marp-bar-height) + var(--cf-marp-title-gap)) var(--cf-marp-content-inset);
+}
+section[data-size='4:3']:not(.cover, .transition) {
+  --cf-marp-content-inset: 48px;
+  --cf-marp-title-size: 36px;
+}
+section:not(.cover, .transition) > h2:first-of-type {
+  flex-shrink: 0;
+  margin: 0 calc(-1 * var(--cf-marp-content-inset)) var(--cf-marp-title-gap);
+  padding: 0 var(--cf-marp-content-inset) var(--cf-marp-title-gap);
+  font-size: var(--cf-marp-title-size);
+  line-height: 1.25;
+}
+/* 正文小标题随密度缩放，避免与固定页题同大。 */
+section:not(.cover, .transition) :is(h3, h4, h5, h6) {
+  margin-bottom: calc(var(--cf-marp-body-space) / 2);
+  line-height: 1.3;
+  font-weight: 600;
+}
+section:not(.cover, .transition) h3 { font-size: 1em; }
+section:not(.cover, .transition) h4 { font-size: 0.95em; }
+section:not(.cover, .transition) h5 { font-size: 0.9em; }
+section:not(.cover, .transition) h6 { font-size: 0.85em; }
+
+/* 单页 _class: compact；只收紧正文，继续使用相同的 cf-cols / cf-col。 */
+section.compact:not(.cover, .transition) {
+  --cf-marp-body-space: 12px;
+  --cf-marp-column-gap: 20px;
+  font-size: 28px;
+  line-height: 1.4;
+}
+section.compact[data-size='4:3']:not(.cover, .transition) {
+  --cf-marp-body-space: 10px;
+  --cf-marp-column-gap: 16px;
+  font-size: 24px;
+}
 
 /* _class: transition；标题前的段落为可选章节编号，标题后为可选引导句。
  * 品牌线与封面共用固定基准，辅助段落不参与标题与品牌线的定位。
@@ -203,7 +252,7 @@ section.transition {
   padding-bottom: calc(720px - var(--cf-marp-divider-top) - var(--cf-marp-divider-width));
   text-align: center;
 }
-section.transition > h1 {
+section.transition > h2:first-of-type {
   margin: 0 calc(-1 * var(--cf-marp-inline-space));
   padding: 0 var(--cf-marp-inline-space) var(--cf-marp-block-space);
   font-size: 2em;
@@ -211,15 +260,15 @@ section.transition > h1 {
   text-wrap: balance;
 }
 section.transition > p { margin: 0; color: var(--cf-text-muted); font-size: 0.875em; text-wrap: balance; }
-section.transition > p:has(+ h1) { font-size: 0.75em; letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
-section.transition > h1 + p {
+section.transition > p:has(+ h2) { font-size: 0.75em; letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
+section.transition > h2:first-of-type + p {
   position: absolute;
   top: calc(var(--cf-marp-divider-top) + var(--cf-marp-divider-width) + var(--cf-marp-block-space));
   left: var(--cf-marp-inline-space);
   right: var(--cf-marp-inline-space);
 }
 
-/* _class: cover；h1 标题、可选 h2 副标题，作者、单位和日期用普通段落。
+/* _class: cover；h1 标题、可选 h6 副标题，作者、单位和日期用普通段落。
  * 主标题自身在品牌线上方居中，副标题跟在其下方，不参与主标题定位。
  * 作者、单位和日期仍作为一组在品牌线下方居中。
  */
@@ -238,8 +287,8 @@ section.cover > .cf-marp-cover-title {
   right: var(--cf-marp-inline-space);
   transform: translateY(-50%);
 }
-section.cover .cf-marp-cover-title > h1 { margin: 0; padding: 0; border: 0; font-size: 2.5em; line-height: 1.2; text-wrap: balance; }
-section.cover .cf-marp-cover-title > h2 {
+section.cover .cf-marp-cover-title > h1 { margin: 0; padding: 0; border: 0; font-size: 2.5em; line-height: 1.2; letter-spacing: -0.025em; text-wrap: balance; }
+section.cover .cf-marp-cover-title > h6 {
   position: absolute;
   top: calc(100% + 24px);
   left: 0;

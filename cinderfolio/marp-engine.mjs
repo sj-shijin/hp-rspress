@@ -25,7 +25,7 @@ export default {
       },
     });
 
-    // 将封面的 h1 与紧随的可选 h2 组成一组；作者仍使用普通 Markdown。
+    // 将封面的 h1 与紧随的可选 h6 组成一组；作者仍使用普通 Markdown。
     marp.markdown.core.ruler.before('marpit_collect', 'cinderfolio_cover_title', state => {
       const grouped = [];
       let cover = false;
@@ -45,7 +45,7 @@ export default {
             heading.level += 1;
             grouped.push(heading);
           } while (state.tokens[index - 1].type !== 'heading_close'
-            || (state.tokens[index]?.type === 'heading_open' && state.tokens[index].tag === 'h2'));
+            || (state.tokens[index]?.type === 'heading_open' && state.tokens[index].tag === 'h6'));
           const close = new state.Token('cinderfolio_cover_title_close', 'div', -1);
           close.block = true;
           close.level = open.level;
