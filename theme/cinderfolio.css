@@ -82,7 +82,7 @@
 .cf-marp__button { display: inline-flex; align-items: center; justify-content: center; height: 1.5rem; padding: 0; border: 0; border-radius: 0.25rem; color: inherit; background: none; font: inherit; cursor: pointer; }
 .cf-marp__ratio { width: 2.75rem; border: 1px solid var(--cf-control-border); color: var(--cf-foreground); }
 .cf-marp__ratio:hover { background: var(--cf-surface-hover); }
-.cf-marp__ratio[aria-pressed="true"] { border-color: var(--cf-control-selected-background); color: var(--cf-control-selected-foreground); background: var(--cf-control-selected-background); }
+.cf-marp__ratio[aria-pressed="true"] { border-color: var(--cf-interaction); color: var(--cf-interaction); background: none; }
 .cf-marp__action { width: 1.5rem; }
 .cf-marp__action:hover { color: var(--cf-interaction); }
 .cf-marp__button:focus-visible { outline: 2px solid var(--cf-interaction); outline-offset: 2px; }
