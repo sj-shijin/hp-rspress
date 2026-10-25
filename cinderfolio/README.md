@@ -104,15 +104,20 @@ npm run marp   # 生成 dist/marp/，包含 16:9、4:3 HTML、字体和图片
 npm test       # 配色、独立导出、真实 Shiki 语法与 Marp 渲染测试
 ```
 
-`examples/marp.md` 是 Cinderfolio-Marp 使用演示，分为快速开始、特性展示和高级 Marp：介绍 CLI 与 VS Code 两条使用路线，实际展示封面、过渡页、分栏、常规与紧凑正文，以及公式、表格、图片和分步列表。生成的 HTML 保留 Marp 官方播放器，可整体复制 `dist/marp/` 分享。字体固定为 Inter、Noto Sans SC、Sarasa Mono SC，本地 WOFF2 随示例分发。
+`examples/marp.md` 是 Cinderfolio-Marp 使用演示，分为快速开始、特性展示、标准 Markdown、扩展 Markdown、原生 Marp 五章。核心语法与渲染效果对照展示；表格、删除线、高亮、上下标、公式、Pele 图表与标注块放在扩展章；文档与单页配置、图片尺寸、分步列表放在原生 Marp 章。任务列表与脚注仅列写法，尚未启用。
+
+生成的 HTML 保留 Marp 官方播放器，可整体复制 `dist/marp/` 分享。字体固定为 Inter、Noto Sans SC、Sarasa Mono SC，本地 WOFF2 随示例分发。
 
 ```yaml
 ---
 marp: true
 theme: cinderfolio
 size: 16:9 # 或 4:3
+transition: fade 300ms # HTML 翻页淡入淡出
 ---
 ```
+
+示例全篇使用 300 毫秒淡入淡出，由 Marp CLI 的官方播放器处理；PDF 保持静态。其他效果与局部设置见[官方转场文档](https://github.com/marp-team/marp-cli/blob/main/docs/bespoke-transitions/README.md)。
 
 `cf-marp.css` 可由 Marp Core / CLI 加载，亮暗随 `prefers-color-scheme`，嵌入时可继承外层的 `color-scheme`。单独 CSS 不内嵌字体；其他渲染入口还需加载 `fonts/marp/font.css` 及同目录 WOFF2。
 

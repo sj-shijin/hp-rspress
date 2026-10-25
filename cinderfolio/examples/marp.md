@@ -2,12 +2,13 @@
 marp: true
 theme: cinderfolio
 size: 16:9
+transition: fade 300ms
 math: mathjax
 lang: zh-CN
 paginate: true
 title: Cinderfolio-Marp
-description: 快速开始、封面与过渡页、分栏布局，以及 Marp 原生能力的使用演示。
-header: '**[快速开始](#2)** [特性展示](#5) [高级 Marp](#11)'
+description: Cinderfolio-Marp 快速开始、特性展示、标准 Markdown、扩展 Markdown 与原生 Marp 使用演示。
+header: '**[快速开始](#2)** [特性展示](#5) [标准 Markdown](#10) [扩展 Markdown](#14) [原生 Marp](#21)'
 footer: Cinderfolio-Marp
 ---
 
@@ -81,7 +82,7 @@ npm run marp
 
 ---
 
-<!-- header: '[快速开始](#2) **[特性展示](#5)** [高级 Marp](#11)' -->
+<!-- header: '[快速开始](#2) **[特性展示](#5)** [标准 Markdown](#10) [扩展 Markdown](#14) [原生 Marp](#21)' -->
 <!-- _class: transition -->
 
 02
@@ -131,7 +132,7 @@ npm run marp
 </div>
 </div>
 
-<!-- 第 1 页展示真实封面，第 2、5、11 页展示真实过渡页。封面与过渡页品牌线距顶部 400px；封面 h1 自身居中于上部。可用 <br> 手动换行。封面清空页眉页脚、跳过编号的完整写法见本文件第一页。 -->
+<!-- 第 1 页展示真实封面，五个章节入口展示真实过渡页。封面与过渡页品牌线距顶部 400px；封面 h1 自身居中于上部。可用 <br> 手动换行。封面清空页眉页脚、跳过编号的完整写法见本文件第一页。 -->
 
 ---
 
@@ -173,91 +174,60 @@ npm run marp
 
 ---
 
-## 单栏—双栏—单栏
+<!-- _class: compact -->
+
+## 自定义多栏布局
 
 <div class="cf-col cf-align-tc">
 
-先给出观点，中间用文字与图像展开，最后归纳结论。
+用 `cf-cols` 分组、`cf-col` 分栏，分别选择列宽与对齐。
 
 </div>
 
 <div class="cf-cols">
 
-<div class="cf-col">
+<div class="cf-col cf-w3 cf-align-tl">
+
+### 列宽权重 · 3:2
 
 ```html
 <div class="cf-cols">
-  <div class="cf-col">
+  <div class="cf-col cf-w3 cf-align-tl">
     <p>左栏</p>
   </div>
-  <div class="cf-col">
+  <div class="cf-col cf-w2 cf-align-mc">
     <p>右栏</p>
   </div>
 </div>
 ```
 
+`cf-w1`—`cf-w5` 按权重分配宽度，可继续添加栏。
+
 </div>
-<div class="cf-col cf-align-tc">
+<div class="cf-col cf-w2 cf-align-mc">
 
-<figure>
+### 九宫格对齐
 
-![h:230 文字与图像并置的工作台](./assets/workspace.jpg)
+```mermaid
+block-beta
+  columns 3
+  tl["tl"] tc["tc"] tr["tr"]
+  ml["ml"] mc["mc"] mr["mr"]
+  bl["bl"] bc["bc"] br["br"]
+```
 
-<figcaption>文字说明观点，图像提供上下文。</figcaption>
-
-</figure>
+`cf-align-*` 对应图中位置；本栏使用 `cf-align-mc`。
 
 </div>
 </div>
 
 <div class="cf-col cf-align-tr">
 
-**默认等宽、顶部对齐；空列收起，剩余一列占满宽度。**
+默认等宽、左上对齐；空列收起，剩余一列占满宽度。
 
 </div>
 
-<!-- cf-col 独立使用就是全宽组，本页上方居中、下方靠右；HTML 容器内写 Markdown 时，标签与内容之间保留空行。图片来自 examples/assets/SOURCE.json；不是主题附带的研究数据。 -->
-
----
-
-## 比例与九宫格对齐
-
-<div class="cf-cols">
-
-<div class="cf-col cf-w3 cf-align-ml">
-
-### 宽度按权重分配
-
-```html
-<div class="cf-cols">
-  <div class="cf-col cf-w3">
-    <p>左栏</p>
-  </div>
-  <div class="cf-col cf-w2">
-    <p>右栏</p>
-  </div>
-</div>
-```
-
-本页为 **3:2**。可用 `cf-w1`—`cf-w5`；不写时为 1。
-
-</div>
-<div class="cf-col cf-w2 cf-align-tc">
-
-### `cf-align-*`
-
-| 左 | 中 | 右 |
-| :---: | :---: | :---: |
-| `tl` | `tc` | `tr` |
-| `ml` | `mc` | `mr` |
-| `bl` | `bc` | `br` |
-
-默认 `tl`；本栏使用 `tc`。
-
-</div>
-</div>
-
-<!-- 本页左栏使用 cf-align-ml，整组垂直居中；右栏使用 cf-align-tc。两列宽度扣除间距后按 3:2 分配。需要额外高度或任意权重时，可用 Marp 的 style scoped 设置组 min-height 或列 flex-grow。 -->
+<!-- cf-cols 可放多个 cf-col；本页两列扣除间距后按 3:2 分配，左栏左上对齐、右栏整体居中。Mermaid block-beta 由 Pele 渲染九宫格：t/m/b 表示上中下，l/c/r 表示左中右，对应 cf-align-*。cf-col 独立使用就是全宽组，本页上方居中、下方靠右；HTML 容器内写 Markdown 时，标签与内容之间保留空行。垂直对齐在另一栏更高或组有额外高度时才有可分配空间；任意权重或额外高度可用 style scoped 设置 flex-grow 或 min-height。 -->
 
 ---
 
@@ -303,20 +273,417 @@ flowchart TD
 
 ---
 
-<!-- header: '[快速开始](#2) [特性展示](#5) **[高级 Marp](#11)**' -->
+<!-- header: '[快速开始](#2) [特性展示](#5) **[标准 Markdown](#10)** [扩展 Markdown](#14) [原生 Marp](#21)' -->
 <!-- _class: transition -->
 
 03
 
-## 高级 Marp
+## 标准 Markdown
 
-用原生指令组织页面，用 Markdown 表达内容。
+用标题、列表、引用与链接组织内容。
 
-<!-- 以下展示 Marp 原生支持的指令、公式、表格、图片、分步列表和演讲备注；不再为每个 HTML 标签单独安排一页。 -->
+<!-- 本章以 CommonMark 核心语法为准；Marp 对分页与列表标记的特殊处理放在原生 Marp 章。参考：https://spec.commonmark.org/ -->
 
 ---
 
-## 原生指令 · 文档与单页
+<!-- _class: compact -->
+
+## 文字与代码
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 写法
+
+````markdown
+### 页内标题
+*斜体* **粗体** ***粗斜体***
+`行内代码`
+\*原样星号\*
+
+```python
+print("Cinderfolio")
+```
+````
+
+</div>
+<div class="cf-col">
+
+### 页内标题
+
+*斜体*　**粗体**　***粗斜体***
+
+`行内代码`
+
+\*原样星号\*
+
+```python
+print("Cinderfolio")
+```
+
+</div>
+</div>
+
+用空行分段；行末两个空格可手动换行。
+
+<!-- 标题、强调、行内代码、代码围栏与反斜杠转义属于 CommonMark 核心语法。代码围栏本身是核心语法，语法高亮由本站 Shiki 引擎提供。Marp 还会把普通段落内的换行转换为 br；本主题约定封面 h1、页题 h2、页内标题 h3 起，原生 Markdown 支持 h1–h6。独立横线会被 Marp 用于分页，见原生 Marp 章。 -->
+
+---
+
+<!-- _class: compact -->
+
+## 列表与引用
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 写法
+
+```markdown
+- 研究问题
+  - 数据与约束
+
+1. 建模
+2. 验证
+
+> 先给结论，再展示证据。
+```
+
+</div>
+<div class="cf-col">
+
+### 效果
+
+- 研究问题
+  - 数据与约束
+
+1. 建模
+2. 验证
+
+> 先给结论，再展示证据。
+
+</div>
+</div>
+
+`-`、`+` 与 `1.` 直接显示；`*`、`1)` 在 Marp 中用于分步。
+
+<!-- 无序列表、有序列表、嵌套列表与引用均为核心语法。CommonMark 的 *、-、+ 都可创建无序列表，1. 和 1) 都可创建有序列表；Marp 为 * 和 1) 增加了分步行为，这里使用 - 与 1. 避免把核心语法演示隐藏起来。 -->
+
+---
+
+<!-- _class: compact -->
+
+## 链接与图片
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 写法
+
+```markdown
+[Marp 官网](https://marp.app/)
+
+![工作台](./assets/workspace.jpg)
+```
+
+链接使用 `[文字](地址)`，图片在前面加 `!`。
+
+图片说明用作替代文本；尺寸设置见“原生 Marp”。
+
+</div>
+<div class="cf-col">
+
+### 效果
+
+[Marp 官网](https://marp.app/)
+
+![工作台](./assets/workspace.jpg)
+
+</div>
+</div>
+
+<!-- 本页图片使用纯 Markdown 图片语法，没有 w/h/bg 等 Marp 扩展；宽度仅受主题的横向防溢出限制。图片使用现有获准资源，来源与许可见 assets/SOURCE.json。链接与图片也可使用引用式定义，参考：https://spec.commonmark.org/ -->
+
+---
+
+<!-- header: '[快速开始](#2) [特性展示](#5) [标准 Markdown](#10) **[扩展 Markdown](#14)** [原生 Marp](#21)' -->
+<!-- _class: transition -->
+
+04
+
+## 扩展 Markdown
+
+用表格、公式与图表补充结构化表达。
+
+<!-- 扩展 Markdown 不是单一标准。当前 Marp Core 4.4.0 支持 GFM 表格、删除线与数学公式；Mermaid 由 Pele 引擎提供，标注块、高亮与上下标由 Cinderfolio 的 Markdown 扩展提供。任务列表和脚注尚未启用，只列写法。参考：https://github.com/marp-team/marp-core/tree/v4#marp-markdown -->
+
+---
+
+<!-- _class: compact -->
+
+## 表格与行内标记
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 写法
+
+```markdown
+| 方法 | 延迟 | 得分 |
+| :--- | :---: | ---: |
+| 基线 | 12 ms | 80 |
+| 改进 | 8 ms | 92 |
+
+~~旧结论~~ 更新后的结论。
+
+==高亮== 重点信息。
+
+x^2^ 与 H~2~O
+```
+
+</div>
+<div class="cf-col">
+
+### 效果
+
+| 方法 | 延迟 | 得分 |
+| :--- | :---: | ---: |
+| 基线 | 12 ms | 80 |
+| 改进 | 8 ms | 92 |
+
+~~旧结论~~ 更新后的结论。
+
+==高亮== 重点信息。
+
+x^2^ 与 H~2~O
+
+</div>
+</div>
+
+冒号控制列对齐；`==` 高亮，`^` 上标，`~` 下标，`~~` 删除线。
+
+<!-- 表格与删除线属于 GFM 扩展，Marp Core 默认启用；高亮与上下标由 markdown-it-mark / sup / sub 提供，分别生成 mark / sup / sub。高亮使用现有文字选区的淡品牌色，保留正文文字色；上下标沿用原生排版，复杂表达式仍使用数学公式。表中数字仅用于展示对齐。参考：https://github.github.com/gfm/#tables-extension- 、https://github.com/markdown-it/markdown-it-mark 、https://github.com/markdown-it/markdown-it-sup 和 https://github.com/markdown-it/markdown-it-sub -->
+
+---
+
+<!-- _class: compact -->
+
+## 数学公式
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 写法
+
+```tex
+行内公式：$E = mc^2$
+
+$$
+\sum_{i=1}^{n} i
+= \frac{n(n+1)}{2}
+$$
+```
+
+</div>
+<div class="cf-col">
+
+### 效果
+
+行内公式：$E = mc^2$
+
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
+
+</div>
+</div>
+
+`$…$` 用于行内，`$$…$$` 用于独立公式。
+
+<!-- 数学语法属于 Markdown 扩展，Marp Core 内置支持。本例通过 math: mathjax 选择 MathJax，也可选择 katex；不在浏览器重复加载网站公式组件。参考：https://github.com/marp-team/marp-core/tree/v4#math-typesetting -->
+
+---
+
+<!-- _class: compact -->
+
+## Mermaid 图表
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 写法
+
+````markdown
+```mermaid
+flowchart TD
+  A[研究问题] --> B[方法与证据]
+  B --> C[结论]
+```
+````
+
+使用 `mermaid` 代码围栏。
+
+</div>
+<div class="cf-col cf-align-tc">
+
+### Pele 渲染
+
+```mermaid
+flowchart TD
+  A[研究问题] --> B[方法与证据]
+  B --> C[结论]
+```
+
+</div>
+</div>
+
+图表由 Cinderfolio 的 Pele 扩展生成，配色跟随亮暗主题。
+
+<!-- Mermaid 围栏复用 marp-engine.mjs 中已接入的 Pele，不属于当前 Marp Core 4.4.0 原生图表能力。与前面的 Cinderfolio 渲染流程示例使用不同图表，验证多图 ID 与引用不会冲突。 -->
+
+---
+
+<!-- _class: compact -->
+
+## 标注块 · 一句话结论
+
+```markdown
+> [!IMPORTANT]
+> **核心结论：** 分层处理减少了重复计算。
+```
+
+> [!IMPORTANT]
+> **核心结论：** 分层处理减少了重复计算。
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 补充说明 · 写法
+
+```markdown
+> [!NOTE]
+> 结果基于相同数据与硬件。
+```
+
+</div>
+<div class="cf-col">
+
+### 栏内效果
+
+> [!NOTE]
+> 结果基于相同数据与硬件。
+
+</div>
+</div>
+
+<!-- IMPORTANT 采用 2px 品牌色边框和现有淡品牌色底，默认省略重复标题；NOTE 使用灰阶边界与浅层底色。正文、粗体与斜体继承所在段落的文字颜色。标注块可用于整页结论，也可直接放入 cf-col；解析由 Cinderfolio 的引擎扩展提供，样式随 cf-marp.css 导出。 -->
+
+---
+
+<!-- _class: compact -->
+
+## 标注块 · 提示与提醒
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 写法
+
+```markdown
+> [!TIP]
+> 先讲结论，再展示证据。
+
+> [!WARNING]
+> 留意方法的适用范围。
+
+> [!CAUTION]
+> 不将相关性当作因果。
+```
+
+</div>
+<div class="cf-col">
+
+### 效果
+
+> [!TIP]
+> 先讲结论，再展示证据。
+
+> [!WARNING]
+> 留意方法的适用范围。
+
+> [!CAUTION]
+> 不将相关性当作因果。
+
+</div>
+</div>
+
+<!-- 五种标记共用现有品牌色与灰阶，通过标题及边框区分职责；不引入额外红黄绿配色。普通 > 仍是引用。标记采用 GitHub 风格，Markdown 标注块由引擎在构建期转换为 HTML，不需要额外浏览器脚本。参考：https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts -->
+
+---
+
+<!-- _class: compact -->
+
+## 更多扩展语法
+
+任务列表与脚注尚未启用，以下仅展示写法。
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 任务列表
+
+```markdown
+- [x] 完成实验
+- [ ] 整理结论
+```
+
+使用勾选状态记录待办事项。
+
+</div>
+<div class="cf-col">
+
+### 脚注
+
+```markdown
+结论的补充说明[^note]。
+
+[^note]: 数据与方法的来源。
+```
+
+脚注显示在正文中，不同于演讲备注。
+
+</div>
+</div>
+
+<!-- 这两类扩展暂未接入，仅在代码围栏中介绍写法。当前 - [x] 保留为普通列表文字，[^note] 不会生成脚注。脚注扩展还需明确按页归属，而不是统一追加到文档末尾。来源：https://github.github.com/gfm/#task-list-items-extension- 及 https://github.com/markdown-it/markdown-it-footnote -->
+
+---
+
+<!-- header: '[快速开始](#2) [特性展示](#5) [标准 Markdown](#10) [扩展 Markdown](#14) **[原生 Marp](#21)**' -->
+<!-- _class: transition -->
+
+05
+
+## 原生 Marp
+
+用指令、图片语法与分步列表组织演示。
+
+<!-- 本章介绍 Marp 原生的文档与单页指令、翻页转场、scoped 样式、图片尺寸与背景，以及分步列表和演讲备注。cover / compact / transition 的类名属于 Cinderfolio 主题，承载它们的 class 指令属于 Marp；transition 转场指令则控制翻页动画。参考：https://marpit.marp.app/markdown -->
+
+---
+
+<!-- _class: compact -->
+
+## 文档设置
 
 <div class="cf-cols">
 
@@ -330,32 +697,89 @@ marp: true
 theme: cinderfolio
 size: 16:9
 paginate: true
+transition: fade 300ms
 math: mathjax
+header: 研究汇报
+footer: 作者 · 单位
 ---
 ```
 
-将 `size` 改为 `4:3`，即可切换画幅。
+页眉、页脚与页码统一设置。
+[fade 300ms：全篇淡入淡出](https://github.com/marp-team/marp-cli/blob/main/docs/bespoke-transitions/README.md)。
 
 </div>
 <div class="cf-col">
 
-### 页面内
+### 章节首页更新
 
 ```markdown
-<!-- header: 研究方法 -->
-<!-- _footer: 仅本页的补充说明 -->
-
-## 页标题
-
-正文内容。
+<!--
+header: >
+  [快速开始](#2)
+  [特性展示](#5)
+  [标准 Markdown](#10)
+  [扩展 Markdown](#14)
+  **[原生 Marp](#21)**
+footer: Cinderfolio · 作者
+-->
 ```
 
-`header` 延续到后页；`_footer` 仅作用于当前页。
+修改后延续到后页；用 **加粗** 标记当前章节。
+
+`#n` 指向实际第 n 页，与页脚编号无关。
 
 </div>
 </div>
 
-<!-- 用独立一行的 --- 分页。全局指令与可继承的局部指令含义不同：size / theme 属于文档配置，header / footer 可在分页后继续修改，加下划线则只覆盖当前页。参考：https://marpit.marp.app/directives -->
+<!-- theme / size 是全局指令。header / footer / paginate 是可继承的局部指令，放在文档开头作为全篇默认值，后续章节可再次更新；加下划线则只覆盖当前页。transition: fade 300ms 为整份 HTML 演示设置 300 毫秒淡入淡出，作用于当前页到下一页的边界；_transition: none 可单独关闭一处，PDF 不保留动画。转场由 CLI 的 bespoke 播放器提供，不影响 Cinderfolio 的 transition 章节页排版。header 支持 Markdown 链接，当前章节的加粗标记由 Cinderfolio 主题显示为选中的分块。链接使用实际幻灯片序号，封面跳过编号不会改变链接目标。size 可改为 4:3；独立一行的 --- 分页。参考：https://marpit.marp.app/directives 及 https://github.com/marp-team/marp-cli/blob/main/docs/bespoke-transitions/README.md -->
+
+---
+
+<!-- _class: compact -->
+
+## 单页设置
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 完整封面配置
+
+```markdown
+<!--
+_class: cover
+_header: ""
+_footer: ""
+_paginate: skip
+-->
+# 报告标题 <small>副标题</small>
+作者
+
+单位
+
+日期
+```
+
+</div>
+<div class="cf-col">
+
+### 仅覆盖当前页
+
+- `_class: cover` 使用封面预设。
+- `_header: ""` 清空页眉。
+- `_footer: ""` 清空页脚。
+
+### 页码处理
+
+- `_paginate: skip` 隐藏且不计数。
+- `_paginate: false` 隐藏但仍计数。
+
+带 `_` 的设置仅本页有效，后页自动恢复。
+
+</div>
+</div>
+
+<!-- 左侧为可复制的封面配置：作者、单位、日期保留为独立段落，副标题与信息项均可省略。文档已设置 paginate: true 时，封面使用 skip 后，下一张正文从 1 开始；false 只隐藏编号，仍消耗一个页码。class 是 Marp 原生指令，cover 是 Cinderfolio 提供的预设。参考：https://marpit.marp.app/directives -->
 
 ---
 
@@ -409,42 +833,6 @@ flowchart LR
 
 ---
 
-## 公式与表格
-
-<div class="cf-cols">
-
-<div class="cf-col">
-
-### 数学表达
-
-行内公式 `$E = mc^2$`：$E = mc^2$。
-
-块级公式使用 `$$` 包裹：
-
-$$
-\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
-$$
-
-</div>
-<div class="cf-col">
-
-### 结构化信息
-
-| 主题能力 | 写法 |
-| :--- | :--- |
-| **封面** | `cover` |
-| 章节过渡 | `transition` |
-| 内容分栏 | `cf-cols` / `cf-col` |
-
-表格使用 Markdown 管道语法，可分别指定列的对齐。
-
-</div>
-</div>
-
-<!-- 本例通过 math: mathjax 使用 Marp Core 内置 MathJax；也可选择 katex。没有在浏览器重复加载网站公式组件。表格内容是主题用法，不是性能比较数据。参考：https://github.com/marp-team/marp-core#math-typesetting -->
-
----
-
 ## 图片 · 尺寸与图注
 
 <div class="cf-cols">
@@ -481,32 +869,42 @@ $$
 
 ---
 
+<!-- _class: compact -->
+
 ## 分步展示与演讲备注
 
 <div class="cf-cols">
 
 <div class="cf-col">
 
+### 无序分步 · `*`
+
 ```markdown
 * 提出研究问题
 * 展示方法与证据
-* 归纳结论与局限
-
-<!-- 在这里写讲解提示。 -->
 ```
-
-`*` 列表在 HTML 播放器中逐项出现；普通 `-` 列表直接显示。
-
-</div>
-<div class="cf-col cf-align-ml">
 
 * 提出研究问题
 * 展示方法与证据
-* 归纳结论与局限
+
+</div>
+<div class="cf-col">
+
+### 有序分步 · `1)`
+
+```markdown
+1) 归纳结论
+2) 说明局限
+```
+
+1) 归纳结论
+2) 说明局限
 
 </div>
 </div>
 
-点击下一步，观察右侧列表；普通 HTML 注释会成为演讲备注。
+`→` / 空格前进，`←` 返回；`-`、`+`、`1.` 直接全部显示。
 
-<!-- 这是本页实际备注：列表逐项揭示，最后总结“先用主题预设组织结构，再用 Marp 原生语法补充内容”。演讲备注不会显示在幻灯片正文。分步列表需要播放器支持，静态 PDF 展示完整内容。参考：https://marpit.marp.app/fragmented-list 和 https://marpit.marp.app/usage?id=presenter-notes -->
+普通 `<!-- 注释 -->` 作为演讲备注，不显示在正文。
+
+<!-- 这是本页实际备注：先逐项显示左栏，再逐项显示右栏；右栏使用英文半角右括号 1)，不是全角 1）。cf-col 内的列表保留分步行为，整栏当前没有独立分步标记。分步交互需要播放器，静态 PDF 展示全部内容；普通注释成为演讲备注，Marp 指令注释由配置系统处理。独立横线 --- 用于分页，而不是在正文中显示 hr。参考：https://marpit.marp.app/fragmented-list 和 https://marpit.marp.app/usage?id=presenter-notes -->

@@ -30,7 +30,7 @@ test('正式引擎编译使用演示，保留 Pele、Shiki 高亮、代码缩放
   const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
   assert.equal(slides.length, result.comments.length);
   assert.ok(result.comments.every(notes => notes.length > 0));
-  assert.equal(elements(tree, node => node.properties?.className?.includes('pele')).length, 1);
+  assert.equal(elements(tree, node => node.properties?.className?.includes('pele')).length, 3);
   const code = elements(tree, node => node.tagName === 'pre' && node.properties?.className?.includes('shiki'))
     .filter(block => elements(block, node => node.type === 'text' && node.value.includes('slideTitle')).length);
   assert.equal(code.length, 1);
@@ -67,7 +67,7 @@ test('两种 size 共用封面与过渡页预设，正文分页与章节跳转�
     const tree = parser.parse(html);
     const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
     const canvases = elements(tree, node => node.tagName === 'svg' && node.properties?.dataMarpitSvg !== undefined);
-    assert.equal(slides.length, 16);
+    assert.equal(slides.length, 26);
     assert.equal(canvases.length, slides.length);
     assert.ok(slides.every(slide => slide.properties.dataSize === size));
     assert.ok(canvases.every(svg => svg.properties.viewBox === `0 0 ${width} 720`));
@@ -80,21 +80,21 @@ test('两种 size 共用封面与过渡页预设，正文分页与章节跳转�
     assert.deepEqual(coverTitle.children.filter(node => node.tagName).map(node => node.tagName), ['small']);
     assert.ok(body.every(slide => !slide.properties.className?.includes('cover')));
     assert.ok(body.every(slide => slide.children.filter(node => node.tagName === 'h2').length === 1));
-    assert.deepEqual(body.map(slide => slide.properties.dataMarpitPagination), Array.from({ length: 15 }, (_, i) => String(i + 1)));
-    assert.ok(body.every(slide => slide.properties.dataMarpitPaginationTotal === '15'));
+    assert.deepEqual(body.map(slide => slide.properties.dataMarpitPagination), Array.from({ length: 25 }, (_, i) => String(i + 1)));
+    assert.ok(body.every(slide => slide.properties.dataMarpitPaginationTotal === '25'));
     // compact 只作用于指定页，不泄漏到相邻的普通正文和过渡页。
     assert.deepEqual(slides.filter(slide => slide.properties.className?.includes('compact'))
-      .map(slide => slide.properties.id), ['7', '13']);
+      .map(slide => slide.properties.id), ['7', '8', '11', '12', '13', '15', '16', '17', '18', '19', '20', '22', '23', '24', '26']);
     const compact = slides[6];
     assert.equal(elements(compact, node => node.properties?.className?.includes('cf-cols')).length, 1);
     assert.equal(elements(compact, node => node.properties?.className?.includes('cf-col')).length, 2);
     const transitions = slides.filter(slide => slide.properties.className?.includes('transition'));
-    assert.deepEqual(transitions.map(slide => slide.properties.id), ['2', '5', '11']);
+    assert.deepEqual(transitions.map(slide => slide.properties.id), ['2', '5', '10', '14', '21']);
     for (const transition of transitions) {
       assert.deepEqual(transition.children.filter(node => node.tagName && !['header', 'footer'].includes(node.tagName))
         .map(node => node.tagName), ['p', 'h2', 'p']);
     }
-    const chapters = { '#2': '快速开始', '#5': '特性展示', '#11': '高级 Marp' };
+    const chapters = { '#2': '快速开始', '#5': '特性展示', '#10': '标准 Markdown', '#14': '扩展 Markdown', '#21': '原生 Marp' };
     for (const header of elements(tree, node => node.tagName === 'header')) {
       const links = elements(header, node => node.tagName === 'a');
       assert.deepEqual(links.map(link => link.properties.href), Object.keys(chapters));
@@ -111,13 +111,13 @@ test('使用演示保留分栏、原生内容和分步列表，图片资源可�
   const { html } = marp.render(await fs.readFile(new URL('../examples/marp.md', import.meta.url), 'utf8'));
   const tree = parser.parse(html);
   for (const tag of [
-    'h1', 'h2', 'h3', 'small', 'p', 'strong', 'a', 'code',
-    'ul', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'h1', 'h2', 'h3', 'small', 'p', 'em', 'strong', 's', 'mark', 'sup', 'sub', 'a', 'code', 'blockquote',
+    'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
     'img', 'pre', 'mjx-container', 'figure', 'figcaption', 'svg', 'header', 'footer',
   ]) {
     assert.ok(elements(tree, node => node.tagName === tag).length, tag);
   }
-  assert.equal(elements(tree, node => node.properties?.dataMarpitFragment !== undefined).length, 3);
+  assert.equal(elements(tree, node => node.properties?.dataMarpitFragment !== undefined).length, 4);
 
   // 原生 HTML 容器内仍解析 Markdown，上下单栏与中间双栏保持同级。
   const slide = elements(tree, node => node.tagName === 'section' && node.properties.id === '8')[0];
@@ -128,17 +128,13 @@ test('使用演示保留分栏、原生内容和分步列表，图片资源可�
   assert.deepEqual(singleColumns.map(node => node.properties.className), [['cf-col', 'cf-align-tc'], ['cf-col', 'cf-align-tr']]);
   const cells = columns[0].children.filter(node => node.properties?.className?.includes('cf-col'));
   assert.equal(cells.length, 2);
-  assert.deepEqual(cells[0].properties.className, ['cf-col']);
-  assert.deepEqual(cells[1].properties.className, ['cf-col', 'cf-align-tc']);
+  assert.deepEqual(cells[0].properties.className, ['cf-col', 'cf-w3', 'cf-align-tl']);
+  assert.deepEqual(cells[1].properties.className, ['cf-col', 'cf-w2', 'cf-align-mc']);
   assert.ok(elements(cells[0], node => node.tagName === 'pre').length > 0);
-  assert.equal(elements(cells[1], node => node.tagName === 'img').length, 1);
-  assert.equal(elements(cells[1], node => node.tagName === 'figcaption').length, 1);
-
-  const weighted = elements(tree, node => node.tagName === 'section' && node.properties.id === '9')[0];
-  assert.deepEqual(elements(weighted, node => node.properties?.className?.includes('cf-col'))
-    .map(node => node.properties.className), [
-    ['cf-col', 'cf-w3', 'cf-align-ml'], ['cf-col', 'cf-w2', 'cf-align-tc'],
-  ]);
+  assert.equal(elements(cells[1], node => node.tagName === 'img').length, 0);
+  const alignment = elements(cells[1], node => node.properties?.className?.includes('pele-block'));
+  assert.equal(alignment.length, 1);
+  assert.equal(elements(alignment[0], node => node.tagName === 'text').length, 9);
 
   const directory = new URL('../examples/assets/', import.meta.url);
   const assets = JSON.parse(await fs.readFile(new URL('SOURCE.json', directory), 'utf8'));
