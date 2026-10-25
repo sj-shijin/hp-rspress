@@ -180,6 +180,20 @@ _footer: ""
 
 每图以 Markdown 行号生成稳定的 `idPrefix`，Pele 同步处理真实 ID 与可访问性引用；图内 `data-id` 可重复，不做字符串替换。测试验证重复图表的 ID 唯一、引用归属和渲染稳定。`buildMarpExample()` 只输出通用 HTML 与资源，不包含状态存储或页面组件脚本。
 
+标注块由构建期依赖 [`@mdit/plugin-alert`](https://mdit-plugins.github.io/alert.html) 解析，锁定兼容 Node.js 20 与 Markdown-it 14 的 0.23.2。`deep: true` 允许在分栏、列表和引用中使用；正文保留 Markdown 解析，代码围栏不转换。沿用 GitHub 的五种标记与 `.markdown-alert-*` 类名，不增加折叠或自定义标记。
+
+```markdown
+> [!IMPORTANT]
+> **核心结论：** 分层处理减少了重复计算。
+
+> [!NOTE]
+> 结果基于相同数据与硬件。
+```
+
+`IMPORTANT` 省略默认标题，使用 2px 品牌色全边框与 `selectedBackground` 淡底；`NOTE` 使用灰阶边框与 `surface` 底色；`TIP / WARNING` 使用品牌色左边线；`CAUTION` 使用品牌色全边框。后四种保留简短中文标签，无图标；小号标签使用 `foreground` 端点色与 600 字重，品牌色负责边框和底色，正文继承文字色。辅助信息继续使用灰阶，正文链接仍使用 `link` 职责。样式随 `cf-marp.css` 导出；单独加载 CSS 不启用解析，CLI 沿用现有引擎配置和构建命令。
+
+行内扩展由 [`markdown-it-mark`](https://github.com/markdown-it/markdown-it-mark) 4.0.0、[`markdown-it-sup`](https://github.com/markdown-it/markdown-it-sup) 2.0.0、[`markdown-it-sub`](https://github.com/markdown-it/markdown-it-sub) 2.0.0 在同一引擎中启用，分别把 `==高亮==`、`x^2^`、`H~2~O` 转为 `mark / sup / sub`。`mark` 使用 `selection` 淡品牌色并继承字色，`sup / sub` 沿用浏览器排版。行内代码底色取 `surfaceHover`（亮色 g14 / 暗色 g2），与画布拉开两档；独立代码块仍取画布底色。插件只在构建期运行；测试覆盖标注块内使用、原生删除线、公式和代码原文。
+
 ## 字体和资源
 
 正文与图表用 `Inter, "Noto Sans SC"`，代码用 `"Sarasa Mono SC"`。当前固定版本为 Noto Sans SC 2.004、Inter 4.1、Sarasa Mono SC 1.0.42。中文按 Latin、GB2312 常用字和扩展字分片，保留原字体字符映射；Inter / Noto 保留可变字重，代码有常规、粗体、斜体和粗斜体。`font.css` 只引用同级 WOFF2，不使用系统 `local()`。

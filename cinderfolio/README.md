@@ -130,7 +130,21 @@ size: 16:9 # 或 4:3
 
 代码块、Pele 图表与通用 SVG 默认不设固定限高，保留横向防溢出和 Marp 原生缩放。需要调整单页字号或图表尺寸时，使用 Markdown 中的 `<style scoped>`；示例见[维护文档](docs/maintenance.md)。
 
-在本项目内转换其他文稿，使用通用渲染扩展启用 Pele 与 Shiki：
+使用标注块突出结论或补充说明，可直接放入 `cf-col`：
+
+```markdown
+> [!IMPORTANT]
+> **核心结论：** 分层处理减少了重复计算。
+
+> [!NOTE]
+> 结果基于相同数据与硬件。
+```
+
+`IMPORTANT` 使用品牌色框与淡品牌色底，默认不加标题；`NOTE / TIP / WARNING / CAUTION` 分别显示“说明／提示／注意／警告”。小号提示标题使用端点文字色与字重，品牌色用于边框和底色；正文继承文字颜色，普通引用保留原有样式。
+
+行内支持 `==高亮==`、`x^2^`、`H~2~O`。高亮复用淡品牌色并保留原字色；上下标使用原生 `sup / sub` 排版，复杂表达式使用数学公式。
+
+在本项目内转换其他文稿，使用通用渲染扩展启用 Pele、Shiki、标注块与行内标记：
 
 ```sh
 npx --no-install marp slides.md --config-file ./marp-engine.mjs --theme-set ./dist/cf-marp.css -o slides.html
@@ -138,7 +152,7 @@ npx --no-install marp slides.md --config-file ./marp-engine.mjs --theme-set ./di
 
 其他项目可通过 `cinderfolio/marp-engine` 引用该配置，或通过 `cinderfolio/marp-build` 的 `buildMarpExample(outputDirectory)` 构建随包样张。这两个入口需要使用方安装 Marp CLI、Pele 和 Shiki；它们不参与纯主题导出。
 
-[Marp for VS Code](https://github.com/marp-team/marp-vscode#use-custom-theme-css) 可通过 `markdown.marp.themes` 加载 `dist/cf-marp.css`。当前官方扩展未提供自定义引擎配置入口，加载 CSS 不会接入 Pele、Shiki、封面标题自动分组或本地字体。完整预览与导出仍在集成终端运行上述 CLI 路线；编辑器内的进一步适配尚未接入。
+[Marp for VS Code](https://github.com/marp-team/marp-vscode#use-custom-theme-css) 可通过 `markdown.marp.themes` 加载 `dist/cf-marp.css`。当前官方扩展未提供自定义引擎配置入口，加载 CSS 不会接入 Pele、Shiki、标注块、行内标记扩展、封面标题自动分组或本地字体。完整预览与导出仍在集成终端运行上述 CLI 路线；编辑器内的进一步适配尚未接入。
 
 ## 维护与许可
 

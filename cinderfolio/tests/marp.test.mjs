@@ -171,6 +171,84 @@ test('封面将 h1 与可选 h6 组成一组，保留手动换行和独立信息
   }
 });
 
+test('行内高亮与上下标保留删除线、数学公式、转义与代码原文', () => {
+  const source = [
+    '==高亮 **重点**==，x^2^ 与 H~2~O，~~旧结论~~。',
+    '> [!IMPORTANT]\n> ==结论==：x^2^ 与 H~2~O。',
+    '$x^2 + H_2O$',
+    String.raw`\=\=原样\=\= \^上标\^ \~下标\~`,
+    '`==原样== x^2^ H~2~O`',
+    '```text\n==原样== x^2^ H~2~O\n```',
+  ].join('\n\n');
+  const tree = parser.parse(marp.render(source).html);
+  const text = node => elements(node, child => child.type === 'text').map(child => child.value).join('');
+  const marks = elements(tree, node => node.tagName === 'mark');
+  assert.deepEqual(marks.map(text), ['高亮 重点', '结论']);
+  assert.equal(elements(marks[0], node => node.tagName === 'strong').length, 1);
+  assert.deepEqual(elements(tree, node => node.tagName === 'sup').map(text), ['2', '2']);
+  assert.deepEqual(elements(tree, node => node.tagName === 'sub').map(text), ['2', '2']);
+  assert.equal(elements(tree, node => node.tagName === 's').length, 1);
+  assert.equal(elements(tree, node => node.tagName === 'mjx-container').length, 1);
+  assert.ok(text(tree).includes('==原样== ^上标^ ~下标~'));
+  const code = elements(tree, node => node.tagName === 'code');
+  assert.equal(code.length, 2);
+  assert.ok(code.every(node => text(node).includes('==原样== x^2^ H~2~O')));
+  assert.ok(code.every(node => elements(node, child => ['mark', 'sup', 'sub'].includes(child.tagName)).length === 0));
+});
+
+test('五种标注块可用于分栏，结论省略标题，正文保留 Markdown 结构', () => {
+  const types = { note: '说明', tip: '提示', important: '', warning: '注意', caution: '警告' };
+  const source = Object.keys(types).map(type => `<div class="cf-col">\n\n> [!${type.toUpperCase()}]\n> **结论**与*说明*。\n>\n> - 证据一\n> - 证据二\n\n</div>`).join('\n\n');
+  const tree = parser.parse(marp.render(`<div class="cf-cols">\n\n${source}\n\n</div>`).html);
+  const columns = elements(tree, node => node.properties?.className?.includes('cf-col'));
+  assert.equal(columns.length, 5);
+  Object.entries(types).forEach(([type, title], index) => {
+    const blocks = columns[index].children.filter(node => node.properties?.className?.includes('markdown-alert'));
+    assert.equal(blocks.length, 1);
+    assert.ok(blocks[0].properties.className.includes(`markdown-alert-${type}`));
+    const titles = elements(blocks[0], node => node.properties?.className?.includes('markdown-alert-title'));
+    assert.equal(titles.length, title ? 1 : 0);
+    if (title) assert.equal(titles[0].children[0].value, title);
+    assert.equal(elements(blocks[0], node => node.tagName === 'strong').length, 1);
+    assert.equal(elements(blocks[0], node => node.tagName === 'em').length, 1);
+    assert.equal(elements(blocks[0], node => node.tagName === 'li').length, 2);
+  });
+});
+
+test('标注块内嵌套引用正确闭合，普通引用、未知标记与围栏保持原样', () => {
+  const source = `> [!NOTE]
+> 正文。
+>
+> > 引用内容。
+>
+> 引用之后。
+
+> 普通引用。
+
+---
+
+> [!UNKNOWN]
+> 保留普通引用。
+
+\`\`\`markdown
+> [!IMPORTANT]
+> 仅为源码。
+\`\`\``;
+  const { html } = marp.render(source);
+  const tree = parser.parse(html);
+  const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
+  assert.equal(slides.length, 2);
+  const alerts = elements(tree, node => node.properties?.className?.includes('markdown-alert'));
+  assert.equal(alerts.length, 1);
+  assert.deepEqual(alerts[0].children.filter(node => node.tagName).map(node => node.tagName), ['p', 'p', 'blockquote', 'p']);
+  assert.equal(elements(alerts[0], node => node.tagName === 'blockquote')[0].children.find(node => node.tagName === 'p').children[0].value, '引用内容。');
+  assert.equal(alerts[0].children.filter(node => node.tagName).at(-1).children[0].value, '引用之后。');
+  assert.equal(slides[0].children.filter(node => node.tagName === 'blockquote').length, 1);
+  assert.equal(slides[1].children.filter(node => node.tagName === 'blockquote').length, 1);
+  assert.equal(elements(slides[1], node => node.tagName === 'pre').length, 1);
+  assert.ok(elements(slides[1], node => node.type === 'text').some(node => node.value.includes('[!UNKNOWN]')));
+});
+
 test('Marp 本地字库与来源记录一致，样式仅引用随包 WOFF2', async () => {
   const directory = new URL('../fonts/marp/', import.meta.url);
   const css = await fs.readFile(new URL('font.css', directory), 'utf8');

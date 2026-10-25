@@ -1,4 +1,8 @@
 import { render } from 'pele';
+import { alert } from '@mdit/plugin-alert';
+import mark from 'markdown-it-mark';
+import sub from 'markdown-it-sub';
+import sup from 'markdown-it-sup';
 import { bundledLanguagesInfo, createHighlighter } from 'shiki';
 import { createShikiTheme } from './shiki.mjs';
 import { marpFonts } from './marp.mjs';
@@ -8,6 +12,16 @@ export default {
   lang: 'zh-CN',
   template: 'bespoke',
   async engine({ marp }) {
+    marp.markdown.use(mark).use(sub).use(sup);
+    marp.markdown.use(alert, {
+      deep: true,
+      titleRender(tokens, index) {
+        // 结论只显示正文，其他类型使用简短中文标签，不添加图标。
+        const title = { note: '说明', tip: '提示', warning: '注意', caution: '警告' }[tokens[index].markup];
+        return title ? `<p class="markdown-alert-title">${title}</p>\n` : '';
+      },
+    });
+
     const highlighter = await createHighlighter({
       themes: ['light', 'dark'].map(mode => createShikiTheme(undefined, mode, { variables: true })),
       // 仅在构建期加载内置语法，与独立主题 JSON 一致。

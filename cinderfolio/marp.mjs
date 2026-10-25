@@ -85,14 +85,29 @@ section > :last-child, section > .cf-col:has(+ footer) { margin-bottom: 0; }
 a { color: var(--cf-link); text-underline-offset: 0.15em; }
 a:hover { color: var(--cf-accent-brand); }
 strong { font-weight: 700; }
-em { color: var(--cf-text-muted); }
-blockquote { padding: 0.4em 0.75em; border-left: 4px solid var(--cf-accent-brand); color: var(--cf-text-muted); background: var(--cf-surface); }
+mark { color: inherit; background: var(--cf-selection); padding: 0.05em 0.15em; border-radius: 0.1em; }
+blockquote { padding: 0.4em 0.75em; border-left: 4px solid var(--cf-accent-brand); background: var(--cf-surface); }
 blockquote > :last-child { margin-bottom: 0; }
 hr { width: 100%; border: 0; border-top: 2px solid var(--cf-border-strong); }
+/* 标注块复用 GitHub 的类名；解析由引擎负责，CSS 可独立分享。 */
+.markdown-alert {
+  margin: 0 0 var(--cf-marp-body-space);
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--cf-border-strong);
+  border-radius: 0.2em;
+  background: var(--cf-surface);
+}
+.markdown-alert > :last-child { margin-bottom: 0; }
+/* 小号提示标题用端点色与字重；品牌色交给边框和底色。 */
+.markdown-alert-title { margin-bottom: 0.35em; color: var(--cf-foreground); font-size: 0.8em; font-weight: 600; line-height: 1.25; }
+.markdown-alert-important { border: 2px solid var(--cf-accent-brand); background: var(--cf-selected-background); }
+.markdown-alert-tip, .markdown-alert-warning { border-left: 4px solid var(--cf-accent-brand); }
+.markdown-alert-caution { border: 2px solid var(--cf-accent-brand); }
+
 /* 媒体只限制宽度；高度由内容比例或 Markdown 局部尺寸决定。 */
 img, svg { max-width: 100%; object-fit: contain; }
 code { font-family: ${marpFonts.code}; font-size: 0.85em; }
-:not(pre) > code { padding: 0.1em 0.25em; background: var(--cf-surface); border-radius: 0.15em; }
+:not(pre) > code { padding: 0.1em 0.25em; background: var(--cf-surface-hover); border-radius: 0.15em; }
 pre { padding: 0.75em 1em; border: 1px solid var(--cf-border); border-radius: 0.25em; background: var(--cf-background); line-height: 1.4; overflow: visible; }
 pre code { display: block; }
 /* 默认等宽；cf-w1…cf-w5 按权重分配列宽，空列隐藏后其余列自动铺满。 */
