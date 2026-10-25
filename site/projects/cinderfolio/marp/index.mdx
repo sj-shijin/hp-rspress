@@ -4,6 +4,9 @@ description: 从快速开始、主题特性和 Marp 原生能力了解 Cinderfol
 outline: false
 ---
 
+import { Prompt } from '@rspress/core/theme';
+import marpPrompt from '../../../public/prompts/cinderfolio-marp.txt?raw';
+
 # Cinderfolio-Marp
 
 [Marp CLI](https://github.com/marp-team/marp-cli) 将 Markdown 生成为 HTML 演示；下方展示 Cinderfolio-Marp 用法、标准与扩展 Markdown 语法，以及 Marp 原生功能，图表与代码复用 [Pele](/projects/cinderfolio/pele/) 和 [Shiki](/projects/cinderfolio/shiki/)。
@@ -13,3 +16,5 @@ outline: false
 </CinderfolioPreview>
 
 <CinderfolioMarp />
+
+<Prompt title="用 AI 快速开始" prompt={marpPrompt} />

@@ -1,0 +1,15 @@
+请帮我构建 Cinderfolio-Marp 的现有示例。
+
+仓库：https://github.com/sj-shijin/cinderfolio
+需要 Node.js 22.12+（推荐 24）。已有检出目录时复用；首次使用运行：
+
+git clone https://github.com/sj-shijin/cinderfolio.git
+cd cinderfolio
+npm ci
+npm run marp
+
+源文件是仓库已有的 examples/marp.md，命令完成后生成同目录的 marp.html。
+
+确认 HTML 已生成；能够访问浏览器时，再检查翻页、字体和图片，以及影响渲染的控制台错误。修复遇到的构建或资源加载问题，并如实说明验证范围。
+
+构建成功后，告知 HTML 的位置，并提醒用户：可以先查看本地构建的示例，或准备新的 Markdown 文件，开始构建自己的 Marp slides。
