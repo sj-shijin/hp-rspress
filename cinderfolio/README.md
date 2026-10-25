@@ -128,6 +128,8 @@ size: 16:9 # 或 4:3
 正文内容。
 ```
 
+代码块、Pele 图表与通用 SVG 默认不设固定限高，保留横向防溢出和 Marp 原生缩放。需要调整单页字号或图表尺寸时，使用 Markdown 中的 `<style scoped>`；示例见[维护文档](docs/maintenance.md)。
+
 在本项目内转换其他文稿，使用通用渲染扩展启用 Pele 与 Shiki：
 
 ```sh

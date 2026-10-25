@@ -52,7 +52,7 @@ section {
   --cf-marp-column-gap: 24px;
   --cf-marp-divider-width: 2px;
   --cf-marp-divider-top: 400px; /* 封面与过渡页共用的品牌线位置。 */
-  --cf-marp-column-media-height: 260px;
+  --cf-marp-column-media-height: none; /* 需要限高时，由 Markdown 局部样式指定。 */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -89,14 +89,12 @@ em { color: var(--cf-text-muted); }
 blockquote { padding: 0.4em 0.75em; border-left: 4px solid var(--cf-accent-brand); color: var(--cf-text-muted); background: var(--cf-surface); }
 blockquote > :last-child { margin-bottom: 0; }
 hr { width: 100%; border: 0; border-top: 2px solid var(--cf-border-strong); }
-/* 图片只限制宽度；高度由原始比例或 Markdown 的 w: / h: 决定。 */
+/* 媒体只限制宽度；高度由内容比例或 Markdown 局部尺寸决定。 */
 img, svg { max-width: 100%; object-fit: contain; }
-svg { max-height: 480px; }
 code { font-family: ${marpFonts.code}; font-size: 0.85em; }
 :not(pre) > code { padding: 0.1em 0.25em; background: var(--cf-surface); border-radius: 0.15em; }
 pre { padding: 0.75em 1em; border: 1px solid var(--cf-border); border-radius: 0.25em; background: var(--cf-background); line-height: 1.4; overflow: visible; }
 pre code { display: block; }
-pre::part(auto-scaling) { max-height: 460px; }
 /* 默认等宽；cf-w1…cf-w5 按权重分配列宽，空列隐藏后其余列自动铺满。 */
 .cf-cols {
   display: flex;
@@ -149,7 +147,7 @@ pre.shiki span {
   text-decoration: var(--shiki-light-text-decoration, none);
 }
 figure.cinderfolio-pele { margin: 0 0 var(--cf-marp-body-space); --pele-font: ${marpFonts.text}; --pele-font-mono: ${marpFonts.code}; }
-figure.cinderfolio-pele > svg { display: block; width: 100%; max-height: 360px; margin-inline: auto; }
+figure.cinderfolio-pele > svg { display: block; width: 100%; margin-inline: auto; }
 table { border-collapse: collapse; font-size: 0.85em; }
 th, td { padding: 0.4em 0.75em; border-bottom: 1px solid var(--cf-border-strong); text-align: left; }
 th { font-weight: 600; background: var(--cf-surface); }
@@ -195,7 +193,6 @@ section[data-size='4:3'] {
   --cf-marp-block-space: 20px;
   --cf-marp-body-space: 20px;
   --cf-marp-column-gap: 20px;
-  --cf-marp-column-media-height: 240px;
   font-size: 28px;
 }
 

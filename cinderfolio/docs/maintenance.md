@@ -116,7 +116,18 @@ cf-align-bl  cf-align-bc  cf-align-br
 </style>
 ```
 
-单栏或各栏内容等高时，垂直对齐没有额外空间可分配；需要时再指定组的最小高度。图片在栏内和全页均无固定高度上限，仅保留 `max-width: 100%` 与 `object-fit: contain`；用 Marp 原生 `w:` / `h:` 选择尺寸，不自动按整页剩余高度缩小。多图合计高度仍由作者控制。图注使用 `figcaption` 并跟随水平对齐。Pele 图表与代码保留独立缩放规则，双栏内仍为 260px / 240px。
+单栏或各栏内容等高时，垂直对齐没有额外空间可分配；需要时再指定组的最小高度。图片、通用 SVG、Pele 图表和代码块默认均无固定限高，保留横向防溢出与 Marp 原生自动缩放；内容不会自动按整页剩余高度缩小，多块内容的合计高度由作者控制。图片仍可用 Marp 原生 `w:` / `h:` 指定尺寸，图注使用 `figcaption` 并跟随水平对齐。
+
+按页调整代码字号或设置限高，继续使用 `<style scoped>`。`--cf-marp-column-media-height` 在两种画幅下均默认为 `none`，仅作用于双栏内的代码与 Pele 图表：
+
+```html
+<style scoped>
+/* 当前页代码字号统一缩小，保留 Marp 原生缩放。 */
+pre code { font-size: 24px; }
+/* 对应 class="cf-col diagram"，按需限制该栏的图表高度。 */
+.cf-col.diagram { --cf-marp-column-media-height: 300px; }
+</style>
+```
 
 ```markdown
 ## 图片
@@ -165,7 +176,7 @@ _footer: ""
 如何把研究问题转化为可验证的方案？
 ```
 
-`marp-engine.mjs` 使用 CLI 异步 `engine` 扩展：`mermaid` 围栏交给 Pele，其他围栏交给 Shiki，保留 Marp 原生代码自动缩放。内置语言仅构建时加载，未知语言按纯文本转义。Shiki 调用同一份 `createShikiTheme(..., { variables: true })`，亮暗字形相同，颜色由 `light-dark()` 选择。生成 HTML 不再加载两个渲染库。
+`marp-engine.mjs` 使用 CLI 异步 `engine` 扩展：`mermaid` 围栏交给 Pele，其他围栏交给 Shiki，保留 Marp 原生代码自动缩放。Pele 的布局参数 `maxWidth: 1120` 保持不变，最终显示宽度仍适配所在栏。内置语言仅构建时加载，未知语言按纯文本转义。Shiki 调用同一份 `createShikiTheme(..., { variables: true })`，亮暗字形相同，颜色由 `light-dark()` 选择。生成 HTML 不再加载两个渲染库。
 
 每图以 Markdown 行号生成稳定的 `idPrefix`，Pele 同步处理真实 ID 与可访问性引用；图内 `data-id` 可重复，不做字符串替换。测试验证重复图表的 ID 唯一、引用归属和渲染稳定。`buildMarpExample()` 只输出通用 HTML 与资源，不包含状态存储或页面组件脚本。
 
