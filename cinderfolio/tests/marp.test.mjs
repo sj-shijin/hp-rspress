@@ -67,7 +67,7 @@ test('两种 size 共用封面与过渡页预设，正文分页与章节跳转�
     const tree = parser.parse(html);
     const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
     const canvases = elements(tree, node => node.tagName === 'svg' && node.properties?.dataMarpitSvg !== undefined);
-    assert.equal(slides.length, 16);
+    assert.equal(slides.length, 15);
     assert.equal(canvases.length, slides.length);
     assert.ok(slides.every(slide => slide.properties.dataSize === size));
     assert.ok(canvases.every(svg => svg.properties.viewBox === `0 0 ${width} 720`));
@@ -80,22 +80,21 @@ test('两种 size 共用封面与过渡页预设，正文分页与章节跳转�
     assert.deepEqual(coverTitle.children.filter(node => node.tagName).map(node => node.tagName), ['h1', 'h6']);
     assert.ok(body.every(slide => !slide.properties.className?.includes('cover')));
     assert.ok(body.every(slide => slide.children.filter(node => node.tagName === 'h2').length === 1));
-    assert.deepEqual(body.map(slide => slide.properties.dataMarpitPagination), Array.from({ length: 15 }, (_, i) => String(i + 1)));
-    assert.ok(body.every(slide => slide.properties.dataMarpitPaginationTotal === '15'));
-    // 单页 class 仅用于紧凑对照页，不泄漏到后续普通正文和过渡页。
+    assert.deepEqual(body.map(slide => slide.properties.dataMarpitPagination), Array.from({ length: 14 }, (_, i) => String(i + 1)));
+    assert.ok(body.every(slide => slide.properties.dataMarpitPaginationTotal === '14'));
+    // 单页 class 仅用于紧凑介绍页，不泄漏到后续普通正文和过渡页。
     assert.deepEqual(slides.filter(slide => slide.properties.className?.includes('compact'))
-      .map(slide => slide.properties.id), ['8']);
-    for (const slide of slides.slice(6, 8)) {
-      assert.equal(elements(slide, node => node.properties?.className?.includes('cf-cols')).length, 1);
-      assert.equal(elements(slide, node => node.properties?.className?.includes('cf-col')).length, 4);
-    }
+      .map(slide => slide.properties.id), ['7']);
+    const compact = slides[6];
+    assert.equal(elements(compact, node => node.properties?.className?.includes('cf-cols')).length, 1);
+    assert.equal(elements(compact, node => node.properties?.className?.includes('cf-col')).length, 2);
     const transitions = slides.filter(slide => slide.properties.className?.includes('transition'));
-    assert.deepEqual(transitions.map(slide => slide.properties.id), ['2', '5', '12']);
+    assert.deepEqual(transitions.map(slide => slide.properties.id), ['2', '5', '11']);
     for (const transition of transitions) {
       assert.deepEqual(transition.children.filter(node => node.tagName && !['header', 'footer'].includes(node.tagName))
         .map(node => node.tagName), ['p', 'h2', 'p']);
     }
-    const chapters = { '#2': '快速开始', '#5': '特性展示', '#12': '高级 Marp' };
+    const chapters = { '#2': '快速开始', '#5': '特性展示', '#11': '高级 Marp' };
     for (const header of elements(tree, node => node.tagName === 'header')) {
       const links = elements(header, node => node.tagName === 'a');
       assert.deepEqual(links.map(link => link.properties.href), Object.keys(chapters));
@@ -121,7 +120,7 @@ test('使用演示保留分栏、原生内容和分步列表，图片资源可�
   assert.equal(elements(tree, node => node.properties?.dataMarpitFragment !== undefined).length, 3);
 
   // 原生 HTML 容器内仍解析 Markdown，上下单栏与中间双栏保持同级。
-  const slide = elements(tree, node => node.tagName === 'section' && node.properties.id === '9')[0];
+  const slide = elements(tree, node => node.tagName === 'section' && node.properties.id === '8')[0];
   const columns = elements(slide, node => node.properties?.className?.includes('cf-cols'));
   assert.deepEqual(slide.children.filter(node => node.tagName && !['header', 'footer'].includes(node.tagName))
     .map(node => node.tagName), ['h2', 'div', 'div', 'div']);
@@ -135,7 +134,7 @@ test('使用演示保留分栏、原生内容和分步列表，图片资源可�
   assert.equal(elements(cells[1], node => node.tagName === 'img').length, 1);
   assert.equal(elements(cells[1], node => node.tagName === 'figcaption').length, 1);
 
-  const weighted = elements(tree, node => node.tagName === 'section' && node.properties.id === '10')[0];
+  const weighted = elements(tree, node => node.tagName === 'section' && node.properties.id === '9')[0];
   assert.deepEqual(elements(weighted, node => node.properties?.className?.includes('cf-col'))
     .map(node => node.properties.className), [
     ['cf-col', 'cf-w3', 'cf-align-ml'], ['cf-col', 'cf-w2', 'cf-align-tc'],
