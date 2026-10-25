@@ -76,8 +76,8 @@ test('两种 size 共用封面与过渡页预设，正文分页与章节跳转�
     assert.equal(cover.properties.dataPaginate, 'skip');
     assert.equal(elements(cover, node => ['header', 'footer'].includes(node.tagName)).length, 0);
     assert.equal(elements(tree, node => node.tagName === 'h1').length, 1);
-    const coverTitle = elements(cover, node => node.properties?.className?.includes('cf-marp-cover-title'))[0];
-    assert.deepEqual(coverTitle.children.filter(node => node.tagName).map(node => node.tagName), ['h1', 'h6']);
+    const coverTitle = cover.children.find(node => node.tagName === 'h1');
+    assert.deepEqual(coverTitle.children.filter(node => node.tagName).map(node => node.tagName), ['small']);
     assert.ok(body.every(slide => !slide.properties.className?.includes('cover')));
     assert.ok(body.every(slide => slide.children.filter(node => node.tagName === 'h2').length === 1));
     assert.deepEqual(body.map(slide => slide.properties.dataMarpitPagination), Array.from({ length: 15 }, (_, i) => String(i + 1)));
@@ -111,7 +111,7 @@ test('使用演示保留分栏、原生内容和分步列表，图片资源可�
   const { html } = marp.render(await fs.readFile(new URL('../examples/marp.md', import.meta.url), 'utf8'));
   const tree = parser.parse(html);
   for (const tag of [
-    'h1', 'h2', 'h3', 'h6', 'p', 'strong', 'a', 'code',
+    'h1', 'h2', 'h3', 'small', 'p', 'strong', 'a', 'code',
     'ul', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
     'img', 'pre', 'mjx-container', 'figure', 'figcaption', 'svg', 'header', 'footer',
   ]) {
@@ -150,22 +150,23 @@ test('使用演示保留分栏、原生内容和分步列表，图片资源可�
   }
 });
 
-test('封面将 h1 与可选 h6 组成一组，保留手动换行和独立信息段落', () => {
+test('封面沿用原生 h1 / small，纯主题也保留可选副标题、手动换行与信息段落', () => {
+  const native = new Marp();
+  native.themeSet.add(createMarpCss());
   for (const size of ['16:9', '4:3']) {
-    // 同时覆盖 Markdown 原生手动换行。
-    for (const title of ['# 简洁标题', '面向异构计算的  \n算法设计与性能优化\n========']) {
-      for (const subtitle of ['', '###### 从研究问题到清晰结论']) {
-        const source = `---\ntheme: cinderfolio\nsize: ${size}\n---\n\n<!-- _class: cover -->\n\n${title}\n\n${subtitle}\n\n作者\n\n日期\n\n---\n\n## 正文\n\n### 页内小标题`;
-        const tree = parser.parse(marp.render(source).html);
-        const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
-        const groups = elements(tree, node => node.properties?.className?.includes('cf-marp-cover-title'));
-        assert.equal(groups.length, 1);
-        assert.ok(slides[0].children.includes(groups[0]));
-        assert.deepEqual(groups[0].children.filter(node => node.tagName).map(node => node.tagName),
-          subtitle ? ['h1', 'h6'] : ['h1']);
-        assert.equal(elements(groups[0], node => node.tagName === 'br').length, title.includes('\n') ? 1 : 0);
-        assert.equal(slides[0].children.filter(node => node.tagName === 'p').length, 2);
-        assert.deepEqual(slides[1].children.filter(node => /^h[1-6]$/.test(node.tagName)).map(node => node.tagName), ['h2', 'h3']);
+    for (const title of ['# 简洁标题', '# 面向异构计算的<br>算法设计与性能优化']) {
+      for (const subtitle of ['', ' <small>从研究问题到清晰结论</small>']) {
+        const source = `---\ntheme: cinderfolio\nsize: ${size}\n---\n\n<!-- _class: cover -->\n\n${title}${subtitle}\n\n作者\n\n日期\n\n---\n\n## 正文\n\n### 页内小标题`;
+        for (const engine of [native, marp]) {
+          const tree = parser.parse(engine.render(source).html);
+          const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
+          const heading = slides[0].children.find(node => node.tagName === 'h1');
+          assert.ok(heading);
+          assert.equal(elements(heading, node => node.tagName === 'small').length, subtitle ? 1 : 0);
+          assert.equal(elements(heading, node => node.tagName === 'br').length, title.includes('<br>') ? 1 : 0);
+          assert.equal(slides[0].children.filter(node => node.tagName === 'p').length, 2);
+          assert.deepEqual(slides[1].children.filter(node => /^h[1-6]$/.test(node.tagName)).map(node => node.tagName), ['h2', 'h3']);
+        }
       }
     }
   }

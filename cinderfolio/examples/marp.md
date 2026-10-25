@@ -18,9 +18,7 @@ _header: ""
 _footer: ""
 -->
 
-# Cinderfolio-Marp
-
-###### 用 Markdown 组织清晰的学术演示
+# Cinderfolio-Marp <small>用 Markdown 组织清晰的学术演示</small>
 
 ShiJin
 
@@ -28,7 +26,7 @@ Cinderfolio
 
 2026 年 10 月
 
-<!-- 本演示也是主题用法示例。封面使用 cover，标题和副标题由 Cinderfolio 引擎自动分组；作者、单位和日期均可省略。 -->
+<!-- 本演示也是主题用法示例。封面使用 cover，h1 自身居中，可选副标题写在标题内的 small 中；布局只需主题 CSS，作者、单位和日期均可省略。 -->
 
 ---
 
@@ -75,11 +73,11 @@ npm run marp
 }
 ```
 
-- 扩展可加载主题 CSS，预览分栏、公式等原生内容。
-- 本地字体、Pele、Shiki 与封面自动分组还需额外接入。
+- 扩展可加载主题 CSS，预览封面、分栏、公式等内容。
+- 本地字体、Pele、Shiki、标注块与行内标记还需额外接入。
 - 要获得完整效果，在集成终端运行 `npm run marp`，打开生成的 HTML。
 
-<!-- 已核对 Marp for VS Code 3.6.1 的公开配置和源码：主题 CSS 是正式入口，未提供自定义 engine 设置；预览直接创建 Marp，导出使用扩展生成的配置，不能把本站 marp-engine.mjs 直接填入扩展设置。可继续探索先用 Pele / Shiki 预渲染资源，或编写专用扩展；本演示未宣称这些方案已经接入。仅加载主题 CSS 时，封面可手动使用 div.cf-marp-cover-title 包住 h1/h6；完整字体需要 fonts/marp/font.css 及 WOFF2。来源：https://github.com/marp-team/marp-vscode#use-custom-theme-css 及 src/extension.ts、src/option.ts。 -->
+<!-- 已核对 Marp for VS Code 3.6.1 的公开配置和源码：主题 CSS 是正式入口，未提供自定义 engine 设置；预览直接创建 Marp，导出使用扩展生成的配置，不能把本站 marp-engine.mjs 直接填入扩展设置。可继续探索先用 Pele / Shiki 预渲染资源，或编写专用扩展；本演示未宣称这些方案已经接入。封面使用 Marp 原生支持的 h1 / small，不需要自定义引擎；完整字体需要 fonts/marp/font.css 及 WOFF2。来源：https://github.com/marp-team/marp-vscode#use-custom-theme-css 及 src/extension.ts、src/option.ts。 -->
 
 ---
 
@@ -106,8 +104,7 @@ npm run marp
 
 ```markdown
 <!-- _class: cover -->
-# 报告标题
-###### 副标题
+# 报告标题 <small>副标题</small>
 作者
 
 单位

@@ -116,7 +116,7 @@ size: 16:9 # 或 4:3
 
 `cf-marp.css` 可由 Marp Core / CLI 加载，亮暗随 `prefers-color-scheme`，嵌入时可继承外层的 `color-scheme`。单独 CSS 不内嵌字体；其他渲染入口还需加载 `fonts/marp/font.css` 及同目录 WOFF2。
 
-标题约定：封面 `#`、封面副标题 `######`、正文与过渡页页题 `##`、页内小标题 `###`；分页仍使用 `---`。副标题使用独立样式，标题层级不决定其视觉字号。
+标题约定：封面 `#`、正文与过渡页页题 `##`、页内小标题 `###`；分页仍使用 `---`。封面可写成 `# 报告标题 <small>副标题</small>`，省略 `small` 即只有主标题；主标题自身居中，副标题不参与定位，纯主题 CSS 即可使用。
 
 正文默认使用常规布局；单页添加 `compact` 收紧正文，标题、品牌线和正文起点不动，分栏继续使用 `cf-cols / cf-col`：
 
@@ -152,7 +152,7 @@ npx --no-install marp slides.md --config-file ./marp-engine.mjs --theme-set ./di
 
 其他项目可通过 `cinderfolio/marp-engine` 引用该配置，或通过 `cinderfolio/marp-build` 的 `buildMarpExample(outputDirectory)` 构建随包样张。这两个入口需要使用方安装 Marp CLI、Pele 和 Shiki；它们不参与纯主题导出。
 
-[Marp for VS Code](https://github.com/marp-team/marp-vscode#use-custom-theme-css) 可通过 `markdown.marp.themes` 加载 `dist/cf-marp.css`。当前官方扩展未提供自定义引擎配置入口，加载 CSS 不会接入 Pele、Shiki、标注块、行内标记扩展、封面标题自动分组或本地字体。完整预览与导出仍在集成终端运行上述 CLI 路线；编辑器内的进一步适配尚未接入。
+[Marp for VS Code](https://github.com/marp-team/marp-vscode#use-custom-theme-css) 可通过 `markdown.marp.themes` 加载 `dist/cf-marp.css`，封面与其他版式均只需主题 CSS。当前官方扩展未提供自定义引擎配置入口，加载 CSS 不会接入 Pele、Shiki、标注块、行内标记扩展或本地字体。完整预览与导出仍在集成终端运行上述 CLI 路线；编辑器内的进一步适配尚未接入。
 
 ## 维护与许可
 
