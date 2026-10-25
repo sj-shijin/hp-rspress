@@ -67,7 +67,7 @@ test('两种 size 共用封面与过渡页预设，正文分页与章节跳转�
     const tree = parser.parse(html);
     const slides = elements(tree, node => node.tagName === 'section' && node.properties?.id);
     const canvases = elements(tree, node => node.tagName === 'svg' && node.properties?.dataMarpitSvg !== undefined);
-    assert.equal(slides.length, 15);
+    assert.equal(slides.length, 16);
     assert.equal(canvases.length, slides.length);
     assert.ok(slides.every(slide => slide.properties.dataSize === size));
     assert.ok(canvases.every(svg => svg.properties.viewBox === `0 0 ${width} 720`));
@@ -80,11 +80,11 @@ test('两种 size 共用封面与过渡页预设，正文分页与章节跳转�
     assert.deepEqual(coverTitle.children.filter(node => node.tagName).map(node => node.tagName), ['h1', 'h6']);
     assert.ok(body.every(slide => !slide.properties.className?.includes('cover')));
     assert.ok(body.every(slide => slide.children.filter(node => node.tagName === 'h2').length === 1));
-    assert.deepEqual(body.map(slide => slide.properties.dataMarpitPagination), Array.from({ length: 14 }, (_, i) => String(i + 1)));
-    assert.ok(body.every(slide => slide.properties.dataMarpitPaginationTotal === '14'));
-    // 单页 class 仅用于紧凑介绍页，不泄漏到后续普通正文和过渡页。
+    assert.deepEqual(body.map(slide => slide.properties.dataMarpitPagination), Array.from({ length: 15 }, (_, i) => String(i + 1)));
+    assert.ok(body.every(slide => slide.properties.dataMarpitPaginationTotal === '15'));
+    // compact 只作用于指定页，不泄漏到相邻的普通正文和过渡页。
     assert.deepEqual(slides.filter(slide => slide.properties.className?.includes('compact'))
-      .map(slide => slide.properties.id), ['7']);
+      .map(slide => slide.properties.id), ['7', '13']);
     const compact = slides[6];
     assert.equal(elements(compact, node => node.properties?.className?.includes('cf-cols')).length, 1);
     assert.equal(elements(compact, node => node.properties?.className?.includes('cf-col')).length, 2);

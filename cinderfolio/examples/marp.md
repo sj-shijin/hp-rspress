@@ -362,6 +362,56 @@ math: mathjax
 
 ---
 
+<!-- _class: compact -->
+
+## 局部样式 · 代码与图表
+
+将 `<style scoped>` 写在需要调整的页内，仅当前页生效。
+
+<div class="cf-cols">
+
+<div class="cf-col">
+
+### 代码块字号
+
+````markdown
+<style scoped>
+pre code {
+  font-size: 24px;
+}
+</style>
+
+```python
+print("Cinderfolio")
+```
+````
+
+</div>
+<div class="cf-col">
+
+### Mermaid 图表大小
+
+````markdown
+<style scoped>
+figure.cinderfolio-pele > svg {
+  width: 320px;
+  height: auto;
+}
+</style>
+
+```mermaid
+flowchart LR
+  A[输入] --> B[输出]
+```
+````
+
+</div>
+</div>
+
+<!-- scoped 是 Marp 原生的单页样式。左例调整当前页代码字号，保留原生横向缩放；右例针对 Pele 生成的 Mermaid SVG 设置宽度，height: auto 保持原始比例，max-width: 100% 继续防止横向溢出。两段示例也可合并到同一个 style scoped 中。 -->
+
+---
+
 ## 公式与表格
 
 <div class="cf-cols">
