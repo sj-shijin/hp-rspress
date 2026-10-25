@@ -30,9 +30,9 @@ site/                   # 个人主页、知识库与项目入口等网站专属
   knowledge/index.md    # /knowledge/
   projects/index.md     # /projects/
   projects.json         # 网站专属项目的显式页面清单
-  projects/cinderfolio/ # Cinderfolio 概览及四种主题的网页展示
+  projects/cinderfolio/ # Cinderfolio 概览及五种适配的网页展示
 theme/                  # 样式、字体与标识资源
-cinderfolio/            # 独立主题项目，含自己的构建、测试、文档与 MIT 许可
+cinderfolio/            # 公开主题仓库的固定版本子模块
 knowledge/publish.json  # 知识库笔记与附件的唯一公开清单
 knowledge-vault/        # 私有知识库的固定版本子模块
 scripts/                # 内容导出、Markdown 校正与产物检查
@@ -43,11 +43,26 @@ scripts/                # 内容导出、Markdown 校正与产物检查
 ```
 
 开发约定见 [AGENTS.md](AGENTS.md)，框架与主题用法见 `.agents/skills/`。
-网站通过本地包依赖使用 [Cinderfolio](cinderfolio/README.md)；`dev` / `build` 会自动生成主题和 Marp 示例。
+网站通过子模块引用公开的 [Cinderfolio 仓库](https://github.com/sj-shijin/cinderfolio)，再以本地包依赖加载。首次安装脚本会获取固定版本；`dev` / `build` 会自动生成主题和 Marp 示例。
 网页组件、调色同步与下载资源的维护见 [网站集成文档](docs/cinderfolio.md)，算法和主题内部规则见 [Cinderfolio 维护文档](cinderfolio/docs/maintenance.md)。
 [Cinderfolio 的 MIT 许可](cinderfolio/LICENSE) 仅覆盖该子项目的原创内容，不扩展到个人网站或知识库；字体和图片保留各自授权。
 项目技能来自 [rstackjs/agent-skills](https://github.com/rstackjs/agent-skills)，
 通过 Skills Manager 导出为项目副本；更新时先更新共享库，再重新导出，不做全局部署。
+
+更新 Cinderfolio 时，先在独立仓库提交并推送，再在网站中选择新版本：
+
+```sh
+git -C cinderfolio fetch origin
+git -C cinderfolio checkout --detach origin/main
+npm install             # 同步网站锁文件中的本地包依赖
+npm ci --prefix cinderfolio
+npm test
+npm run build
+git add cinderfolio package-lock.json
+git commit -m "chore: 更新 Cinderfolio"
+```
+
+网站提交记录具体版本，普通构建不会自动升级主题。
 
 ## 知识库内容
 
@@ -123,6 +138,7 @@ npm run check:afdocs -- http://127.0.0.1:1320    # 检测已启动的本地静�
 
 推送网站 `main` 会触发 `.github/workflows/pages.yml`，执行测试、构建并发布到 GitHub Pages。
 构建通过只读 `KNOWLEDGE_VAULT_DEPLOY_KEY` 获取私有知识库的固定提交，仅上传 `.generated/site/`。
+公开的 Cinderfolio 子模块通过 HTTPS 获取固定提交，不需要私有知识库密钥。
 知识库仓库保持私有；仅推送知识库不会更新网站，还需提交网站中的子模块版本。
 
 自定义域名继续在 GitHub Pages 设置中绑定；阿里云 DNS 通过 CNAME 指向 ESA，由 ESA 回源 GitHub Pages。

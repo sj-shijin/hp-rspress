@@ -24,6 +24,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 获取公开的 Cinderfolio 固定版本
+        run: git submodule update --init cinderfolio
+
       - name: 读取知识库子模块的固定版本
         id: vault
         run: echo "ref=$(git rev-parse HEAD:knowledge-vault)" >> "$GITHUB_OUTPUT"

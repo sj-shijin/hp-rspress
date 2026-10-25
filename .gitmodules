@@ -1,3 +1,6 @@
 [submodule "knowledge-vault"]
 	path = knowledge-vault
 	url = git@github.com:sj-shijin/personal-knowledge-vault.git
+[submodule "cinderfolio"]
+	path = cinderfolio
+	url = https://github.com/sj-shijin/cinderfolio.git

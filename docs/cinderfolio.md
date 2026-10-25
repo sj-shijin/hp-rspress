@@ -1,11 +1,11 @@
 # 个人网站集成 Cinderfolio
 
-网站通过 `package.json` 中的 `"cinderfolio": "file:./cinderfolio"` 引用独立项目，保留通用 Rspress 主题。子项目的使用方式见 [README](../cinderfolio/README.md)，内部规则见 [维护文档](../cinderfolio/docs/maintenance.md)。
+网站通过 `cinderfolio/` 子模块引用 [sj-shijin/cinderfolio](https://github.com/sj-shijin/cinderfolio) 的固定提交，`package.json` 继续使用 `"cinderfolio": "file:./cinderfolio"` 加载本地包。子项目的使用方式见 [README](../cinderfolio/README.md)，内部规则见 [维护文档](../cinderfolio/docs/maintenance.md)。
 
 ## 归属
 
 ```text
-cinderfolio/                    # 独立主题项目，自己的依赖、锁文件、测试与 MIT 许可
+cinderfolio/                    # 公开主题子模块，自己的依赖、锁文件、测试与 MIT 许可
 theme/CinderfolioTheme.tsx      # Rspress Layout 中的配色状态与全站变量
 theme/CinderfolioPreview.tsx    # 三栏选择器、色阶和显示职责
 theme/CinderfolioDownload.tsx   # 按当前参数生成 CSS / JSON 下载
@@ -25,7 +25,7 @@ scripts/marp_theme_sync.mjs     # 本站同源本地存储协议
 ## 安装与构建
 
 ```sh
-sh scripts/install.sh # 安装网站及子项目各自锁定的依赖
+sh scripts/install.sh # 初始化 Cinderfolio 子模块，安装网站及子项目依赖
 npm run colors        # 调用 cinderfolio-build，生成纯主题 dist/
 npm run marp          # 生成 .generated/cinderfolio/，只在网站版本注入同步脚本
 npm run dev           # 自动先运行 colors、marp，再导出网站内容
@@ -33,7 +33,20 @@ npm run build         # 相同准备步骤，随后静态构建和产物检查
 npm test              # 先运行独立项目测试，再检查网站导出与集成
 ```
 
-本地 `file:` 依赖不会安装子项目的开发依赖，安装脚本和 CI 因此分别安装两份锁文件。手动安装时执行 `npm ci` 和 `npm ci --prefix cinderfolio`。`npm run dev` / `build` 的日常用法不变。
+本地 `file:` 依赖不会安装子项目的开发依赖，安装脚本和 CI 因此分别安装两份锁文件。手动安装时先执行 `git submodule update --init cinderfolio`，再执行 `npm ci` 和 `npm ci --prefix cinderfolio`。CI 单独初始化这个公开子模块，私有知识库继续使用专用只读密钥。`npm run dev` / `build` 的日常用法不变。
+
+独立开发目录是 `/Users/shijin/Code/cinderfolio`；网站内的 `cinderfolio/` 是另一个检出目录，两者不会自动同步。独立仓库提交并推送后，在网站中更新固定版本：
+
+```sh
+git -C cinderfolio fetch origin
+git -C cinderfolio checkout --detach origin/main
+npm install             # 主题依赖变化时同步网站锁文件
+npm ci --prefix cinderfolio
+npm test && npm run build
+git diff --submodule
+git add cinderfolio package-lock.json
+git commit -m "chore: 更新 Cinderfolio"
+```
 
 ```text
 Cinderfolio 源码 → cinderfolio/dist/（纯主题，带许可证）
@@ -70,4 +83,4 @@ Shiki 和 Pele 使用原生双层 Tabs，仅保留必要间距、窄屏换行及
 
 ## 许可范围
 
-`cinderfolio/LICENSE` 仅适用于该子项目的原创代码、主题和文档；字体及图片保留第三方授权。它不将个人网站内容、知识库、网页组件或其他目录改授 MIT。当前两个项目仍在同一仓库，本地依赖即可表达引用关系。
+`cinderfolio/LICENSE` 仅适用于独立主题仓库的原创代码、主题和文档；字体及图片保留第三方授权。它不将个人网站内容、知识库、网页组件或其他目录改授 MIT。两个项目分别维护提交，网站只记录 Cinderfolio 的固定版本。

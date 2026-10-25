@@ -8,6 +8,8 @@ if ! command -v pandoc >/dev/null 2>&1; then
 fi
 
 node -e 'const [m,n]=process.versions.node.split(".").map(Number); if (m<22 || (m===22 && n<12)) { console.error("请使用 Node.js 22.12+ 或更新版本"); process.exit(1); }'
+# 只初始化公开主题；私有知识库仍按单独的授权流程获取。
+git submodule update --init cinderfolio
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 # 安装缓存保留在本项目，不改动全局 npm 配置或缓存权限。
