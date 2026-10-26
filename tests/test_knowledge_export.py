@@ -7,6 +7,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from export_knowledge import export
@@ -177,6 +178,95 @@ $$
         self.assertEqual(config['sidebar']['/knowledge/'][0]['items'][0],
                          {'text': '概览与阅读路线', 'link': '/knowledge/math/'})
         self.assertNotIn('/knowledge/alpha/', json.dumps(config))
+
+    def test_topic_order_and_sidebars_follow_manifest_without_mixing_notes(self):
+        self.write_note('丙.md', '# 丙\n', '逻辑专题概览。')
+        self.write_note('丁.md', '# 丁\n', '逻辑专题正文。')
+        self.spec['categories'].append({'id': 'logic', 'title': '逻辑领域', 'overview': 'gamma'})
+        self.spec['notes'] += [
+            {'path': '丙.md', 'slug': 'gamma', 'category': 'logic'},
+            {'path': '丁.md', 'slug': 'delta', 'category': 'logic'},
+        ]
+
+        def links(items):
+            return [item['link'] for item in items if 'link' in item] + [
+                link for item in items for link in links(item.get('items', []))]
+
+        for order in [('math', 'logic'), ('logic', 'math')]:
+            with self.subTest(order=order):
+                self.spec['categories'].sort(key=lambda category: order.index(category['id']))
+                self.run_export()
+                config = json.loads((self.out / 'theme-config.json').read_text())
+                expected = [f'/knowledge/{category}/' for category in order]
+                self.assertEqual(links(config['nav'][0]['items']), expected)
+                home = yaml.safe_load((self.out / 'docs/knowledge/index.md').read_text().split('---', 2)[1])
+                self.assertEqual([feature['link'] for feature in home['features']], expected)
+                for category, article in [('math', 'beta'), ('logic', 'delta')]:
+                    routes = [f'/knowledge/{category}/', f'/knowledge/{article}/']
+                    for route in routes:
+                        sidebar = config['sidebar'][route]
+                        self.assertEqual(len(sidebar), 1)
+                        self.assertEqual(links(sidebar), routes)
+
+    def add_same_named_overviews(self):
+        for folder, slug in [('领域甲', 'first-overview'), ('领域乙', 'second-overview')]:
+            (self.vault / folder).mkdir()
+            self.write_note(f'{folder}/概览.md', '# 概览\n', f'{folder}的概览。')
+            self.spec['notes'].append({'path': f'{folder}/概览.md', 'slug': slug})
+
+    def test_same_named_notes_resolve_local_and_explicit_relative_links(self):
+        self.add_same_named_overviews()
+        self.write_note('领域甲/说明.md',
+                        '# 说明\n\n[[概览|本地概览]]。\n[跨目录概览](../领域乙/概览.md)。\n', '相对链接示例。')
+        self.spec['notes'].append({'path': '领域甲/说明.md', 'slug': 'local-links'})
+        self.run_export()
+        rendered = (self.out / 'docs/knowledge/local-links/index.md').read_text()
+        self.assertIn('[本地概览](/knowledge/first-overview/)', rendered)
+        self.assertIn('[跨目录概览](/knowledge/second-overview/)', rendered)
+        records = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())['notes']
+        self.assertEqual(next(note for note in records if note['id'] == 'local-links')['links'],
+                         ['first-overview', 'second-overview'])
+
+    def test_ambiguous_note_name_requires_a_relative_path(self):
+        self.add_same_named_overviews()
+        path = self.vault / '甲.md'
+        path.write_text(path.read_text() + '\n[[概览]]\n')
+        with self.assertRaisesRegex(ValueError, '重名.*相对路径'):
+            self.run_export()
+
+    def test_shared_slides_stay_consistent_until_the_last_link_is_removed(self):
+        source = 'slides/example/index.md'
+        deck = self.root / source
+        deck.parent.mkdir(parents=True)
+        deck.write_text('---\nmarp: true\ntitle: 临时演示\nsize: 16:9\nsizes: [16:9, 4:3]\n---\n\n# 演示\n')
+        hidden = self.root / 'slides/unpublished/index.md'
+        hidden.parent.mkdir()
+        hidden.write_text('未登记的草稿，无需有效 frontmatter。')
+        expected = {'title': '临时演示', 'src': '/slides/example/index.html', 'size': '16:9',
+                    'sources': {'16:9': '/slides/example/index.html',
+                                '4:3': '/slides/example/index-4-3.html'}}
+        originals = {path: path.read_bytes() for path in [deck, self.vault / '甲.md', self.vault / '乙.md']}
+        for linked in [('alpha', 'beta'), ('beta',), ()]:
+            with self.subTest(linked=linked):
+                for note in self.spec['notes']:
+                    if note['slug'] in linked:
+                        note['slides'] = [source]
+                    else:
+                        note.pop('slides', None)
+                self.run_export()
+                registry = json.loads((self.out / 'slides.json').read_text())
+                self.assertEqual(registry, [{'source': source, **expected}] if linked else [])
+                records = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())['notes']
+                for record in records:
+                    slides = [expected] if record['id'] in linked else []
+                    self.assertEqual(record.get('slides', []), slides)
+                    page = self.out / 'docs' / record['url'].lstrip('/') / 'index.md'
+                    metadata = yaml.safe_load(page.read_text().split('---', 2)[1])
+                    self.assertEqual(metadata.get('slides', []), slides)
+                    markdown = (self.out / 'docs/public' / record['markdown'].lstrip('/')).read_text()
+                    for url in expected['sources'].values():
+                        self.assertEqual(f']({url})' in markdown, bool(slides))
+        self.assertEqual({path: path.read_bytes() for path in originals}, originals)
 
     def test_overview_keeps_identity_and_redirects_old_route(self):
         self.run_export()
