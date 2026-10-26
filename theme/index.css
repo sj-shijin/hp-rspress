@@ -389,3 +389,4 @@ html.rp-dark .rp-codeblock .shiki span {
     padding: 0.5rem;
   }
 }
+.rp-doc .cf-pseudocode { --cf-pseudocode-cjk: var(--rp-font-family-base); }

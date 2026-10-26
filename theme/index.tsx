@@ -2,6 +2,8 @@ import 'katex/dist/katex.min.css';
 import './index.css';
 import 'cinderfolio/themes/cf-rspress.css';
 import 'cinderfolio/themes/cf-pele.css';
+import 'cinderfolio/themes/cf-pseudocode.css';
+import '../.generated/cinderfolio/cf-pseudocode-mathjax.css';
 import { Layout as OriginalLayout } from '@rspress/core/theme-original';
 import { CinderfolioProvider } from './CinderfolioTheme';
 import type { ComponentProps } from 'react';

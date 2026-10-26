@@ -30,7 +30,7 @@ site/                   # 个人主页、知识库与项目入口等网站专属
   knowledge/index.md    # /knowledge/
   projects/index.md     # /projects/
   projects.json         # 网站专属项目的显式页面清单
-  projects/cinderfolio/ # Cinderfolio 概览及五种适配的网页展示
+  projects/cinderfolio/ # Cinderfolio 概览及各类适配的网页展示
 theme/                  # 样式、字体与标识资源
 cinderfolio/            # 公开主题仓库的固定版本子模块
 knowledge/publish.json  # 知识库笔记与附件的唯一公开清单

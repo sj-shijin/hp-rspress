@@ -1,0 +1,320 @@
+---
+title: Cinderfolio-Pseudocode
+description: 预览 KaTeX 与 MathJax 的论文式算法排版，查看代码块选项与常用伪代码语法。
+outline: false
+---
+
+import { Callout, Tab, Tabs } from '@rspress/core/theme';
+
+{/*
+官方快速排序示例： https://saswat.padhi.me/pseudocode.js/
+The MIT License (MIT)
+
+Copyright (c) 2020-2023 Saswat Padhi (saswat.sourav@gmail.com)
+Copyright (c) 2015-2019 Tate Tian (tatetian@gmail.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/}
+
+# Cinderfolio-Pseudocode
+
+[pseudocode.js](https://github.com/saswatpadhi/pseudocode.js) 将 `algorithmic` 语法排成论文式算法，下方使用[官方快速排序示例](https://saswat.padhi.me/pseudocode.js/)。
+
+<CinderfolioPreview section="controls" />
+
+<Tabs>
+<Tab label="KaTeX 0.16.47">
+
+```pseudocode math=katex noEnd=true scopeLines=true
+% This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
+\begin{algorithm}
+\caption{Quicksort}
+\begin{algorithmic}
+\PROCEDURE{Quicksort}{$A, p, r$}
+    \IF{$p < r$}
+        \STATE $q = $ \CALL{Partition}{$A, p, r$}
+        \STATE \CALL{Quicksort}{$A, p, q - 1$}
+        \STATE \CALL{Quicksort}{$A, q + 1, r$}
+    \ENDIF
+\ENDPROCEDURE
+\PROCEDURE{Partition}{$A, p, r$}
+    \STATE $x = A[r]$
+    \STATE $i = p - 1$
+    \FOR{$j = p$ \TO $r - 1$}
+        \IF{$A[j] < x$}
+            \STATE $i = i + 1$
+            \STATE exchange
+            $A[i]$ with     $A[j]$
+        \ENDIF
+        \STATE exchange $A[i]$ with $A[r]$
+    \ENDFOR
+\ENDPROCEDURE
+\end{algorithmic}
+\end{algorithm}
+```
+
+</Tab>
+<Tab label="MathJax 3.2.2">
+
+```pseudocode math=mathjax noEnd=true scopeLines=true
+% This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
+\begin{algorithm}
+\caption{Quicksort}
+\begin{algorithmic}
+\PROCEDURE{Quicksort}{$A, p, r$}
+    \IF{$p < r$}
+        \STATE $q = $ \CALL{Partition}{$A, p, r$}
+        \STATE \CALL{Quicksort}{$A, p, q - 1$}
+        \STATE \CALL{Quicksort}{$A, q + 1, r$}
+    \ENDIF
+\ENDPROCEDURE
+\PROCEDURE{Partition}{$A, p, r$}
+    \STATE $x = A[r]$
+    \STATE $i = p - 1$
+    \FOR{$j = p$ \TO $r - 1$}
+        \IF{$A[j] < x$}
+            \STATE $i = i + 1$
+            \STATE exchange
+            $A[i]$ with     $A[j]$
+        \ENDIF
+        \STATE exchange $A[i]$ with $A[r]$
+    \ENDFOR
+\ENDPROCEDURE
+\end{algorithmic}
+\end{algorithm}
+```
+
+</Tab>
+</Tabs>
+
+## 代码块选项
+
+在 `pseudocode` 后用空格分隔选项，每个代码块放一个算法：
+
+````markdown
+```pseudocode math=mathjax noEnd=true scopeLines=true
+\begin{algorithm}
+\caption{Quicksort}
+\begin{algorithmic}
+\STATE \CALL{Quicksort}{$A, p, r$}
+\end{algorithmic}
+\end{algorithm}
+```
+````
+
+```pseudocode math=mathjax noEnd=true scopeLines=true
+\begin{algorithm}
+\caption{Quicksort}
+\begin{algorithmic}
+\STATE \CALL{Quicksort}{$A, p, r$}
+\end{algorithmic}
+\end{algorithm}
+```
+
+代码块目前接受以下三项设置：
+
+- `math=katex` 或 `math=mathjax`：选择公式引擎。省略时，网页使用 KaTeX，Marp 跟随文稿的 `math` 设置。
+- `noEnd=true` 或 `noEnd=false`：是否隐藏 `end if` 等结束行，默认 `true`。源文中的 `\ENDIF` 等结束命令仍须保留。
+- `scopeLines=true` 或 `scopeLines=false`：是否显示缩进竖线，默认 `true`。
+
+行号自动显示；算法标题编号在每篇文档内从 1 开始。
+
+## 常用伪代码语法
+
+算法正文放在 `algorithmic` 环境中；外层 `algorithm` 和 `\caption{标题}` 添加带编号的标题。以下示例均可放入 `pseudocode` 代码块，上方为源码，下方为渲染结果。完整说明见 [pseudocode.js 官方语法文档](https://github.com/saswatpadhi/pseudocode.js#grammar)。
+
+<Tabs>
+<Tab label="基本语句">
+
+```latex
+\begin{algorithmic}
+\INPUT Values $a, b$                % 输入
+\OUTPUT Maximum $m$                % 输出
+\REQUIRE $a, b \in \mathbb{R}$      % 前置条件
+\ENSURE $m \ge a$ \AND $m \ge b$    % 后置条件
+\STATE $m \gets \max(a, b)$         % 一条语句
+\PRINT $m$                         % 输出一行
+\RETURN $m$                        % 返回结果
+\end{algorithmic}
+```
+
+```pseudocode
+\begin{algorithmic}
+\INPUT Values $a, b$                % 输入
+\OUTPUT Maximum $m$                % 输出
+\REQUIRE $a, b \in \mathbb{R}$      % 前置条件
+\ENSURE $m \ge a$ \AND $m \ge b$    % 后置条件
+\STATE $m \gets \max(a, b)$         % 一条语句
+\PRINT $m$                         % 输出一行
+\RETURN $m$                        % 返回结果
+\end{algorithmic}
+```
+
+</Tab>
+<Tab label="条件分支">
+
+```latex
+\begin{algorithmic}
+\IF{$x > 0$}
+    \RETURN $1$
+\ELIF{$x = 0$}
+    \RETURN $0$
+\ELSE
+    \RETURN $-1$
+\ENDIF
+\end{algorithmic}
+```
+
+```pseudocode
+\begin{algorithmic}
+\IF{$x > 0$}
+    \RETURN $1$
+\ELIF{$x = 0$}
+    \RETURN $0$
+\ELSE
+    \RETURN $-1$
+\ENDIF
+\end{algorithmic}
+```
+
+`\ELIF` 和 `\ELSE` 均可省略；条件中可使用 `\AND`、`\OR`、`\NOT`，布尔值用 `\TRUE`、`\FALSE`。
+
+</Tab>
+<Tab label="循环">
+
+```latex
+\begin{algorithmic}
+% 范围循环；倒序可将 \TO 换成 \DOWNTO
+\FOR{$i \gets 1$ \TO $n$}
+    \STATE $s \gets s + A[i]$
+\ENDFOR
+
+% 遍历集合，同样用 \ENDFOR 结束
+\FORALL{$x \in S$}
+    \PRINT $x$
+\ENDFOR
+
+% 条件循环
+\WHILE{$i < n$}
+    \STATE $i \gets i + 1$
+\ENDWHILE
+
+% 至少执行一次，条件满足时停止
+\REPEAT
+    \STATE $i \gets i + 1$
+\UNTIL{$i \ge n$}
+\end{algorithmic}
+```
+
+```pseudocode
+\begin{algorithmic}
+% 范围循环；倒序可将 \TO 换成 \DOWNTO
+\FOR{$i \gets 1$ \TO $n$}
+    \STATE $s \gets s + A[i]$
+\ENDFOR
+
+% 遍历集合，同样用 \ENDFOR 结束
+\FORALL{$x \in S$}
+    \PRINT $x$
+\ENDFOR
+
+% 条件循环
+\WHILE{$i < n$}
+    \STATE $i \gets i + 1$
+\ENDWHILE
+
+% 至少执行一次，条件满足时停止
+\REPEAT
+    \STATE $i \gets i + 1$
+\UNTIL{$i \ge n$}
+\end{algorithmic}
+```
+
+循环中可用 `\BREAK` 退出，或用 `\CONTINUE` 进入下一轮。
+
+</Tab>
+<Tab label="函数与调用">
+
+```latex
+\begin{algorithmic}
+\FUNCTION{Max}{$a, b$}
+    \RETURN $\max(a, b)$
+\ENDFUNCTION
+
+\PROCEDURE{ShowMax}{$a, b$}
+    \STATE $m \gets$ \CALL{Max}{$a, b$}
+    \PRINT $m$
+\ENDPROCEDURE
+\end{algorithmic}
+```
+
+```pseudocode
+\begin{algorithmic}
+\FUNCTION{Max}{$a, b$}
+    \RETURN $\max(a, b)$
+\ENDFUNCTION
+
+\PROCEDURE{ShowMax}{$a, b$}
+    \STATE $m \gets$ \CALL{Max}{$a, b$}
+    \PRINT $m$
+\ENDPROCEDURE
+\end{algorithmic}
+```
+
+`\FUNCTION{名称}{参数}` 与 `\PROCEDURE{名称}{参数}` 分别用对应的结束命令闭合；`\CALL{名称}{参数}` 可嵌入语句。
+
+</Tab>
+<Tab label="公式与注释">
+
+```latex
+\begin{algorithmic}
+\STATE $x_i \gets \frac{a + b}{2}$   % $...$ 包裹公式
+\STATE \(y \gets x_i^2\)            % 也支持 \(...\)
+\COMMENT{这条注释会显示在算法中}
+% 以百分号开始的注释只留在源文中
+
+\STATE \textbf{bold}, \textit{italic}, \texttt{label}
+\STATE \{value\}, \$, \%, \_, \&    % 转义普通文字中的特殊字符
+\end{algorithmic}
+```
+
+```pseudocode
+\begin{algorithmic}
+\STATE $x_i \gets \frac{a + b}{2}$   % $...$ 包裹公式
+\STATE \(y \gets x_i^2\)            % 也支持 \(...\)
+\COMMENT{这条注释会显示在算法中}
+% 以百分号开始的注释只留在源文中
+
+\STATE \textbf{bold}, \textit{italic}, \texttt{label}
+\STATE \{value\}, \$, \%, \_, \&    % 转义普通文字中的特殊字符
+\end{algorithmic}
+```
+
+</Tab>
+</Tabs>
+
+<Callout type="details" title="显示职责">
+
+- **字体**：算法文字与公式采用所选引擎的字体，中文使用页面的后备字体。算法字号与行距独立于 Marp 正文。
+- **关键词**：浅色主题使用强调色系的 `darker` 档，深色主题使用 `light` 档，与 Shiki 的流程导航色一致。
+- **横线与注释**：次要文字灰阶；三条横线颜色一致。
+- **行号与缩进竖线**：统一使用辅助文字灰阶。
+- **外框**：独立算法使用圆角边框；单算法标签页与标签容器共用外框。
+
+</Callout>

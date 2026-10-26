@@ -13,10 +13,11 @@ theme/CinderfolioMarp.tsx       # iframe、比例、当前页与底栏操作
 theme/CinderfolioMermaid.tsx    # 官方 Mermaid 的实时渲染与源码折叠
 theme/cinderfolio_mermaid.mjs   # 懒加载、串行配置与绘图，跳过过期请求
 theme/cinderfolio.css           # 本站预览组件布局
-theme/index.tsx                 # 通过包入口加载 Rspress / Pele CSS
+theme/index.tsx                 # 通过包入口加载 Rspress / Pele / Pseudocode CSS
 site/projects/cinderfolio/     # 本站 MDX 展示页，保留现有网址
 scripts/build_marp.mjs          # 复制主题、生成本站 HTML、注入主题同步
 scripts/marp_theme_sync.mjs     # 本站同源本地存储协议
+scripts/remark_pseudocode.mjs   # 构建期算法块，调用共享渲染器
 .generated/cinderfolio/        # 供网站发布的主题和 HTML，生成目录
 ```
 
@@ -28,7 +29,7 @@ scripts/marp_theme_sync.mjs     # 本站同源本地存储协议
 sh scripts/install.sh # 初始化 Cinderfolio 子模块，安装网站及子项目依赖
 npm run colors        # 调用 cinderfolio-build，生成纯主题 dist/
 npm run marp          # 生成 .generated/cinderfolio/，只在网站版本注入同步脚本
-npm run dev           # 自动先运行 colors、marp，再导出网站内容
+npm run dev           # 自动准备主题、导出内容并构建演示
 npm run build         # 相同准备步骤，随后静态构建和产物检查
 npm test              # 先运行独立项目测试，再检查网站导出与集成
 ```
@@ -59,7 +60,7 @@ Cinderfolio 源码 → cinderfolio/dist/（纯主题，带许可证）
 
 ## 预览状态与下载
 
-五个适配页面共用 `CinderfolioProvider`。深色、浅色、品牌基准色选择器通过 `useHead` 更新全站变量；Shiki 直接引用变量，无需重新分词。调色跨页面保留，刷新后重置；默认方案仍维护在子项目 `palette.mjs`。
+各适配页面共用 `CinderfolioProvider`。深色、浅色、品牌基准色选择器通过 `useHead` 更新全站变量；Shiki 直接引用变量，无需重新分词。调色跨页面保留，刷新后重置；默认方案仍维护在子项目 `palette.mjs`。
 
 深色栏使用 `g15` 浅底，浅色栏使用 `g1` 深底，亮暗切换不反转。亮暗开关与导航共用 Rspress `ThemeContext`。显示职责与选择器的布局属于网站，通用职责定义来自 Cinderfolio。
 
@@ -72,6 +73,22 @@ Shiki 和 Pele 使用原生双层 Tabs，仅保留必要间距、窄屏换行及
 网站锁定 Mermaid 12.2.0，Node.js 要求为 22.12+；Cinderfolio 纯主题生成仍支持原来的 Node.js 版本。`mermaid` 围栏默认由 Pele 处理，只有标注 `renderer=mermaid` 才交给 `CinderfolioMermaid`。示例使用原生双层 Tabs 的 `keepDOM={false}`，只挂载当前图表；源码保留原生代码块和折叠样式。
 
 渲染器在组件挂载后懒加载。调色与亮暗变化使用同一 `createMermaidTheme()` 重新绘图，初始化和绘制串行执行，过期请求跳过或丢弃结果。传入实际容器供甘特图等按嵌入宽度排版。正文预览沿用网站字体，独立 JSON 不携带网站字体。下载按钮导出当前配色，静态下载提供默认亮暗配置；无 JavaScript 时仍保留源码与静态下载入口。
+
+## 论文式伪代码
+
+网页与 Marp 共用 `pseudocode` 围栏；语法与示例见 [Cinderfolio 用法](../cinderfolio/README.md#论文式伪代码)。网页的 `remark_pseudocode.mjs` 在 Shiki 前生成算法 HTML，Marp 的围栏渲染调用同一 `renderPseudocode()`。标题编号在每篇文档内从 1 开始，重复构建不受其他页面影响。
+
+算法排版维护于 Cinderfolio 的 `pseudocode.mjs`，导出 `cf-pseudocode.css` 并包含在 Marp 主题内。算法文字与公式采用同一引擎的字体：KaTeX Main 或 MathJax 3 的 TeX Main；中文后备字体分别使用网页文楷与 Marp 的 Noto Sans SC。颜色继续通过 `--cf-*` 变量跟随亮暗与调色。
+
+网页外框由 `rspress.mjs` 适配：独立算法使用与代码块相同的细边框、圆角和留白；作为 Tab 的唯一内容时共用标签外框。源码与渲染结果等多块内容保留各自边框。此规则只作用于 Rspress 页面，Marp 继续使用算法自身的论文式排版。
+
+横线粗细、标题间距与行距沿用 pseudocode.js 原始排版，不额外添加标题内边距；三条横线统一使用比正文淡三级的 `--cf-text-muted`。关键词通过 `light-dark()` 读取 `--cf-accent-darker` 与 `--cf-accent-light`，分别用于浅色与深色主题，与 Shiki 的流程导航色一致。`noEnd` 与 `scopeLines` 在 Cinderfolio 中统一默认为 `true`，默认隐藏块结束行、显示缩进竖线；围栏仍可显式覆盖。
+
+算法容器自行设置字体、字重、行高与对齐。Marp 算法默认 `24px`，与正文和 `compact` 的字号无关；文稿可用 `--cf-pseudocode-font-size` 独立调节算法大小。
+
+MathJax 的普通文字字体来自 `cinderfolio/fonts/mathjax-text/`，使用完整的垂直度量，避免字形越过标题横线；公式仍使用 MathJax 3.2.2 自带的 CHTML 专用字体。构建时将文字字体复制到 `mathjax-fonts/text/`，不通过额外行距或内边距补偿。
+
+网页默认 KaTeX，Marp 跟随文稿的 `math` 设置；围栏 `pseudocode math=katex` / `pseudocode math=mathjax` 可单独指定引擎。[Cinderfolio-Pseudocode](/projects/cinderfolio/pseudocode/) 使用原生 Tabs 对照官方快速排序算法。`scripts/build_marp.mjs` 同时生成网站所需的 MathJax 静态 CSS 与字体资源，网页字体按需加载并独立缓存；独立 Marp HTML 内嵌两套本地公式字体。算法渲染器不进入客户端包，也不请求 CDN。
 
 ## Marp 集成
 

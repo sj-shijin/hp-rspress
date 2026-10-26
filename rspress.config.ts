@@ -7,6 +7,7 @@ import { transformerNotationHighlight } from '@shikijs/transformers';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkMermaid from './scripts/remark_mermaid.mjs';
+import remarkPseudocode from './scripts/remark_pseudocode.mjs';
 import { renderLlmsTxt } from './scripts/render_llms.mjs';
 import { createShikiTheme } from 'cinderfolio/shiki';
 
@@ -82,7 +83,7 @@ export default defineConfig({
       buildCache: {
         cacheDigest: [siteOrigin],
         // MDX 高亮结果依赖主题，变更后不能复用旧代码块。
-        buildDependencies: [require.resolve('cinderfolio/shiki')],
+        buildDependencies: [require.resolve('cinderfolio/shiki'), require.resolve('cinderfolio/pseudocode-render')],
       },
     },
     output: {
@@ -112,7 +113,7 @@ export default defineConfig({
       defaultColor: false,
       transformers: [transformerNotationHighlight()],
     },
-    remarkPlugins: [remarkMath, remarkMathBlocks, remarkMermaid],
+    remarkPlugins: [remarkMath, remarkMathBlocks, remarkMermaid, remarkPseudocode],
     rehypePlugins: [[rehypeKatex, { strict: 'ignore', throwOnError: true }]],
     link: {
       checkDeadLinks: true,
