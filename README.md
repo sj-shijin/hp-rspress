@@ -16,11 +16,18 @@ npm run dev           # 开发预览；修改内容或公开清单后需重启
 npm run build         # 导出、构建、校正 Markdown 并检查产物
 npm run preview       # 预览已构建的静态网站
 npm run colors        # 单独导出 Cinderfolio 的 CSS 与 Shiki JSON
-npm test              # 独立主题测试，以及临时知识库与网站集成测试
+npm test              # 全量：Cinderfolio 与网站测试（CI 仍使用此入口）
+npm run test:theme    # 仅 Cinderfolio：配色、渲染、资源与 CLI
+npm run test:site     # 仅网站：临时知识库导出、索引、产物检查器与前端适配
 npm run check:build   # 单独检查现有构建产物
 ```
 
 预览地址为 `http://127.0.0.1:1320/`，仅监听本机。
+
+测试按责任分层：Cinderfolio 验证主题与渲染规则，网站验证参数传递、内容导出和组件生命周期。
+`check:build` 检查真实构建产物，由 `postbuild` 自动执行；它与产物检查器自身的测试互补。
+仅调整正文时执行构建并验收受影响页面；修改主题、升级依赖或发布前运行全量测试。
+当前自动化测试不包含真实浏览器验收；页面改动仍按影响范围检查亮暗、窄屏、导航、资源和公式。演示预览器的三条固定验收流程见[网站集成文档](docs/cinderfolio.md#marp-集成)。
 
 ## 项目目录
 
