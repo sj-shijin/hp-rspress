@@ -31,6 +31,8 @@ site/                   # 个人主页、知识库与项目入口等网站专属
   projects/index.md     # /projects/
   projects.json         # 网站专属项目的显式页面清单
   projects/cinderfolio/ # Cinderfolio 概览及各类适配的网页展示
+slides/<id>/index.md     # 独立维护的 Marp 文稿，含 title、size、分页与演讲备注
+slides/<id>/assets/      # 随这份演示公开的素材
 theme/                  # 样式、字体与标识资源
 cinderfolio/            # 公开主题仓库的固定版本子模块
 knowledge/publish.json  # 知识库笔记与附件的唯一公开清单
@@ -38,6 +40,7 @@ knowledge-vault/        # 私有知识库的固定版本子模块
 scripts/                # 内容导出、Markdown 校正与产物检查
 .generated/cinderfolio/ # 本站使用的主题与 Marp HTML，不提交
 .generated/docs/        # 生成的 Rspress 输入，不提交
+.generated/slides/      # 显式关联文稿的 HTML 与素材，不提交
 .generated/site/        # 唯一发布产物，不提交
 .runtime/               # 本地日志，不提交
 ```
@@ -75,7 +78,51 @@ git commit -m "chore: 更新 Cinderfolio"
 
 `categories[].overview` 指定的概览正文作为类别首页，默认位于 `/knowledge/<category>/`，
 普通笔记使用 `/knowledge/<slug>/`。类别指定 `section: projects` 时，使用独立的 `/projects/` 导航、侧栏和卡片入口。旧概览网页与 Markdown 地址继续兼容，搜索和 AI 索引不重复收录。
+知识库入口卡片与顶部菜单按 `categories` 顺序排列；每个知识专题的首页和文章使用本专题侧栏，上一篇／下一篇也只在专题内跳转，已有文章网址保持不变。
 双链在导出时转换，反链仅保存在关联索引的 `backlinks` 字段，不追加到正文；未公开笔记链接显示为文字，整篇嵌入、块引用及未获允许的附件会中止导出。
+
+### 配套 Marp 演示
+
+知识笔记与演示文稿分开维护，公开清单中的可选 `slides` 字段负责关联：
+
+```json
+{
+  "path": "SAT/CDCL.md",
+  "slug": "sat-cdcl",
+  "category": "sat",
+  "slides": ["slides/sat-cdcl/index.md"]
+}
+```
+
+文稿示例：
+
+```markdown
+---
+marp: true
+title: 从 DPLL 到 CDCL
+theme: cinderfolio
+size: 16:9
+paginate: true
+---
+
+# 从 DPLL 到 CDCL
+
+<!-- 演讲备注也会进入公开 HTML。 -->
+
+---
+
+## 冲突驱动子句学习
+
+![示意图](./assets/diagram.svg)
+```
+
+- 文稿使用 `slides/<英文标识>/index.md`，标题只维护于文稿，比例支持 `16:9`、`4:3`；素材放在同目录的 `assets/` 并以相对路径引用。
+- `size` 指定默认比例；需要双比例时添加 `sizes: ["16:9", "4:3"]`。同一份源稿生成两个 HTML，预览器可切换比例并保留当前页；下载 Markdown 包含两个入口。
+- `slides` 数组支持多份演示，顺序即展示顺序；同一文稿被多篇笔记关联时只构建一次。未关联的文稿不发布，已关联文稿的整个 `assets/` 随之公开。
+- `npm run marp` 先刷新公开关联，再生成 HTML、打包素材并同步主题；`npm run dev` / `build` 已包含这些步骤。修改文稿或关联后，重新启动开发预览。
+- 网页通过 `afterDocContent` 插槽在文末展示演示；笔记正文不包含播放器或 Marp 语法。Markdown 下载和关联索引同时保留演示入口，`SITE_ORIGIN` 仍按现有流程补全链接。
+- 网站专属展示页可在前置属性中写同样的 `slides` 数组。
+- 只有至少一篇公开笔记的类别才会显示专题入口。
 
 文献在知识库根目录的 `references.bib` 维护，正文使用 Pandoc 引用：
 

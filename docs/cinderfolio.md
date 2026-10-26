@@ -10,15 +10,19 @@ theme/CinderfolioTheme.tsx      # Rspress Layout 中的配色状态与全站变�
 theme/CinderfolioPreview.tsx    # 三栏选择器、色阶和显示职责
 theme/CinderfolioDownload.tsx   # 按当前参数生成 CSS / JSON 下载
 theme/MarpPreview.tsx           # 通用 iframe、比例、当前页与底栏操作
+theme/DocSlides.tsx             # 从页面关联读取文稿，在 afterDocContent 展示
 theme/CinderfolioMermaid.tsx    # 官方 Mermaid 的实时渲染与源码折叠
 theme/cinderfolio_mermaid.mjs   # 懒加载、串行配置与绘图，跳过过期请求
 theme/cinderfolio.css           # 本站预览组件布局
 theme/index.tsx                 # 通过包入口加载 Rspress / Pele / Pseudocode CSS
 site/projects/cinderfolio/     # 本站 MDX 展示页，保留现有网址
 scripts/build_marp.mjs          # 复制主题、生成本站 HTML、注入主题同步
+scripts/site_slides.py          # 显式关联、文稿元数据与构建清单
+scripts/build_slides.mjs        # 调用 buildMarp，打包每份文稿的 assets/
 scripts/marp_theme_sync.mjs     # 本站同源本地存储协议
 scripts/remark_pseudocode.mjs   # 构建期算法块，调用共享渲染器
 .generated/cinderfolio/        # 供网站发布的主题和 HTML，生成目录
+.generated/slides/             # 关联文稿的 HTML 和素材，生成目录
 ```
 
 网站组件只使用 `cinderfolio/*` 公开入口，不跨目录引用项目内部文件。`rspress.config.ts` 从包入口加载 Shiki 变量主题，并将主题文件加入构建缓存依赖。
@@ -28,7 +32,7 @@ scripts/remark_pseudocode.mjs   # 构建期算法块，调用共享渲染器
 ```sh
 sh scripts/install.sh # 初始化 Cinderfolio 子模块，安装网站及子项目依赖
 npm run colors        # 调用 cinderfolio-build，生成纯主题 dist/
-npm run marp          # 生成 .generated/cinderfolio/，只在网站版本注入同步脚本
+npm run marp          # 刷新导出并构建主题样张、关联文稿，只在网站版本注入同步脚本
 npm run dev           # 自动准备主题、导出内容并构建演示
 npm run build         # 相同准备步骤，随后静态构建和产物检查
 npm test              # 先运行独立项目测试，再检查网站导出与集成
@@ -90,21 +94,28 @@ MathJax 的普通文字字体来自 `cinderfolio/fonts/mathjax-text/`，使用�
 
 网页默认 KaTeX，Marp 跟随文稿的 `math` 设置；围栏 `pseudocode math=katex` / `pseudocode math=mathjax` 可单独指定引擎。[Cinderfolio-Pseudocode](/projects/cinderfolio/pseudocode/) 使用原生 Tabs 对照官方快速排序算法。`scripts/build_marp.mjs` 同时生成网站所需的 MathJax 静态 CSS 与字体资源，网页字体按需加载并独立缓存；独立 Marp HTML 内嵌两套本地公式字体。算法渲染器不进入客户端包，也不请求 CDN。
 
+正式笔记保留算法原始 Markdown；下载与 AI 索引也保留围栏，不把生成的 HTML 写回知识库。
+
 ## Marp 集成
 
-网站调用 `buildMarpExample()` 生成 16:9 与 4:3 HTML，然后注入 `installMarpThemeSync`。
+网站调用 `buildMarpExample()` 生成主题样张的 16:9 与 4:3 HTML，调用 `buildMarp()` 构建 `.generated/slides.json` 中显式关联的其他文稿；二者都注入 `installMarpThemeSync`。所有文稿共用原有字体资源，每份文稿只额外复制自己的 `assets/`。独立 Cinderfolio 的构建接口不依赖网站清单和 Rspress。
 
 `MarpPreview` 接收标题与「比例 → HTML 地址」映射，不固定文稿地址。将当前颜色写入同源本地存储后，iframe 与独立窗口只替换变量、不重载 HTML，保留当前页码。独立项目的样张没有这层状态同步。
 
 ```mdx
-<MarpPreview title="Cinderfolio-Marp 示例" sources={{ '16:9': '/cinderfolio/marp/example.html' }} />
+<MarpPreview title="演示标题" sources={{
+  '16:9': '/slides/sat-cdcl/index.html',
+  '4:3': '/slides/sat-cdcl/index-4-3.html',
+}} />
 ```
+
+知识笔记的关联维护于 `knowledge/publish.json`，网站展示页的关联维护于页面前置属性。导出阶段读取文稿的 `title` 与 `size`，生成网页前置属性中的展示信息和独立构建清单；`DocSlides` 通过原生 `afterDocContent` 插槽展示，不改写笔记正文。完整目录与清单示例见 [README](../README.md#配套-marp-演示)。
 
 底栏左侧是独立打开，只有存在多个比例时才显示等宽比例按钮，右侧是 PDF 图标。比例切换和独立打开通过 Marp URL 锚点保留当前页；PDF 调用 iframe 原生打印，用户选择“存储为 PDF”。字体仅由 Marp HTML 加载，网站继续使用文楷。备注来自 Markdown 注释，会进入公开 HTML。
 
-验证范围：两个比例、单比例预览、亮暗主题、当前页保持、调色同步、窄屏与下载资源；不重复检查播放器全屏和演讲者模式。同步协议测试维护在 `tests/marp_sync.test.mjs`，独立渲染、SVG ID 和字体哈希测试在 Cinderfolio 内。
+验证范围：主题样张的两个比例、独立文稿比例、文末插槽、亮暗主题、当前页保持、调色同步、窄屏与素材；不重复检查播放器全屏和演讲者模式。同步协议测试维护在 `tests/marp_sync.test.mjs`；独立渲染、SVG ID 和字体哈希测试在 Cinderfolio 内。
 
-自动化打印 PDF 时，先切换到打印媒体并等待布局、字体完成，再导出；直接从仅显示一页的播放器立即导出，可能漏掉未完成自动缩放的代码。导出后核对总页数，并实际检查 Python 代码页和论文式算法页。
+自动化打印 PDF 时，先切换到打印媒体并等待布局、字体完成，再导出；直接从仅显示一页的播放器立即导出，可能漏掉未完成自动缩放的代码。导出后核对总页数，并实际检查伪代码算法页。
 
 ## 许可范围
 

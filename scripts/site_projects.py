@@ -4,9 +4,11 @@ from pathlib import Path
 import re
 
 import yaml
+from site_slides import SlideRegistry
 
 
-def read_site_projects(site: Path) -> list[dict]:
+def read_site_projects(site: Path, slides: SlideRegistry | None = None) -> list[dict]:
+    slides = slides or SlideRegistry(site.parent)
     manifest = site / 'projects.json'
     entries = json.loads(manifest.read_text(encoding='utf-8')) if manifest.exists() else []
     projects, allowed, ids = [], {'index.md'}, set()
@@ -41,6 +43,8 @@ def read_site_projects(site: Path) -> list[dict]:
             pages.append({'title': metadata['title'],
                           'label': metadata.get('sidebarTitle', metadata['title']),
                           'description': metadata['description'], 'url': f'/projects/{route}'})
+            if metadata.get('slides') is not None:
+                pages[-1]['slides'] = slides.resolve(metadata['slides'])
         projects.append({'id': identifier, 'title': pages[0]['title'],
                          'description': pages[0]['description'], 'url': pages[0]['url'], 'pages': pages})
     actual = {p.relative_to(site / 'projects').as_posix()

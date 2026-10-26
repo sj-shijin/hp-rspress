@@ -16,6 +16,7 @@ from urllib.parse import quote, unquote, urlsplit
 import yaml
 from markdown_tools import markdown_tools
 from site_projects import read_site_projects
+from site_slides import SlideRegistry, slides_markdown
 
 
 SECTIONS = {'projects': '项目', 'knowledge': '知识库'}
@@ -34,6 +35,7 @@ class Note:
     chapter: str = ''
     section: str = 'knowledge'
     landing: bool = False
+    slides: list[str] = field(default_factory=list)
     links: set[str] = field(default_factory=set)
 
     @property
@@ -72,7 +74,7 @@ def read_note(vault: Path, item: dict) -> Note:
     return Note(path, slug, title, text.strip() + '\n', str(metadata.get('permalink', '')),
                 description=description, category=item.get('category', ''),
                 group=item.get('group', ''),
-                chapter=item.get('chapter', ''))
+                chapter=item.get('chapter', ''), slides=item.get('slides', []))
 
 
 def outside_code(text: str, transform) -> str:
@@ -216,10 +218,14 @@ class Exporter:
     def resolve_note(self, target: str, source: Note) -> Note | None:
         target = unquote(target).removesuffix('.md')
         local = (source.path.parent / target).resolve()
+        # 标准 Markdown 相对路径优先于名称检索；不同领域可以有同名概览。
+        exact = next((note for note in self.notes if local == note.path.with_suffix('').resolve()), None)
+        if exact:
+            return exact
         matches = []
         for note in self.notes:
             relative = note.path.relative_to(self.vault).as_posix().removesuffix('.md')
-            if target in {relative, note.path.stem, note.title, note.permalink} or local == note.path.with_suffix('').resolve():
+            if target in {relative, note.path.stem, note.title, note.permalink}:
                 matches.append(note)
         if len(matches) > 1:
             raise ValueError("链接目标有重名，请在笔记中使用相对路径")
@@ -303,7 +309,9 @@ class Exporter:
 
     def write(self, output: Path, *, preview: bool = True, site_source: Path | None = None) -> dict:
         site_source = site_source or Path(__file__).resolve().parents[1] / 'site'
-        site_projects = read_site_projects(site_source)
+        slide_registry = SlideRegistry(site_source.parent)
+        site_projects = read_site_projects(site_source, slide_registry)
+        note_slides = {note.slug: slide_registry.resolve(note.slides) for note in self.notes}
         reserved = {n.url for n in self.notes} | {f'/{n.section}/{n.slug}/' for n in self.notes} | {
             f'/{c.get("section", "knowledge")}/{identifier}/' for identifier, c in self.categories.items()}
         if any(page['url'] in reserved for project in site_projects for page in project['pages']):
@@ -346,9 +354,20 @@ class Exporter:
             path.write_text('---\n' + yaml.safe_dump(metadata, allow_unicode=True,
                             sort_keys=False) + '---\n\n' + body, encoding='utf-8')
 
+        # 网站展示页也使用同一关联入口，原始前置属性仅保留文稿路径。
+        for project in site_projects:
+            for item in project['pages']:
+                if 'slides' in item:
+                    source = next((docs / item['url'].lstrip('/')).glob('index.md*'))
+                    metadata, _, body = source.read_text(encoding='utf-8')[4:].partition('\n---\n')
+                    metadata = yaml.safe_load(metadata)
+                    metadata['slides'] = item['slides']
+                    page(source, metadata, body.lstrip('\n'))
+
         features = {key: [] for key in sections}
         navigation = {key: [] for key in sections}
         sidebar = {key: [] for key in sections}
+        topic_sidebars = {}
         for project in site_projects:
             features['projects'].append({'title': project['title'], 'details': project['description'],
                                          'link': project['url']})
@@ -377,6 +396,10 @@ class Exporter:
             else:
                 sidebar[section].append({'text': category['title'], 'link': url,
                                          'items': self.sidebar_items(notes)})
+            if section == 'knowledge':
+                # 每个专题独立导航；按已有网址映射，保留公开文章地址。
+                for route in [url, *(n.url for n in notes)]:
+                    topic_sidebars[route] = [sidebar[section][-1]]
             categories.append({'id': identifier, 'title': category['title'],
                                'url': url, 'section': section,
                                'description': overview.description if overview else description,
@@ -422,7 +445,8 @@ class Exporter:
                 nav.append({'text': SECTIONS[key], 'link': f'/{key}/', 'items': navigation[key]})
         theme_config = {
             'nav': nav,
-            'sidebar': {f'/{key}/': sidebar[key] for key in sections},
+            'sidebar': {**{f'/{key}/': sidebar[key] for key in sections},
+                        **topic_sidebars},
         }
         (output / 'theme-config.json').write_text(
             json.dumps(theme_config, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -435,10 +459,13 @@ class Exporter:
             # .md 使用普通 Markdown 解析；remark-math 在解析期识别公式。
             # 不继承私有 frontmatter，也不把数学改写为 Hugo 简码或 MDX。
             title = self.categories[note.category]['title'] if note.landing else note.title
-            page(docs / note.url.lstrip('/') / 'index.md',
-                 {'title': title, 'description': note.description}, headings(body))
+            slides = note_slides[note.slug]
+            metadata = {'title': title, 'description': note.description}
+            if slides:
+                metadata['slides'] = slides
+            page(docs / note.url.lstrip('/') / 'index.md', metadata, headings(body))
             (docs / 'public' / note.section / 'raw' / f'{note.slug}.md').write_text(
-                f'# {title}\n\n' + body, encoding='utf-8')
+                f'# {title}\n\n' + body.rstrip() + slides_markdown(slides) + '\n', encoding='utf-8')
             if note.landing:
                 # 保留旧文章路由，使用原生运行时跳转；正文不再生成第二份页面。
                 page(docs / note.section / note.slug / 'index.mdx',
@@ -451,6 +478,8 @@ class Exporter:
                             'links': sorted(note.links), 'backlinks': [n.slug for n in incoming]})
             if note.landing:
                 records[-1]['aliases'] = [f'/{note.section}/{note.slug}/']
+            if slides:
+                records[-1]['slides'] = slides
         for source, name in self.used_assets.items():
             (public / 'attachments').mkdir(exist_ok=True)
             shutil.copyfile(source, public / 'attachments' / name)
@@ -466,6 +495,9 @@ class Exporter:
                   'source_commit': revision.stdout.strip() if revision.returncode == 0 else None}
         (output / 'report.json').write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        (output / 'slides.json').write_text(
+            json.dumps(list(slide_registry.entries.values()), ensure_ascii=False, indent=2) + '\n',
+            encoding='utf-8')
         return report
 
 

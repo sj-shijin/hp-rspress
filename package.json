@@ -6,10 +6,11 @@
   "scripts": {
     "export": ".venv/bin/python scripts/export_knowledge.py",
     "colors": "cinderfolio-build",
+    "premarp": "npm run export",
     "marp": "node scripts/build_marp.mjs",
-    "predev": "npm run export && npm run colors && npm run marp",
+    "predev": "npm run colors && npm run marp",
     "dev": "rspress dev --host 127.0.0.1 --port 1320",
-    "prebuild": "npm run export && npm run colors && npm run marp",
+    "prebuild": "npm run colors && npm run marp",
     "build": "rspress build",
     "postbuild": ".venv/bin/python scripts/finalize_markdown.py && npm run check:build",
     "preview": "rspress preview --host 127.0.0.1 --port 1320",

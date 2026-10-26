@@ -94,6 +94,7 @@ export default defineConfig({
         },
         { from: path.resolve('theme/brand'), to: 'brand' },
         { from: path.join(generated, 'cinderfolio'), to: 'cinderfolio' },
+        { from: path.join(generated, 'slides'), to: 'slides', noErrorOnMissing: true },
       ],
     },
   },

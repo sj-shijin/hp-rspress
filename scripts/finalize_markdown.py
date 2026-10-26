@@ -7,12 +7,23 @@ import re
 import shutil
 from urllib.parse import unquote, urlsplit
 from markdown_tools import markdown_tools
+from site_slides import slides_markdown
 
 
 def finalize(output: Path, site_origin: str = '') -> dict:
     output = output.resolve()
     site_origin = site_origin.rstrip('/')
     index = json.loads((output / 'knowledge/index.json').read_text(encoding='utf-8'))
+    # Layout 插槽不进入 SSG-MD；网站展示页补上同一份演示链接。
+    # 知识笔记的下载副本已经由导出阶段附带这些入口。
+    for project in index.get('siteProjects', []):
+        for page in project['pages']:
+            slides = page.get('slides', [])
+            if slides:
+                target = output / page['url'].lstrip('/') / 'index.md'
+                body = target.read_text(encoding='utf-8')
+                if '\n## 配套演示\n' not in body:
+                    target.write_text(body.rstrip() + slides_markdown(slides), encoding='utf-8')
     routes = {'/': '/index.md', '/knowledge/': '/knowledge/index.md'}
     contexts = {}
     for note in index['notes']:

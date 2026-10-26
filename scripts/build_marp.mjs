@@ -1,10 +1,10 @@
 /** 网站集成：准备下载资源，并在独立 Marp HTML 中接入同源调色同步。 */
 import fs from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { buildMarpExample } from 'cinderfolio/marp-build';
 import { pseudocodeMathCss } from 'cinderfolio/pseudocode-render';
-import { installMarpThemeSync, marpThemeStorageKey } from './marp_theme_sync.mjs';
+import { buildSlideDecks, syncMarpHtml } from './build_slides.mjs';
 
 const directory = new URL('../.generated/cinderfolio/', import.meta.url);
 const themes = new URL('./', import.meta.resolve('cinderfolio/themes/cf-marp.css'));
@@ -32,10 +32,13 @@ await fs.cp(new URL('./assets/', import.meta.resolve('cinderfolio/examples/marp.
 await fs.copyFile(new URL('LICENSE', themes), new URL('cinderfolio/LICENSE', slides));
 await buildMarpExample(slides, { fontDirectory: fonts });
 // 脚本只进入本站 HTML，Cinderfolio 的独立产物不依赖本地存储或网站组件。
-const sync = `<script>(${installMarpThemeSync.toString()})(${JSON.stringify(marpThemeStorageKey)});</script>`;
 for (const filename of ['example.html', 'example-4-3.html']) {
-  const target = new URL(filename, slides);
-  const html = await fs.readFile(target, 'utf8');
-  await fs.writeFile(target, html.replace('</body>', `${sync}</body>`));
+  await syncMarpHtml(new URL(filename, slides));
 }
-console.log('Cinderfolio-Marp：网站资源已生成，包含 16:9 / 4:3 示例和同源主题同步。');
+const entries = JSON.parse(await fs.readFile(new URL('../.generated/slides.json', import.meta.url), 'utf8'));
+await buildSlideDecks(entries, {
+  root: fileURLToPath(new URL('../', import.meta.url)),
+  output: fileURLToPath(new URL('../.generated/slides/', import.meta.url)),
+  fontDirectory: fonts,
+});
+console.log(`Cinderfolio-Marp：双比例样张与 ${entries.length} 份关联文稿已生成。`);

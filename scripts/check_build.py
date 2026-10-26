@@ -8,12 +8,13 @@ import json
 import os
 from pathlib import Path
 import re
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, urljoin, urlsplit
 import xml.etree.ElementTree as ET
 
 from export_knowledge import SECTIONS, inside, outside_code, read_note
 from markdown_tools import markdown_tools
 from site_projects import read_site_projects
+from site_slides import SlideRegistry
 
 
 def require(condition, message):
@@ -50,7 +51,9 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     origin = site_origin.rstrip('/')
     spec = json.loads(manifest.read_text(encoding='utf-8'))
     index = json.loads((output / 'knowledge/index.json').read_text(encoding='utf-8'))
-    site_projects = read_site_projects(site_source or Path(__file__).resolve().parents[1] / 'site')
+    site_source = site_source or Path(__file__).resolve().parents[1] / 'site'
+    slides = SlideRegistry(site_source.parent)
+    site_projects = read_site_projects(site_source, slides)
     require(index.get('siteProjects', []) == site_projects, '网站项目索引与 site/projects.json 不一致')
     site_pages = [page for project in site_projects for page in project['pages']]
     expected = {item['slug']: item for item in spec['notes']}
@@ -68,10 +71,20 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
                      for identifier, category in categories.items()}
     expected_html = {f'{key}/index.html' for key in sections} | {
         category_urls[identifier].lstrip('/') + 'index.html' for identifier in active_categories}
+
+    def check_slides(page, linked, url):
+        for slide in linked:
+            require(page.has('iframe', src=slide['src'], title=slide['title']),
+                    f'文末缺少关联演示：{url}：{slide["src"]}')
+            markdown = (output / url.lstrip('/') / 'index.md').read_text(encoding='utf-8')
+            for src in slide.get('sources', {slide['size']: slide['src']}).values():
+                require(origin + src in markdown, f'Markdown 缺少演示入口：{url}：{src}')
+
     for item in site_pages:
         url = item['url']
         expected_html.add(url.lstrip('/') + 'index.html')
         page = Page(output / url.lstrip('/') / 'index.html')
+        check_slides(page, item.get('slides', []), url)
         require(page.has('h1'), f'网站项目正文未生成：{url}')
         require(page.has('meta', name='description', content=item['description']),
                 f'网站项目网页摘要不一致：{url}')
@@ -105,6 +118,9 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         raw = output / markdown_url.lstrip('/')
         require(canonical.read_bytes() == raw.read_bytes(), f'Markdown 公式或正文不一致：{identifier}')
         page = Page(output / url.lstrip('/') / 'index.html')
+        linked = slides.resolve(item.get('slides', []))
+        require(note.get('slides', []) == linked, f'演示关联与公开清单不一致：{identifier}')
+        check_slides(page, linked, url)
         ids = [attrs['id'] for _, attrs in page.tags if attrs.get('id', '').startswith('ref-')]
         require(len(ids) == len(set(ids)), f'参考文献锚点重复：{identifier}')
         for tag, attrs in page.tags:
@@ -224,6 +240,21 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         require(not parsed.query and not parsed.fragment, 'sitemap 不应包含查询参数或章节锚点')
         sitemap_routes.add(parsed.path)
     public_routes = set()
+    slide_html = {src.lstrip('/') for entry in slides.entries.values()
+                  for src in entry.get('sources', {entry['size']: entry['src']}).values()}
+    actual_slides = {path.relative_to(output).as_posix() for path in (output / 'slides').rglob('*.html')}
+    require(actual_slides == slide_html, '演示构建范围与显式关联不一致')
+    for src in sorted(slide_html):
+        deck = Page(output / src)
+        for tag, attrs in deck.tags:
+            if tag != 'img' or not attrs.get('src'):
+                continue
+            resource = urlsplit(urljoin('/' + src, attrs['src']))
+            if resource.scheme or resource.netloc:
+                continue
+            target = (output / unquote(resource.path).lstrip('/')).resolve()
+            require(target.is_relative_to(output) and target.is_file(),
+                    f'演示图片不存在：{src}：{attrs["src"]}')
     # CLI 生成的独立演示是 iframe 资源，正文入口是 Cinderfolio-Marp 页面。
     presentations = ('cinderfolio/marp/example.html', 'cinderfolio/marp/example-4-3.html')
     has_marp = any(page['url'] == '/projects/cinderfolio/marp/' for page in site_pages)
@@ -238,7 +269,7 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
                 'Marp 页面缺少独立演示 iframe')
     for path in output.rglob('*.html'):
         relative = path.relative_to(output).as_posix()
-        if has_marp and relative in presentations:
+        if relative in slide_html or (has_marp and relative in presentations):
             continue
         route = '/' + relative.removesuffix('index.html')
         if relative != '404.html' and route not in aliases:
@@ -249,6 +280,7 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     require((output / 'llms-full.txt').read_text(encoding='utf-8') == bundle,
             'llms-full.txt 与单篇 Markdown 不一致')
     return {'notes': len(notes),
+            'slides': len(slide_html),
             'site_project_pages': len(site_pages),
             'knowledge_html_pages': sum(p.startswith('knowledge/') for p in actual_html),
             'project_html_pages': sum(p.startswith('projects/') for p in actual_html),
