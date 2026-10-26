@@ -25,7 +25,12 @@
       "path": "SAT/00 概览与阅读路线.md",
       "slug": "sat-overview",
       "category": "sat",
-      "group": "概览"
+      "group": "概览",
+      "slides": [
+        "slides/sat-cdcl/index.md",
+        "slides/sat-implementation/index.md",
+        "slides/sat-usage/index.md"
+      ]
     },
     {
       "path": "SAT/SAT与DPLL.md",
@@ -39,35 +44,50 @@
       "slug": "sat-cdcl",
       "category": "sat",
       "group": "基础知识",
-      "chapter": "完备求解"
+      "chapter": "完备求解",
+      "slides": [
+        "slides/sat-cdcl/index.md"
+      ]
     },
     {
       "path": "SAT/预处理与内处理.md",
       "slug": "sat-preprocessing",
       "category": "sat",
       "group": "基础知识",
-      "chapter": "求解器实现与优化"
+      "chapter": "求解器实现与优化",
+      "slides": [
+        "slides/sat-implementation/index.md"
+      ]
     },
     {
       "path": "SAT/搜索策略.md",
       "slug": "sat-search-strategies",
       "category": "sat",
       "group": "基础知识",
-      "chapter": "求解器实现与优化"
+      "chapter": "求解器实现与优化",
+      "slides": [
+        "slides/sat-implementation/index.md"
+      ]
     },
     {
       "path": "SAT/结果验证与不可满足证明.md",
       "slug": "sat-result-verification",
       "category": "sat",
       "group": "基础知识",
-      "chapter": "结果验证与应用"
+      "chapter": "结果验证与应用",
+      "slides": [
+        "slides/sat-usage/index.md"
+      ]
     },
     {
       "path": "SAT/增量SAT与建模实践.md",
       "slug": "sat-incremental-solving",
       "category": "sat",
       "group": "基础知识",
-      "chapter": "结果验证与应用"
+      "chapter": "结果验证与应用",
+      "slides": [
+        "slides/sat-usage/index.md"
+      ]
     },
     {
       "path": "格问题与格密码/00 概览与阅读路线.md",
