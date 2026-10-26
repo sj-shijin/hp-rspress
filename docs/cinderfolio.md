@@ -59,7 +59,7 @@ Cinderfolio 源码 → cinderfolio/dist/（纯主题，带许可证）
 
 ## 预览状态与下载
 
-五个适配页面共用 `CinderfolioProvider`。深色、浅色、品牌色选择器通过 `useHead` 更新全站变量；Shiki 直接引用变量，无需重新分词。调色跨页面保留，刷新后重置；默认方案仍维护在子项目 `palette.mjs`。
+五个适配页面共用 `CinderfolioProvider`。深色、浅色、品牌基准色选择器通过 `useHead` 更新全站变量；Shiki 直接引用变量，无需重新分词。调色跨页面保留，刷新后重置；默认方案仍维护在子项目 `palette.mjs`。
 
 深色栏使用 `g15` 浅底，浅色栏使用 `g1` 深底，亮暗切换不反转。亮暗开关与导航共用 Rspress `ThemeContext`。显示职责与选择器的布局属于网站，通用职责定义来自 Cinderfolio。
 

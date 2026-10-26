@@ -16,14 +16,14 @@ const accentPresets = [
 const seedControls = [
   { name: 'ink', label: '深色', step: 'g0', presets: [['纯黑', '#000000'], ['炭黑', seeds.ink], ['暖黑', '#1c1917']] },
   { name: 'paper', label: '浅色', step: 'g16', presets: [['纯白', '#ffffff'], ['微暖白', seeds.paper], ['暖白', '#faf8f2']] },
-  { name: 'accent', label: '品牌色', step: 'brand', presets: accentPresets },
+  { name: 'accent', label: '品牌基准色', step: 'brand', presets: accentPresets },
 ] as const;
 
 const roleGroups = [
   ['背景层次', ['background', 'surface', 'surfaceHover']],
   ['文字层次', ['foreground', 'textMuted', 'textSubtle']],
   ['边界与控件', ['border', 'borderStrong', 'controlBorder', 'controlSelectedBackground', 'controlSelectedForeground']],
-  ['品牌与状态', ['interaction', 'link', 'diagramStroke', 'selection', 'selectedBackground']],
+  ['强调与状态', ['interaction', 'link', 'diagramStroke', 'selection', 'selectedBackground']],
 ] as const;
 
 function BgMark() {
@@ -189,7 +189,7 @@ export default function CinderfolioPreview({ section, children }: { section: 'co
         <code>{value}</code>
       </div>)}
     </div>
-    <div className="cf-scale cf-scale--accent" aria-label="品牌色五档">
+    <div className="cf-scale cf-scale--accent" aria-label="强调色系五档">
       {Object.entries(createAccentScale(input.accent)).map(([name, value]) => {
         const delta = accentSteps[name];
         const offset = delta > 0 ? `+${delta}` : delta < 0 ? `−${Math.abs(delta)}` : '0';
