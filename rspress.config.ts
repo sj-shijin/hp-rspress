@@ -102,7 +102,7 @@ export default defineConfig({
       path.resolve('theme/Mermaid.tsx'),
       path.resolve('theme/CinderfolioPreview.tsx'),
       path.resolve('theme/CinderfolioDownload.tsx'),
-      path.resolve('theme/CinderfolioMarp.tsx'),
+      path.resolve('theme/MarpPreview.tsx'),
       path.resolve('theme/CinderfolioMermaid.tsx'),
     ],
     shiki: {

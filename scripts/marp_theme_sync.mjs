@@ -1,6 +1,6 @@
 export const marpThemeStorageKey = 'cinderfolio-marp-theme';
 
-/** 仅用于网站示例 HTML；独立 cf-marp.css 不需要此脚本。 */
+/** 仅用于网站发布的 HTML；独立 cf-marp.css 不需要此脚本。 */
 export function installMarpThemeSync(storageKey) {
   function apply(value) {
     if (!value) return;

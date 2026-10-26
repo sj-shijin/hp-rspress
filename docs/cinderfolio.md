@@ -9,7 +9,7 @@ cinderfolio/                    # 公开主题子模块，自己的依赖、锁�
 theme/CinderfolioTheme.tsx      # Rspress Layout 中的配色状态与全站变量
 theme/CinderfolioPreview.tsx    # 三栏选择器、色阶和显示职责
 theme/CinderfolioDownload.tsx   # 按当前参数生成 CSS / JSON 下载
-theme/CinderfolioMarp.tsx       # iframe、比例、当前页与底栏操作
+theme/MarpPreview.tsx           # 通用 iframe、比例、当前页与底栏操作
 theme/CinderfolioMermaid.tsx    # 官方 Mermaid 的实时渲染与源码折叠
 theme/cinderfolio_mermaid.mjs   # 懒加载、串行配置与绘图，跳过过期请求
 theme/cinderfolio.css           # 本站预览组件布局
@@ -92,11 +92,19 @@ MathJax 的普通文字字体来自 `cinderfolio/fonts/mathjax-text/`，使用�
 
 ## Marp 集成
 
-网站调用 `buildMarpExample()` 生成 16:9 与 4:3 HTML，然后注入 `installMarpThemeSync`。`CinderfolioMarp` 将当前颜色写入同源本地存储；iframe 与独立窗口只替换变量、不重载 HTML，保留当前页码。独立项目的样张没有这层状态同步。
+网站调用 `buildMarpExample()` 生成 16:9 与 4:3 HTML，然后注入 `installMarpThemeSync`。
 
-底栏左侧是独立打开、等宽比例按钮，右侧是 PDF 图标。比例切换和独立打开通过 Marp URL 锚点保留当前页；PDF 调用 iframe 原生打印，用户选择“存储为 PDF”。字体仅由 Marp HTML 加载，网站继续使用文楷。备注来自 Markdown 注释，会进入公开 HTML。
+`MarpPreview` 接收标题与「比例 → HTML 地址」映射，不固定文稿地址。将当前颜色写入同源本地存储后，iframe 与独立窗口只替换变量、不重载 HTML，保留当前页码。独立项目的样张没有这层状态同步。
 
-验证范围：两个比例、亮暗主题、当前页保持、调色同步、窄屏与下载资源；不重复检查播放器全屏和演讲者模式。同步协议测试维护在 `tests/marp_sync.test.mjs`，独立渲染、SVG ID 和字体哈希测试在 Cinderfolio 内。
+```mdx
+<MarpPreview title="Cinderfolio-Marp 示例" sources={{ '16:9': '/cinderfolio/marp/example.html' }} />
+```
+
+底栏左侧是独立打开，只有存在多个比例时才显示等宽比例按钮，右侧是 PDF 图标。比例切换和独立打开通过 Marp URL 锚点保留当前页；PDF 调用 iframe 原生打印，用户选择“存储为 PDF”。字体仅由 Marp HTML 加载，网站继续使用文楷。备注来自 Markdown 注释，会进入公开 HTML。
+
+验证范围：两个比例、单比例预览、亮暗主题、当前页保持、调色同步、窄屏与下载资源；不重复检查播放器全屏和演讲者模式。同步协议测试维护在 `tests/marp_sync.test.mjs`，独立渲染、SVG ID 和字体哈希测试在 Cinderfolio 内。
+
+自动化打印 PDF 时，先切换到打印媒体并等待布局、字体完成，再导出；直接从仅显示一页的播放器立即导出，可能漏掉未完成自动缩放的代码。导出后核对总页数，并实际检查 Python 代码页和论文式算法页。
 
 ## 许可范围
 
