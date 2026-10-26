@@ -7,6 +7,12 @@
       "overview": "lattices-overview"
     },
     {
+      "id": "sat",
+      "title": "SAT 求解",
+      "description": "从 CNF 与 DPLL/CDCL 出发，理解传播、预处理、搜索策略、结果验证和增量应用。",
+      "overview": "sat-overview"
+    },
+    {
       "id": "mosaic-sieve",
       "title": "MOSAIC-Sieve",
       "section": "projects",
@@ -15,6 +21,54 @@
     }
   ],
   "notes": [
+    {
+      "path": "SAT/00 概览与阅读路线.md",
+      "slug": "sat-overview",
+      "category": "sat",
+      "group": "概览"
+    },
+    {
+      "path": "SAT/SAT与DPLL.md",
+      "slug": "sat-dpll",
+      "category": "sat",
+      "group": "基础知识",
+      "chapter": "完备求解"
+    },
+    {
+      "path": "SAT/CDCL.md",
+      "slug": "sat-cdcl",
+      "category": "sat",
+      "group": "基础知识",
+      "chapter": "完备求解"
+    },
+    {
+      "path": "SAT/预处理与内处理.md",
+      "slug": "sat-preprocessing",
+      "category": "sat",
+      "group": "基础知识",
+      "chapter": "求解器实现与优化"
+    },
+    {
+      "path": "SAT/搜索策略.md",
+      "slug": "sat-search-strategies",
+      "category": "sat",
+      "group": "基础知识",
+      "chapter": "求解器实现与优化"
+    },
+    {
+      "path": "SAT/结果验证与不可满足证明.md",
+      "slug": "sat-result-verification",
+      "category": "sat",
+      "group": "基础知识",
+      "chapter": "结果验证与应用"
+    },
+    {
+      "path": "SAT/增量SAT与建模实践.md",
+      "slug": "sat-incremental-solving",
+      "category": "sat",
+      "group": "基础知识",
+      "chapter": "结果验证与应用"
+    },
     {
       "path": "格问题与格密码/00 概览与阅读路线.md",
       "slug": "lattices-overview",
