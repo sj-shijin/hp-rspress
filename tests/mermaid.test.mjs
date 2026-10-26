@@ -42,14 +42,10 @@ test('同页重复图的可访问性 ID 不冲突，输出可复现', async () =
   assert.deepEqual(await compile(source + '\n\n' + source), tree);
 });
 
-test('构建期 SVG 为虚线添加透明命中层，保留原线条与箭头', async () => {
+test('网站生成的 SVG 接入 Cinderfolio 连线命中层', async () => {
   const tree = await compile('```mermaid\nsequenceDiagram\n A-->>B: 返回\n```');
-  const edge = descendants(tree, n => n.properties?.className?.includes('pele-edge'))[0];
-  const hit = edge.children.find(n => n.properties?.className?.includes('cf-pele-edge-hit'));
-  assert.equal(hit.properties.opacity, '0');
-  assert.equal(hit.properties.ariaHidden, 'true');
-  assert.ok(edge.children.some(n => n.properties?.strokeDashArray?.length > 0));
-  assert.equal(edge.children.filter(n => n.properties?.className?.includes('pele-marker')).length, 1);
+  // 透明度、几何、箭头与 ID 保留由 Cinderfolio 的 pele-svg 测试覆盖。
+  assert.ok(descendants(tree, n => n.properties?.className?.includes('cf-pele-edge-hit')).length > 0);
 });
 
 test('普通代码及行内代码保持原样', async () => {

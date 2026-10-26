@@ -14,7 +14,9 @@
     "build": "rspress build",
     "postbuild": ".venv/bin/python scripts/finalize_markdown.py && npm run check:build",
     "preview": "rspress preview --host 127.0.0.1 --port 1320",
-    "test": "npm --prefix cinderfolio test && .venv/bin/python -m unittest discover -s tests -v && node --test tests/*.test.mjs",
+    "test": "npm run test:theme && npm run test:site",
+    "test:theme": "npm --prefix cinderfolio test",
+    "test:site": ".venv/bin/python -m unittest discover -s tests -v && node --test tests/*.test.mjs",
     "check:build": ".venv/bin/python scripts/check_build.py",
     "check:afdocs": ".venv/bin/python scripts/check_afdocs.py"
   },

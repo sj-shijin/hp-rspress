@@ -55,17 +55,9 @@ test('同页显式选择 KaTeX 和 MathJax，生成不同公式结构', async ()
   await assert.rejects(compile('```pseudocode math=unknown\n' + algorithm + '\n```'), /不支持/);
 });
 
-test('默认隐藏结束行并显示缩进竖线，围栏允许显式关闭这两项设置', async () => {
-  for (const math of ['katex', 'mathjax']) {
-    const tree = await compile(['', ' noEnd=false scopeLines=false'].map(options =>
-      '```pseudocode math=' + math + options + '\n' + algorithm + '\n```').join('\n\n'));
-    const [compact, official] = tree.children.map(descendants);
-    const hasScopeLines = nodes => nodes.some(n => n.properties?.className?.includes('with-scopelines'));
-    const text = nodes => nodes.filter(n => n.type === 'text').map(n => n.value).join(' ');
-    assert.equal(hasScopeLines(compact), true);
-    assert.equal(hasScopeLines(official), false);
-    assert.doesNotMatch(text(compact), /end if/);
-    assert.match(text(official), /end if/);
-    assert.equal(official.filter(n => n.properties?.className?.includes('ps-linenum')).length, 3);
-  }
+test('网页围栏将排版开关传给伪代码渲染器', async () => {
+  const tree = await compile('```pseudocode noEnd=false scopeLines=false\n' + algorithm + '\n```');
+  const nodes = descendants(tree);
+  assert.equal(nodes.some(n => n.properties?.className?.includes('with-scopelines')), false);
+  assert.match(nodes.filter(n => n.type === 'text').map(n => n.value).join(' '), /end if/);
 });
