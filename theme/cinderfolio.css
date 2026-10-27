@@ -66,10 +66,8 @@
 .cf-shiki-roles__legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; padding-top: 0.75rem; border-top: 1px solid var(--cf-border-strong); color: var(--cf-text-muted); font-size: 0.75rem; }
 .cf-shiki-roles__background, .cf-shiki-roles__diff { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
 .cf-shiki-roles__legend code { font-size: inherit; }
-/* 两层均沿用官方 Tabs 外观和自动换行；仅保留外部间距与现有配色映射。 */
-:is(.cf-pele-categories, .cf-shiki-categories, .cf-mermaid-categories) { --rp-code-title-bg: var(--rp-c-bg-soft); margin-block: 0.75rem; }
-/* 亮暗选中项统一使用画布色，保留官方字色、阴影与尺寸。 */
-.rp-tabs:is(.cf-pele-categories, .cf-shiki-categories, .cf-mermaid-categories) .rp-tabs__label__item--selected { background-color: var(--rp-c-bg); }
+/* 配色由 cf-rspress.css 中的 cf-tabs 统一提供；这里只保留展示页间距。 */
+.cf-tabs { margin-block: 0.75rem; }
 .cf-pele-categories .sj-mermaid__diagram > svg { max-width: 100%; max-height: 22rem; }
 .cf-mermaid { padding-top: 1rem; }
 .cf-mermaid .sj-mermaid__diagram > svg { width: 100%; height: auto; max-width: 100%; max-height: 25rem; }

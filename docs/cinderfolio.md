@@ -72,7 +72,7 @@ Cinderfolio 源码 → cinderfolio/dist/（纯主题，带许可证）
 
 MDX 单独放置 `CinderfolioDownload`。CSS / JSON 下载使用当前颜色，`/cinderfolio/` 静态文件使用默认种子；CSS 自带 MIT 全文，分享 JSON 时附上 `/cinderfolio/LICENSE`。
 
-Shiki 和 Pele 使用原生双层 Tabs，仅保留必要间距、窄屏换行及选中项画布底色。Mermaid 源码用原生 `details / summary`，与图表共用底色；Pele 的渲染和源码折叠属于网站组件，不进入独立主题项目。
+Shiki、Pele、Mermaid 和 Pseudocode 共用官方 `<Tabs className="cf-tabs">`。配色规则统一维护于 `cinderfolio/rspress.mjs`，随 `cf-rspress.css` 导出：标签栏使用 `--cf-surface`，选中项使用 `--cf-background`，内层 Tabs 自动沿用；本站只保留展示页间距，交互与窄屏换行仍由官方组件负责。Mermaid 源码用原生 `details / summary`，与图表共用底色；Pele 的渲染和源码折叠属于网站组件，不进入独立主题项目。
 
 ## Mermaid 官方渲染器
 
