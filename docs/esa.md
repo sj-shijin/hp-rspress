@@ -1,6 +1,6 @@
 # ESA 接入与内容协商
 
-记录日期：2026-10-19。依据已采用的迁移方案与当日外部验收整理；这是手工维护摘要，未导出 ESA 控制台配置。
+配置与验收基线：2026-10-19。本文是方案及当日外部验收的手工摘要，控制台配置与当前可达性需现场复核。
 
 ## 接入与回源
 
@@ -15,14 +15,12 @@
 源站地址：sj-shijin.github.io
 回源协议 / 端口：HTTPS / 443
 回源 Host：shijin.space
-回源 SNI：sj-shijin.github.io（迁移方案采用值，未读取控制台复核）
+回源 SNI：sj-shijin.github.io（方案值，控制台待复核）
 ```
 
-GitHub Pages 继续绑定 `shijin.space`，构建和私有知识库公开清单保持原样。
-ESA 边缘证书覆盖 `shijin.space`；阿里云 DNS 中保留 ESA 提供的托管 DCV 验证记录，用于续签。
-源站地址始终使用 GitHub 域名，避免主站切到 ESA 后形成回源循环。
+GitHub Pages 绑定 `shijin.space`，ESA 以 GitHub 域名作为固定源站，保持单向回源。ESA 边缘证书覆盖主站，阿里云 DNS 保留托管 DCV 记录供续签。
 
-## URL 重写：当前采用方案二
+## URL 重写
 
 仅对指定主机且接受 Markdown 的请求重写。使用已验证的扩展名排除列表；后续增加其他类型的文件时，同步更新两条规则并复验。
 
@@ -52,7 +50,7 @@ and not ends_with(http.request.uri.path, "/")
 
 ## 缓存与响应头
 
-相关缓存、响应头和回源规则覆盖上述两个主机；维护时核对旧单篇规则、绕过缓存规则不与全站方案叠加。
+缓存、响应头和回源规则统一覆盖上述两个主机；维护时整合旧单篇规则与绕过缓存规则，保持生效规则一致。
 
 ```text
 缓存资格：符合缓存条件
@@ -61,13 +59,13 @@ and not ends_with(http.request.uri.path, "/")
 出站响应头：Vary: Accept-Encoding, Accept
 ```
 
-`Vary` 不能替代 ESA 自定义缓存键。命中判断使用 `X-Site-Cache-Status: HIT`，并交替核对两种响应的类型与正文；源站的 `Age` 或其他命中头不能代替 ESA 证据。
+缓存区分响应类型：ESA 缓存键包含 `Accept`，`Vary` 告知下游按请求头区分响应。使用 `X-Site-Cache-Status: HIT` 验证 ESA 命中，并交替核对 HTML、Markdown 的响应类型与正文。
 
 ## 验收与日常复查
 
 2026-10-19 主站基线：63 种页面路径全部通过且两种表示各自命中；172 个文件在两种 Accept 下均与源站一致；11 类文件缓存样本与 6 次真实 404 检查通过。
 AFDocs 0.22.2 全站复测使用 `--sampling deterministic --max-links 100`，31/31 页面支持内容协商：默认 97 分，公式差异仅报告模式 100 分。
-默认结果仍保留 28/31 页的公式文本比较差异；当时使用严格构建比较器核验。2026-10-22 已移除 HTML/Markdown 正文比较器，引用转换改为保留原文，差异报告供人工核对。
+默认结果包含 28/31 页的公式文本比较差异；当前构建检查与 AFDocs 结果解读见 [README](../README.md#构建与-ai-读取)。
 
 ```sh
 # 重复请求，观察响应类型、Vary 和两种表示各自的 ESA HIT
@@ -80,12 +78,11 @@ done
 npm run check:afdocs
 ```
 
-尚未完成：ESA 未统一强制 HTTP → HTTPS；本机 16 个 ESA 地址中 6 个连接超时，其他网络可达性未确认；浏览器工具超时，未完成渲染与交互验收。
-强制 HTTPS 可在 ESA 的「SSL/TLS → 边缘证书」中开启，完成后再验收并更新本记录。
+该次验收的待复核项：HTTP → HTTPS 强制跳转、跨网络可达性、浏览器渲染与交互。当时本机 16 个 ESA 地址中 6 个连接超时，浏览器工具也超时。HTTPS 设置位于 ESA「SSL/TLS → 边缘证书」，实际完成复验后更新本记录。
 
 ## 回退
 
 在阿里云 DNS 将现有 `@ CNAME` 恢复为 `sj-shijin.github.io`，TTL 保持 600 秒；GitHub Pages 的自定义域名保持不变。
-保留 ESA 的主站记录、证书和规则，等待 DNS 缓存逐步完成回退后再处理。回退不立即覆盖所有访问。
+保留 ESA 的主站记录、证书和规则，等待 DNS 缓存逐步完成回退后再处理。
 
 官方参考：[URL 重写](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/rewrite-url)、[自定义缓存键](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/custom-cachekey)、[回源 SNI](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/back-to-source-sni/)、[托管 DCV](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/managed-dcv)、[强制 HTTPS](https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/force-https)。

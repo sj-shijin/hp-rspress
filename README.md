@@ -2,205 +2,87 @@
 
 ShiJin 的个人网站，使用 Rspress 2 构建，包含个人主页、知识库与项目记录。
 
-- 网站：<https://shijin.space/>
-- 代码：<https://github.com/sj-shijin/hp-rspress>
+[网站](https://shijin.space/) · [代码](https://github.com/sj-shijin/hp-rspress) · [开发约定](AGENTS.md)
 
 ## 本地使用
 
-需要 Node.js 22.12+（Mermaid 12 的要求）、Python 3 和 Pandoc；CI 固定使用 Node.js 24 与 Pandoc 3.12.1。
-本机未安装 Pandoc 时先执行 `brew install pandoc`（macOS），其他系统使用 [官方安装包](https://github.com/jgm/pandoc/releases/tag/3.12.1)。
+需要 Node.js 22.12+、Python 3 和 Pandoc；CI 使用 Node.js 24 与 Pandoc 3.12.1。macOS 可用 `brew install pandoc` 安装，其他系统见[官方安装包](https://github.com/jgm/pandoc/releases/tag/3.12.1)。
 
 ```sh
-sh scripts/install.sh  # 首次安装依赖
-npm run dev           # 开发预览；修改内容或公开清单后需重启
-npm run build         # 导出、构建、校正 Markdown 并检查产物
-npm run preview       # 预览已构建的静态网站
-npm run colors        # 单独导出 Cinderfolio 的 CSS 与 Shiki JSON
-npm test              # 全量：Cinderfolio 与网站测试（CI 仍使用此入口）
-npm run test:theme    # 仅 Cinderfolio：配色、渲染、资源与 CLI
-npm run test:site     # 仅网站：临时知识库导出、索引、产物检查器与前端适配
-npm run check:build   # 单独检查现有构建产物
+sh scripts/install.sh # 首次安装依赖
+npm run dev           # 导出并启动开发预览；内容或清单更新后重启
+npm run build         # 导出、静态构建、校正 Markdown 并检查产物
+npm run preview       # 预览已构建的网站
+npm run colors        # 单独导出 Cinderfolio 主题
+npm run marp          # 刷新内容关联并构建演示
+npm test              # Cinderfolio 与网站全量测试
+npm run test:theme    # Cinderfolio 配色、渲染、资源与 CLI
+npm run test:site     # 网站导出、索引、产物检查器与前端适配
+npm run check:build   # 检查现有构建产物；build 已自动执行
 ```
 
-预览地址为 `http://127.0.0.1:1320/`，仅监听本机。
+开发与静态预览地址为 `http://127.0.0.1:1320/`，监听本机。正文改动执行构建并检查受影响页面；主题、依赖改动或发布前运行全量测试。页面交互另做浏览器验收，Marp 预览器的验收流程见[网站集成](docs/cinderfolio.md#验证)。
 
-测试按责任分层：Cinderfolio 验证主题与渲染规则，网站验证参数传递、内容导出和组件生命周期。
-`check:build` 检查真实构建产物，由 `postbuild` 自动执行；它与产物检查器自身的测试互补。
-仅调整正文时执行构建并验收受影响页面；修改主题、升级依赖或发布前运行全量测试。
-当前自动化测试不包含真实浏览器验收；页面改动仍按影响范围检查亮暗、窄屏、导航、资源和公式。演示预览器的三条固定验收流程见[网站集成文档](docs/cinderfolio.md#marp-集成)。
-
-## 项目目录
+## 目录与维护入口
 
 ```text
-site/                   # 个人主页、知识库与项目入口等网站专属正文
-  index.md              # /
-  knowledge/index.md    # /knowledge/
-  projects/index.md     # /projects/
-  projects.json         # 网站专属项目的显式页面清单
-  projects/cinderfolio/ # Cinderfolio 概览及各类适配的网页展示
-slides/<id>/index.md     # 独立维护的 Marp 文稿，含 title、size、分页与演讲备注
-slides/<id>/assets/      # 随这份演示公开的素材
-theme/                  # 样式、字体与标识资源
+site/                   # 个人主页、知识库入口与网站项目正文
+site/projects.json      # 网站项目的页面清单
+slides/<id>/            # Marp 文稿 index.md 与公开素材 assets/
+rspress.config.ts       # 网站配置
+theme/                  # 网页组件、样式、字体与标识
 cinderfolio/            # 公开主题仓库的固定版本子模块
-knowledge/publish.json  # 知识库笔记与附件的唯一公开清单
+knowledge/publish.json  # 知识笔记、附件与演示的公开清单
 knowledge-vault/        # 私有知识库的固定版本子模块
-scripts/                # 内容导出、Markdown 校正与产物检查
-.generated/cinderfolio/ # 本站使用的主题与 Marp HTML，不提交
-.generated/docs/        # 生成的 Rspress 输入，不提交
-.generated/slides/      # 显式关联文稿的 HTML 与素材，不提交
-.generated/site/        # 唯一发布产物，不提交
-.runtime/               # 本地日志，不提交
+scripts/                # 导出、渲染、Markdown 校正与产物检查
+.generated/             # 本地生成目录；site/ 子目录为发布产物
+.runtime/               # 本地日志与检测报告
 ```
 
-开发约定见 [AGENTS.md](AGENTS.md)，框架与主题用法见 `.agents/skills/`。
-网站通过子模块引用公开的 [Cinderfolio 仓库](https://github.com/sj-shijin/cinderfolio)，再以本地包依赖加载。首次安装脚本会获取固定版本；`dev` / `build` 会自动生成主题和 Marp 示例。
-网页组件、调色同步与下载资源的维护见 [网站集成文档](docs/cinderfolio.md)，算法和主题内部规则见 [Cinderfolio 维护文档](cinderfolio/docs/maintenance.md)。
-[Cinderfolio 的 MIT 许可](cinderfolio/LICENSE) 仅覆盖该子项目的原创内容，不扩展到个人网站或知识库；字体和图片保留各自授权。
-项目技能来自 [rstackjs/agent-skills](https://github.com/rstackjs/agent-skills)，
-通过 Skills Manager 导出为项目副本；更新时先更新共享库，再重新导出，不做全局部署。
+- [内容发布](docs/content.md)：笔记、网站项目、文献与演示的维护和导出。
+- [Cinderfolio 集成](docs/cinderfolio.md)：主题版本更新、网页组件、调色同步与资源打包。
+- [Cinderfolio 用法](cinderfolio/README.md)与[维护文档](cinderfolio/docs/maintenance.md)：独立主题的接入、渲染与实现规则。
+- [ESA 运维](docs/esa.md)：内容协商、缓存、验收基线与回退。
 
-更新 Cinderfolio 时，先在独立仓库提交并推送，再在网站中选择新版本：
-
-```sh
-git -C cinderfolio fetch origin
-git -C cinderfolio checkout --detach origin/main
-npm install             # 同步网站锁文件中的本地包依赖
-npm ci --prefix cinderfolio
-npm test
-npm run build
-git add cinderfolio package-lock.json
-git commit -m "chore: 更新 Cinderfolio"
-```
-
-网站提交记录具体版本，普通构建不会自动升级主题。
-
-## 知识库内容
-
-正式笔记在 Obsidian 知识库维护，不在子模块副本中编辑。
-公开清单维护笔记路径、网址、类别、分组、章节和顺序；标题和摘要直接读取笔记的 `title`、`description`，不重复维护。
-导出只选取需要的前置属性，不沿链接扩大公开范围。
-`site/knowledge/` 仅维护入口 `index.md`，知识正文和附件由公开清单生成。
-网站专属项目正文维护于 `site/projects/<id>/`，通过 `site/projects.json` 显式登记页面顺序；标题与摘要读取各页前置属性，`sidebarTitle` 可设置侧栏标签。
-网站项目与知识库项目共用导航、搜索和 AI 索引，但不混用内容来源；未登记页面与冲突网址会中止导出。
-
-`categories[].overview` 指定的概览正文作为类别首页，默认位于 `/knowledge/<category>/`，
-普通笔记使用 `/knowledge/<slug>/`。类别指定 `section: projects` 时，使用独立的 `/projects/` 导航、侧栏和卡片入口。旧概览网页与 Markdown 地址继续兼容，搜索和 AI 索引不重复收录。
-知识库入口卡片与顶部菜单按 `categories` 顺序排列；每个知识专题的首页和文章使用本专题侧栏，上一篇／下一篇也只在专题内跳转，已有文章网址保持不变。
-双链在导出时转换，反链仅保存在关联索引的 `backlinks` 字段，不追加到正文；未公开笔记链接显示为文字，整篇嵌入、块引用及未获允许的附件会中止导出。
-
-### 配套 Marp 演示
-
-知识笔记与演示文稿分开维护，公开清单中的可选 `slides` 字段负责关联：
-
-```json
-{
-  "path": "SAT/CDCL.md",
-  "slug": "sat-cdcl",
-  "category": "sat",
-  "slides": ["slides/sat-cdcl/index.md"]
-}
-```
-
-文稿示例：
-
-```markdown
----
-marp: true
-title: 从 DPLL 到 CDCL
-theme: cinderfolio
-size: 16:9
-paginate: true
----
-
-# 从 DPLL 到 CDCL
-
-<!-- 演讲备注也会进入公开 HTML。 -->
-
----
-
-## 冲突驱动子句学习
-
-![示意图](./assets/diagram.svg)
-```
-
-- 文稿使用 `slides/<英文标识>/index.md`，标题只维护于文稿，比例支持 `16:9`、`4:3`；素材放在同目录的 `assets/` 并以相对路径引用。
-- `size` 指定默认比例；需要双比例时添加 `sizes: ["16:9", "4:3"]`。同一份源稿生成两个 HTML，预览器可切换比例并保留当前页；下载 Markdown 包含两个入口。
-- `slides` 数组支持多份演示，顺序即展示顺序；同一文稿被多篇笔记关联时只构建一次。未关联的文稿不发布，已关联文稿的整个 `assets/` 随之公开。
-- `npm run marp` 先刷新公开关联，再生成 HTML、打包素材并同步主题；`npm run dev` / `build` 已包含这些步骤。修改文稿或关联后，重新启动开发预览。
-- 网页通过 `afterDocContent` 插槽在文末展示演示；笔记正文不包含播放器或 Marp 语法。Markdown 下载和关联索引同时保留演示入口，`SITE_ORIGIN` 仍按现有流程补全链接。
-- 网站专属展示页可在前置属性中写同样的 `slides` 数组。
-- 只有至少一篇公开笔记的类别才会显示专题入口。
-
-文献在知识库根目录的 `references.bib` 维护，正文使用 Pandoc 引用：
-
-```markdown
-关键结论 [@Regev2004Introduction, pp. 1, 3–4]。
-多篇文献 [@Regev2004Introduction, p. 1; @Micciancio2017PointLattices, p. 2]。
-```
-
-导出时仅把引用片段交给 Pandoc `--citeproc`，将生成的编号引用放回原文；正文、公式、代码与 Mermaid 不重新序列化。
-`knowledge/author-title.csl` 按首次引用顺序编号，定位保留在正文，例如 `[1, pp. 3–4]`；“参考文献”中每篇只展示一次完整作者、题名、出版信息，不输出 Bib 的 `note`。
-来源链接优先使用 DOI，否则使用 URL；`scripts/citation_links.lua` 仅将链接缩为“DOI”或“原文”，并为书目锚点加上笔记 slug，合并全文时不会串引。书目文件不整库发布，未引用条目不会导出。
-Rspress 2.0 的内置锚点检查仅登记标题；书目使用 Pandoc 原生 `div` 锚点，由产物检查核验引用目标存在且不重复。
-未知文献键或不正确的引用语法会报告来源问题，不自动改写知识库。
-
-预览使用子模块的固定提交，不读取正式库中尚未提交的修改。
-更新笔记时，先在正式库提交并推送，再更新网站的子模块版本、检查差异并重新构建：
-
-```sh
-git -C knowledge-vault fetch origin
-git -C knowledge-vault checkout --detach origin/main
-git diff --submodule
-```
+Rspress 技能来自 [rstackjs/agent-skills](https://github.com/rstackjs/agent-skills)，通过 Skills Manager 导出到 `.agents/skills/`；更新流程为更新共享库后重新导出项目副本。
 
 ## 构建与 AI 读取
 
 ```text
-网站正文 + 私有子模块中的公开内容
-  → 读取笔记摘要、转换文献引用 → .generated/docs/
-  → Rspress → 复用导出的 Markdown、补全链接 → 产物检查
+site/ 正文 + knowledge/publish.json 中的笔记与演示
+  → 导出正文、摘要、引用和关联索引 → .generated/docs/
+  → Rspress 静态构建 → 复用导出 Markdown、补全链接、检查产物
   → .generated/site/
 ```
 
-- `/llms.txt`：按公开清单的领域、分组和章节发现笔记，摘要来自笔记属性。
-- `/llms-full.txt`：按上述索引合并的全文。
+- `/llms.txt`：按领域、分组和章节组织的索引，摘要来自来源属性。
+- `/llms-full.txt`：按索引顺序合并的全文。
 - `/knowledge/<slug>/index.md`、`/knowledge/raw/<slug>.md`：单篇 Markdown 与下载副本。
-- `/knowledge/index.json`：单独标识的 JSON 辅助资源，提供链接、反链与旧地址。
-- `/sitemap.xml`：官方插件生成的公开页面索引，排除旧概览跳转页和 404。
+- `/knowledge/index.json`：链接、反链和旧地址等关联信息。
+- `/sitemap.xml`：官方插件生成的公开页面索引，收录正式地址。
 
-使用标准的 `mermaid` 围栏代码块编写图表：Pele 1.6.0 在构建时生成首屏 SVG，含图页面在浏览器中按需使用 `mountAsync()` 接管，随容器宽度自动重排。
-配色随网站亮暗主题切换，字体继承文楷；页面保留可展开的源码，Markdown／AI 接口保留原始 Mermaid。
-手写固定颜色会覆盖主题配色，语法错误会中止构建；离开图表页面时清理监听，渲染器加载失败时保留静态 SVG。
+标准 `mermaid` 围栏由 Pele 在构建时生成 SVG，浏览器按需接管并随容器重排；配色跟随网站亮暗主题，源码可展开。公式和图表的语法由各自渲染器检查。Markdown 与 AI 入口保留原始公式、代码和图表源码，具体集成见 [Cinderfolio 集成](docs/cinderfolio.md)。
 
-Rspress 2.0 SSG-MD 不运行自定义数学插件，会重新转义 LaTeX；`postbuild` 复用同一份导出 Markdown 作为标准入口与下载副本，保留公式与文献引用，并补充 AI 导航提示及 `SITE_ORIGIN` 链接。
-构建检查核对公开范围、摘要、搜索、链接、提示及 sitemap；不比较 HTML 与 Markdown 的正文文本。
-公式保留由引用转换测试验证，公式和 Mermaid 的语法错误由各自渲染器报告。
-检查失败会中止构建，报告见 `.generated/build-check.json`。
-AFDocs 固定使用 0.22.2（需要 Node.js 22+）；通用正文比较可能误报公式和脚注，差异保留供人工核对。
-`agent-docs.config.yml` 仅将该项设为仅报告，保留差异数据；`agent-docs.defaults.yml` 不覆盖任何检查参数，保留原始对照口径。
+Rspress 2.0 的 SSG-MD 会重新转义 LaTeX，`postbuild` 因此复用导出 Markdown。构建检查核验公开范围、摘要、搜索、链接、提示与 sitemap；失败时中止构建，报告写入 `.generated/build-check.json`。
+
+AFDocs 0.22.2 提供外部检测，公式与脚注的正文比较差异由人工核对：
 
 ```sh
-npm run check:afdocs                            # 读取线上网站，同时保存两套检测结果
-npm run check:afdocs -- http://127.0.0.1:1320    # 检测已启动的本地静态预览
+npm run check:afdocs                         # 检测线上网站
+npm run check:afdocs -- http://127.0.0.1:1320 # 检测已启动的本地静态预览
 ```
 
-每次在 `.runtime/afdocs/<时间戳>/` 保存 `default.json`、`report.json`、配置快照、命令记录和摘要，不覆盖历史结果。
-仅报告模式的 PASS 不表示差异已修复，分数不能与默认参数直接比较；其他检查失败仍返回非零。
-内容协商由 ESA 边缘提供；WebMCP 尚未接入。
+每次结果保存在 `.runtime/afdocs/<时间戳>/`，包括 `default.json`、`report.json`、配置快照、命令与摘要。默认配置保留工具原始口径；项目配置将正文比较设为仅报告，其 PASS 表示检测已完成，差异仍需核对。两种评分分别解读，其余检查失败返回非零。
 
 ## 部署
 
-推送网站 `main` 会触发 `.github/workflows/pages.yml`，执行测试、构建并发布到 GitHub Pages。
-构建通过只读 `KNOWLEDGE_VAULT_DEPLOY_KEY` 获取私有知识库的固定提交，仅上传 `.generated/site/`。
-公开的 Cinderfolio 子模块通过 HTTPS 获取固定提交，不需要私有知识库密钥。
-知识库仓库保持私有；仅推送知识库不会更新网站，还需提交网站中的子模块版本。
+推送 `main` 触发 [GitHub Pages 工作流](.github/workflows/pages.yml)，执行测试、构建并上传 `.generated/site/`。Cinderfolio 经 HTTPS 获取固定版本；私有知识库通过只读 `KNOWLEDGE_VAULT_DEPLOY_KEY` 获取固定提交。知识库更新通过网站的子模块版本进入下一次发布。
 
-自定义域名继续在 GitHub Pages 设置中绑定；阿里云 DNS 通过 CNAME 指向 ESA，由 ESA 回源 GitHub Pages。
-边缘规则、验收基线和回退方法见 [ESA 运维记录](docs/esa.md)。
-线上设置 `SITE_ORIGIN=https://shijin.space`；本地默认使用本机路径。
-构建缓存随 `SITE_ORIGIN` 切换失效。检查正式域名产物时，构建与检查需使用相同的变量：
+GitHub Pages 绑定 `shijin.space`，阿里云 DNS 指向 ESA，ESA 回源 GitHub Pages。线上构建设置 `SITE_ORIGIN`，本地默认使用本机路径；构建与产物检查使用同一值：
 
 ```sh
 SITE_ORIGIN=https://shijin.space npm run build
 SITE_ORIGIN=https://shijin.space npm run check:build
 ```
+
+[Cinderfolio 的 MIT 许可](cinderfolio/LICENSE) 覆盖该子项目的原创内容；网站、知识库及第三方资源的授权分别管理。
