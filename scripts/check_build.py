@@ -22,6 +22,16 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def check_theme_downloads(output: Path, source: Path):
+    """分发文件不能被网站压缩器改写，Marp 的主题指令也属于有效内容。"""
+    for artifact in source.iterdir():
+        if not artifact.is_file() or (artifact.suffix not in {'.css', '.json'} and artifact.name != 'LICENSE'):
+            continue
+        target = output / 'cinderfolio' / artifact.name
+        require(target.is_file(), f'主题下载文件缺失：{artifact.name}')
+        require(target.read_bytes() == artifact.read_bytes(), f'主题下载文件已被改写：{artifact.name}')
+
+
 class Page(HTMLParser):
     def __init__(self, path):
         super().__init__()
@@ -55,6 +65,8 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     slides = SlideRegistry(site_source.parent)
     site_projects = read_site_projects(site_source, slides)
     require(index.get('siteProjects', []) == site_projects, '网站项目索引与 site/projects.json 不一致')
+    if any(project['id'] == 'cinderfolio' for project in site_projects):
+        check_theme_downloads(output, site_source.parent / 'cinderfolio' / 'dist')
     site_pages = [page for project in site_projects for page in project['pages']]
     expected = {item['slug']: item for item in spec['notes']}
     notes = {note['id']: note for note in index['notes']}

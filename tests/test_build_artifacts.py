@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from check_build import check_build
+from check_build import check_build, check_theme_downloads
 from export_knowledge import export
 from finalize_markdown import finalize, markdown_tools
 
@@ -89,6 +89,29 @@ class BuildArtifactTests(unittest.TestCase):
         report = self.check()
         self.assertEqual((report['notes'], report['math_pages'], report['legacy_routes']), (2, 1, 1))
         self.assertEqual(report['sitemap_pages'], 3)
+
+    def test_theme_downloads_preserve_source_and_marp_metadata(self):
+        source = self.root / 'themes'
+        source.mkdir()
+        artifacts = {
+            'cf-marp.css': '/* @theme cinderfolio */\nsection { color: #121212; }\n',
+            'cf-shiki-light.json': '{"name":"cinderfolio-light"}\n',
+            'LICENSE': 'MIT License\n',
+        }
+        destination = self.output / 'cinderfolio'
+        destination.mkdir()
+        for name, content in artifacts.items():
+            (source / name).write_text(content)
+            (destination / name).write_text(content)
+        check_theme_downloads(self.output, source)
+        css = destination / 'cf-marp.css'
+        css.write_text('section{color:#121212}')
+        with self.assertRaisesRegex(ValueError, '主题下载文件已被改写：cf-marp.css'):
+            check_theme_downloads(self.output, source)
+        css.write_text(artifacts['cf-marp.css'])
+        (destination / 'cf-shiki-light.json').unlink()
+        with self.assertRaisesRegex(ValueError, '主题下载文件缺失：cf-shiki-light.json'):
+            check_theme_downloads(self.output, source)
 
     def test_production_build_contract(self):
         origin = 'https://shijin.space'

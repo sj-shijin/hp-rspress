@@ -93,7 +93,8 @@ export default defineConfig({
           to: 'fonts/lxgw-wenkai-mono-gb/OFL.txt',
         },
         { from: path.resolve('theme/brand'), to: 'brand' },
-        { from: path.join(generated, 'cinderfolio'), to: 'cinderfolio' },
+        // 下载产物原样分发，保留 Marp 的 @theme / @size 指令与许可注释。
+        { from: path.join(generated, 'cinderfolio'), to: 'cinderfolio', info: { minimized: true } },
         { from: path.join(generated, 'slides'), to: 'slides', noErrorOnMissing: true },
       ],
     },
