@@ -31,7 +31,7 @@ npm run build
 
 ```json
 {
-  "path": "SAT/CDCL.md",
+  "path": "SAT求解/CDCL.md",
   "slug": "sat-cdcl",
   "category": "sat",
   "slides": ["slides/sat-cdcl/index.md"]
