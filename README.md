@@ -59,11 +59,13 @@ site/ 正文 + knowledge/publish.json 中的笔记与演示
 - `/llms-full.txt`：按索引顺序合并的全文。
 - `/knowledge/<slug>/index.md`、`/knowledge/raw/<slug>.md`：单篇 Markdown 与下载副本。
 - `/knowledge/index.json`：链接、反链和旧地址等关联信息。
-- `/sitemap.xml`：官方插件生成的公开页面索引，收录正式地址。
+- `/sitemap.xml`：Rspress 内置生成的公开页面索引，构建后按公开清单过滤兼容旧地址。
+
+保留 Rspress 默认的 [WebMCP 工具](https://rspress.rs/zh/guide/basic/webmcp)，供支持该 API 的浏览器智能体检索和阅读公开内容；完整的 Markdown 读取能力在 `npm run build` 后通过 `npm run preview` 或线上站点验证。
 
 标准 `mermaid` 围栏由 Pele 在构建时生成 SVG，浏览器按需接管并随容器重排；配色跟随网站亮暗主题，源码可展开。公式和图表的语法由各自渲染器检查。Markdown 与 AI 入口保留原始公式、代码和图表源码，具体集成见 [Cinderfolio 集成](docs/cinderfolio.md)。
 
-Rspress 2.0 的 SSG-MD 会重新转义 LaTeX，`postbuild` 因此复用导出 Markdown。构建检查核验公开范围、摘要、搜索、链接、提示与 sitemap；失败时中止构建，报告写入 `.generated/build-check.json`。
+`postbuild` 复用导出 Markdown 以保留 LaTeX 原文，并过滤 sitemap 中的兼容旧地址。构建检查核验公开范围、摘要、搜索、链接、提示与 sitemap；失败时中止构建，报告写入 `.generated/build-check.json`。
 
 AFDocs 0.22.2 提供外部检测，公式与脚注的正文比较差异由人工核对：
 

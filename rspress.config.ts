@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { defineConfig } from '@rspress/core';
-import { pluginSitemap } from '@rspress/plugin-sitemap';
 import { transformerNotationHighlight } from '@shikijs/transformers';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -22,13 +21,7 @@ const knowledgeIndex = JSON.parse(
   fs.readFileSync(path.join(generated, 'docs/public/knowledge/index.json'), 'utf-8'),
 );
 
-const sitemap = pluginSitemap({ siteUrl: siteOrigin || 'http://127.0.0.1:1320' });
-const sitemapExcluded = new Set([
-  '/404.html',
-  ...knowledgeIndex.notes.flatMap((note: { aliases?: string[] }) => note.aliases || []),
-]);
-
-// Rspress 2.0 的 Shiki 先于自定义 rehype 插件运行。
+// Shiki 先于自定义 rehype 插件运行。
 // 块公式改用 div 传给 KaTeX，避免被识别为 language-math 代码块。
 function remarkMathBlocks() {
   return (tree: any) => {
@@ -61,13 +54,7 @@ export default defineConfig({
   icon: './theme/brand/sj-favicon.svg',
   base: '/',
   siteOrigin,
-  plugins: [{
-    ...sitemap,
-    // 官方插件负责生成；仅过滤已由公开清单定义的兼容跳转页。
-    extendPageData(page, isProd) {
-      if (!sitemapExcluded.has(page.routePath)) return sitemap.extendPageData?.(page, isProd);
-    },
-  }],
+  sitemap: { siteUrl: siteOrigin || 'http://127.0.0.1:1320' },
   route: { cleanUrls: true },
   llms: {
     llmsTxt: context => renderLlmsTxt(context, knowledgeIndex),
@@ -119,7 +106,7 @@ export default defineConfig({
     rehypePlugins: [[rehypeKatex, { strict: 'ignore', throwOnError: true }]],
     link: {
       checkDeadLinks: true,
-      // 2.0 的内置检查只登记标题锚点；Pandoc 书目 div 的锚点由 check_build 核验。
+      // 内置检查只登记标题锚点；Pandoc 书目 div 的锚点由 check_build 核验。
       checkAnchors: { excludes: (href: string) => href.startsWith('#ref-') },
     },
   },

@@ -31,8 +31,7 @@ def finalize(output: Path, site_origin: str = '') -> dict:
         target = output / note['url'].lstrip('/') / 'index.md'
         if not source.resolve().is_relative_to(output) or not target.resolve().is_relative_to(output):
             raise ValueError('Markdown 路径超出网站构建目录')
-        # Rspress 2.0 的 SSG-MD 不执行自定义数学插件，会转义 LaTeX。
-        # 此处只使用清单导出得到的副本，网页渲染与正式知识库均保持原状。
+        # 复用公开清单导出的 Markdown，保留 LaTeX 原文。
         shutil.copyfile(source, target)
         contexts[source] = note['url']
         contexts[target] = note['url']
@@ -44,7 +43,7 @@ def finalize(output: Path, site_origin: str = '') -> dict:
             contexts[legacy] = note['url']
             routes[alias] = note['url'] + 'index.md'
 
-    # 原生 404 页也带 Markdown alternate 链接，但 2.0 不生成对应文件。
+    # 为原生 404 页的 Markdown alternate 链接提供对应内容。
     if (output / '404.html').exists():
         (output / '404.md').write_text(
             '# 页面不存在\n\n请从[知识库目录](/knowledge/)继续查阅。\n', encoding='utf-8')
