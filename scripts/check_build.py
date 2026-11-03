@@ -25,7 +25,7 @@ def require(condition, message):
 def check_theme_downloads(output: Path, source: Path):
     """分发文件不能被网站压缩器改写，Marp 的主题指令也属于有效内容。"""
     for artifact in source.iterdir():
-        if not artifact.is_file() or (artifact.suffix not in {'.css', '.json'} and artifact.name != 'LICENSE'):
+        if not artifact.is_file() or (artifact.suffix not in {'.css', '.json', '.typ', '.txt'} and artifact.name != 'LICENSE'):
             continue
         target = output / 'cinderfolio' / artifact.name
         require(target.is_file(), f'主题下载文件缺失：{artifact.name}')

@@ -1,0 +1,42 @@
+---
+title: Cinderfolio-Typst/CeTZ
+sidebarTitle: Typst/CeTZ
+description: 下载当前配色的 Typst 模块，复制绘图 Prompt，使用 CeTZ 绘制数学与算法示意图。
+---
+
+# Cinderfolio-Typst/CeTZ
+
+[Typst](https://typst.app/) 负责排版，[CeTZ](https://typst.app/universe/package/cetz/) 负责绘图。调整三个种子后，下载包含亮暗配色的原生颜色模块，通过下方 Prompt 指导 AI 使用语义颜色。
+
+<CinderfolioPreview section="controls">
+  <CinderfolioDownload target="typst" />
+</CinderfolioPreview>
+
+## 使用
+
+将下载的 `cinderfolio.typ` 与绘图文件 `diagram.typ` 放在同一目录，在 `diagram.typ` 中导入模块和 CeTZ。示例使用 Typst 0.14.2 与 CeTZ 0.5.2：
+
+```typst
+#import "cinderfolio.typ": cf-palette
+#import "@preview/cetz:0.5.2"
+
+#let cf = cf-palette(mode: "light")
+#set page(width: auto, height: auto, margin: 6pt, fill: cf.background)
+#set text(fill: cf.foreground)
+
+#cetz.canvas({
+  import cetz.draw: *
+  circle((0, 0), radius: 0.8, fill: cf.surface, stroke: cf.diagram-stroke)
+  content((0, 0), [CeTZ])
+})
+```
+
+使用 [Typst CLI](https://github.com/typst/typst#usage) 编译为 SVG：
+
+```sh
+typst compile diagram.typ diagram.svg
+```
+
+`cf-palette(mode: "light")` 选择亮色，改为 `"dark"` 选择暗色。模块可以放在项目的其他目录，导入路径相对于当前源文件填写。
+
+<CinderfolioTypstPrompt />

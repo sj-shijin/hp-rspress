@@ -18,7 +18,7 @@ await fs.cp(new URL('./', import.meta.resolve('cinderfolio/fonts/mathjax-text/OF
 await fs.writeFile(new URL('cf-pseudocode-mathjax.css', directory), pseudocodeMathCss('mathjax', { fontURL: './mathjax-fonts' }));
 // dist/ 也可保留演示产物，只复制网站需要的主题文件。
 for (const file of await fs.readdir(themes, { withFileTypes: true })) {
-  if (file.isFile() && (file.name === 'LICENSE' || /\.(css|json)$/.test(file.name))) {
+  if (file.isFile() && (file.name === 'LICENSE' || /\.(css|json|typ|txt)$/.test(file.name))) {
     await fs.copyFile(new URL(file.name, themes), new URL(file.name, directory));
   }
 }

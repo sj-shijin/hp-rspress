@@ -96,6 +96,8 @@ class BuildArtifactTests(unittest.TestCase):
         artifacts = {
             'cf-marp.css': '/* @theme cinderfolio */\nsection { color: #121212; }\n',
             'cf-shiki-light.json': '{"name":"cinderfolio-light"}\n',
+            'cinderfolio.typ': '#let cf-palette(mode: "light") = (foreground: rgb("#121212"))\n',
+            'cinderfolio-prompt.txt': '使用配套的 cinderfolio.typ 绘制 CeTZ 图。\n',
             'LICENSE': 'MIT License\n',
         }
         destination = self.output / 'cinderfolio'
