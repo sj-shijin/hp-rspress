@@ -1093,6 +1093,43 @@ See Equation~\eqref{eq:score} for the score.
 
 </Tab>
 
+<Tab value="typst" label={languageLabel("typst")}>
+
+```typst title="vector.typ · Typst" lineNumbers
+#set page(width: auto, height: auto, margin: 16pt)
+#set text(size: 11pt)
+#set heading(numbering: "1.")
+#set math.equation(numbering: "(1)")
+
+#let score(x, y, scale: 0.5) = {
+  let total = 0
+  for (a, b) in x.zip(y) {
+    total += a * b
+  }
+  if total > 0 { scale * total } else { 0 }
+}
+
+= Vector score <sec-score>
+
+// 标记、数学和代码可以在同一份文档中组合。
+For *vectors* $x, y in RR^n$, define
+$ s = alpha sum_(i=1)^n x_i y_i $ <eq-score>
+
+#let x = (1, 2, 3)
+#let y = (4, 5, 6)
+#let result = score(x, y)
+
+#table(
+  columns: (auto, auto),
+  [Item], [Value],
+  [Weighted score], [#result],
+)
+
+See @eq-score in @sec-score.
+```
+
+</Tab>
+
 <Tab value="mmd" label={languageLabel("mmd")}>
 
 {/* mmd 仅展示 Mermaid 源码，mermaid 围栏由本站 Pele 渲染。 */}

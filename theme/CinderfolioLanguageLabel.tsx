@@ -71,6 +71,7 @@ const languages = {
   text: { label: "纯文本", name: "纯文本伪代码", icon: "text" },
   markdown: { label: "MD", name: "Markdown", icon: "markdown" },
   latex: { label: "LaTeX", name: "TeX / LaTeX", icon: "latex" },
+  typst: { label: "Typst", name: "Typst", icon: "text" },
   mmd: { label: "Mermaid", name: "Mermaid 源码", icon: "mermaid" },
   regexp: { label: "正则", name: "正则表达式", icon: "regexp" },
   diff: { label: "Diff", name: "Diff", icon: "diff" },
