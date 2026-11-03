@@ -8,6 +8,8 @@
 
 `site/knowledge/index.md` 维护知识库入口。网站项目正文在 `site/projects/<id>/` 维护，由 `site/projects.json` 登记页面顺序；各页提供 `title`、`description`，可用 `sidebarTitle` 设置侧栏标签。网站项目与知识库项目共用导航、搜索和 AI 索引，分别从各自来源导出；未登记页面与冲突网址会中止导出。
 
+知识笔记的侧栏短标题在公开清单的 `notes[].sidebarTitle` 设置，省略时使用原始标题；页面、搜索和 AI 索引使用完整标题。项目分组显示项目名，组内菜单使用不带项目前缀的短标题。
+
 ```text
 categories[].overview  → /knowledge/<category>/ 类别首页
 普通笔记的 slug         → /knowledge/<slug>/

@@ -95,6 +95,7 @@ $$
 
     def test_projects_have_independent_navigation_cards_sidebar_and_cleanup(self):
         self.add_project()
+        self.spec['notes'][-1]['sidebarTitle'] = '设计'
         self.run_export()
         config = json.loads((self.out / 'theme-config.json').read_text())
         self.assertEqual([item['text'] for item in config['nav']], ['项目', '知识库'])
@@ -104,6 +105,14 @@ $$
         self.assertNotIn('数学领域', (self.out / 'docs/projects/index.md').read_text())
         self.assertEqual(config['sidebar']['/projects/'][0]['items'][0],
                          {'text': '项目概览', 'link': '/projects/demo/'})
+        self.assertEqual(config['sidebar']['/projects/'][0]['items'][1],
+                         {'text': '设计', 'link': '/projects/demo-design/'})
+        page = (self.out / 'docs/projects/demo-design/index.md').read_text()
+        self.assertIn('title: 设计说明', page)
+        self.assertIn('sidebarTitle: 设计', page)
+        index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
+        self.assertEqual(next(n for n in index['notes'] if n['id'] == 'demo-design')['title'],
+                         '设计说明')
         self.assertNotIn('/knowledge/', json.dumps(config['sidebar']['/projects/']))
         self.assertTrue((self.out / 'docs/public/projects/raw/demo-design.md').is_file())
         self.spec['categories'] = self.spec['categories'][:1]

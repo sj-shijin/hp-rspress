@@ -298,17 +298,20 @@
     {
       "path": "项目/Mosaic Sieve/架构设计.md",
       "slug": "mosaic-sieve-architecture",
-      "category": "mosaic-sieve"
+      "category": "mosaic-sieve",
+      "sidebarTitle": "架构设计"
     },
     {
       "path": "项目/Mosaic Sieve/实践经验.md",
       "slug": "mosaic-sieve-practical-experience",
-      "category": "mosaic-sieve"
+      "category": "mosaic-sieve",
+      "sidebarTitle": "实践经验"
     },
     {
       "path": "项目/Mosaic Sieve/CUDA 与 Tensor Core 编程.md",
       "slug": "mosaic-sieve-cuda-tensor-cores",
-      "category": "mosaic-sieve"
+      "category": "mosaic-sieve",
+      "sidebarTitle": "CUDA 与 Tensor Core 编程"
     }
   ],
   "attachments": []

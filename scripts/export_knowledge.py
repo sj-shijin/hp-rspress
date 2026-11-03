@@ -33,6 +33,7 @@ class Note:
     category: str = ''
     group: str = ''
     chapter: str = ''
+    sidebar_title: str = ''
     section: str = 'knowledge'
     landing: bool = False
     slides: list[str] = field(default_factory=list)
@@ -74,7 +75,8 @@ def read_note(vault: Path, item: dict) -> Note:
     return Note(path, slug, title, text.strip() + '\n', str(metadata.get('permalink', '')),
                 description=description, category=item.get('category', ''),
                 group=item.get('group', ''),
-                chapter=item.get('chapter', ''), slides=item.get('slides', []))
+                chapter=item.get('chapter', ''), sidebar_title=item.get('sidebarTitle', ''),
+                slides=item.get('slides', []))
 
 
 def outside_code(text: str, transform) -> str:
@@ -293,7 +295,7 @@ class Exporter:
             grouped = [n for n in notes if n.group == group]
             children = []
             for chapter in dict.fromkeys(n.chapter for n in grouped):
-                items = [{'text': n.title, 'link': n.url}
+                items = [{'text': n.sidebar_title or n.title, 'link': n.url}
                          for n in grouped if n.chapter == chapter]
                 if chapter:
                     children.append({'text': chapter, 'items': items,
@@ -461,6 +463,8 @@ class Exporter:
             title = self.categories[note.category]['title'] if note.landing else note.title
             slides = note_slides[note.slug]
             metadata = {'title': title, 'description': note.description}
+            if note.sidebar_title:
+                metadata['sidebarTitle'] = note.sidebar_title
             if slides:
                 metadata['slides'] = slides
             page(docs / note.url.lstrip('/') / 'index.md', metadata, headings(body))
