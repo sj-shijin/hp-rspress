@@ -132,7 +132,7 @@ $$
 
 ## 处理一个变假的监视文字
 
-```pseudocode
+```pseudo
 \begin{algorithm}
 \caption{Process a False Watch}
 \begin{algorithmic}
@@ -417,7 +417,7 @@ $$
 
 ## 按相反顺序恢复模型
 
-```pseudocode
+```pseudo
 \begin{algorithm}
 \caption{Restore Eliminated Variables}
 \begin{algorithmic}

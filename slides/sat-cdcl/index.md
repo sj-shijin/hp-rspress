@@ -140,7 +140,7 @@ $$
 <div class="cf-cols">
 <div class="cf-col cf-w3">
 
-```pseudocode
+```pseudo
 \begin{algorithm}
 \caption{DPLL}
 \begin{algorithmic}
@@ -389,7 +389,7 @@ $$
 
 ## CDCL 的基本循环
 
-```pseudocode
+```pseudo
 \begin{algorithm}
 \caption{CDCL}
 \begin{algorithmic}

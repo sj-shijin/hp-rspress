@@ -37,6 +37,8 @@ SOFTWARE.
 
 [pseudocode.js](https://github.com/saswatpadhi/pseudocode.js) 将 `algorithmic` 语法排成论文式算法，下方使用[官方快速排序示例](https://saswat.padhi.me/pseudocode.js/)。
 
+网站与 Marp 统一使用 `pseudo` 围栏，与 [Obsidian Pseudocode 插件](https://github.com/ytliu74/obsidian-pseudocode#usage)保持一致。
+
 <CinderfolioPreview section="controls" />
 
 <small>`cf-pseudocode.css` 随仓库提供，需配合 Cinderfolio 配色变量及 KaTeX / MathJax 的样式和字体，暂不单独下载。</small>
@@ -44,7 +46,7 @@ SOFTWARE.
 <Tabs className="cf-tabs">
 <Tab label="KaTeX 0.16.47">
 
-```pseudocode math=katex noEnd=true scopeLines=true
+```pseudo math=katex noEnd=true scopeLines=true
 % This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
 \begin{algorithm}
 \caption{Quicksort}
@@ -75,7 +77,7 @@ SOFTWARE.
 </Tab>
 <Tab label="MathJax 3.2.2">
 
-```pseudocode math=mathjax noEnd=true scopeLines=true
+```pseudo math=mathjax noEnd=true scopeLines=true
 % This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
 \begin{algorithm}
 \caption{Quicksort}
@@ -108,10 +110,10 @@ SOFTWARE.
 
 ## 代码块选项
 
-在 `pseudocode` 后用空格分隔选项，每个代码块放一个算法：
+在 `pseudo` 后用空格分隔选项，每个代码块放一个算法：
 
 ````markdown
-```pseudocode math=mathjax noEnd=true scopeLines=true
+```pseudo math=mathjax noEnd=true scopeLines=true
 \begin{algorithm}
 \caption{Quicksort}
 \begin{algorithmic}
@@ -121,7 +123,7 @@ SOFTWARE.
 ```
 ````
 
-```pseudocode math=mathjax noEnd=true scopeLines=true
+```pseudo math=mathjax noEnd=true scopeLines=true
 \begin{algorithm}
 \caption{Quicksort}
 \begin{algorithmic}
@@ -140,7 +142,7 @@ SOFTWARE.
 
 ## 常用伪代码语法
 
-算法正文放在 `algorithmic` 环境中；外层 `algorithm` 和 `\caption{标题}` 添加带编号的标题。以下示例均可放入 `pseudocode` 代码块，上方为源码，下方为渲染结果。完整说明见 [pseudocode.js 官方语法文档](https://github.com/saswatpadhi/pseudocode.js#grammar)。
+算法正文放在 `algorithmic` 环境中；外层 `algorithm` 和 `\caption{标题}` 添加带编号的标题。以下示例均可放入 `pseudo` 代码块，上方为源码，下方为渲染结果。完整说明见 [pseudocode.js 官方语法文档](https://github.com/saswatpadhi/pseudocode.js#grammar)。
 
 <Tabs className="cf-tabs">
 <Tab label="基本语句">
@@ -157,7 +159,7 @@ SOFTWARE.
 \end{algorithmic}
 ```
 
-```pseudocode
+```pseudo
 \begin{algorithmic}
 \INPUT Values $a, b$                % 输入
 \OUTPUT Maximum $m$                % 输出
@@ -184,7 +186,7 @@ SOFTWARE.
 \end{algorithmic}
 ```
 
-```pseudocode
+```pseudo
 \begin{algorithmic}
 \IF{$x > 0$}
     \RETURN $1$
@@ -225,7 +227,7 @@ SOFTWARE.
 \end{algorithmic}
 ```
 
-```pseudocode
+```pseudo
 \begin{algorithmic}
 % 范围循环；倒序可将 \TO 换成 \DOWNTO
 \FOR{$i \gets 1$ \TO $n$}
@@ -267,7 +269,7 @@ SOFTWARE.
 \end{algorithmic}
 ```
 
-```pseudocode
+```pseudo
 \begin{algorithmic}
 \FUNCTION{Max}{$a, b$}
     \RETURN $\max(a, b)$
@@ -297,7 +299,7 @@ SOFTWARE.
 \end{algorithmic}
 ```
 
-```pseudocode
+```pseudo
 \begin{algorithmic}
 \STATE $x_i \gets \frac{a + b}{2}$   % $...$ 包裹公式
 \STATE \(y \gets x_i^2\)            % 也支持 \(...\)

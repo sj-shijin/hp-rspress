@@ -244,7 +244,7 @@ $$
 
 ## 用额外查询缩减核心
 
-```pseudocode
+```pseudo
 \begin{algorithm}
 \caption{Deletion-Based Core Reduction}
 \begin{algorithmic}
@@ -360,7 +360,7 @@ $$
 
 ## 只检查 RUP 添加步骤的教学检查器
 
-```pseudocode
+```pseudo
 \begin{algorithm}
 \caption{Checking a RUP Refutation}
 \begin{algorithmic}

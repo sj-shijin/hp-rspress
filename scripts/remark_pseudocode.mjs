@@ -1,4 +1,4 @@
-/** 在 Shiki 前将 pseudocode 围栏转换为算法 HTML；导出的 Markdown 保留原文。 */
+/** 在 Shiki 前将伪代码围栏转换为算法 HTML；导出的 Markdown 保留原文。 */
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import { renderPseudocode, pseudocodeOptions } from 'cinderfolio/pseudocode-render';
@@ -10,7 +10,7 @@ export default function remarkPseudocode({ math = 'katex' } = {}) {
     let number = 0;
     function visit(parent) {
       parent.children?.forEach((node, position) => {
-        if (node.type !== 'code' || node.lang !== 'pseudocode') {
+        if (node.type !== 'code' || node.lang !== 'pseudo') {
           visit(node);
           return;
         }
