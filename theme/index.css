@@ -202,10 +202,6 @@ html.rp-dark .rp-codeblock .shiki span {
   }
 }
 
-.sj-typst {
-  margin: 1.5rem 0;
-}
-
 html:not(.rp-dark) .sj-typst [data-typst-mode="dark"],
 html.rp-dark .sj-typst [data-typst-mode="light"] {
   display: none;
@@ -215,16 +211,15 @@ html.rp-dark .sj-typst [data-typst-mode="light"] {
   display: block;
   width: fit-content;
   max-width: 100%;
-  margin: 0.75rem auto;
+  margin: 0 auto;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: zoom-in;
 }
 
-.sj-typst__open:focus-visible {
-  outline: 2px solid var(--rp-c-brand);
-  outline-offset: 3px;
+.sj-typst__open + .sj-typst__open {
+  margin-top: 0.75rem;
 }
 
 .sj-typst__thumbnail {
@@ -240,17 +235,16 @@ html:not(.rp-dark) .sj-typst__thumbnail.medium-zoom-image--opened[data-typst-mod
   object-fit: contain;
 }
 
-.sj-typst summary {
-  color: var(--rp-c-text-2);
-  cursor: pointer;
-}
-
 /* Pele 在构建时生成 SVG，颜色继承网站主题，切换亮暗无需重新渲染。 */
 .sj-mermaid {
   /* 配色和描边由 Cinderfolio 的 Pele 适配负责；这里只保留站内字体与布局。 */
   --pele-font: var(--rp-font-family-base);
   --pele-font-mono: var(--rp-font-family-mono);
+}
 
+/* Typst 与 Pele 共用图表外框及底部源码栏。 */
+.sj-typst,
+.sj-mermaid {
   margin: 1.5rem 0;
   padding: 1rem;
   border: 1px solid var(--rp-c-divider-light);
@@ -259,6 +253,7 @@ html:not(.rp-dark) .sj-typst__thumbnail.medium-zoom-image--opened[data-typst-mod
 }
 
 /* 与官方代码块一致：单图面板共用 Tab 外框，正文中的图表保留独立边框。 */
+.rp-tabs__content__item > .sj-typst:only-child,
 .rp-tabs__content__item > .sj-mermaid:only-child {
   margin: 0 -1rem;
   border: 0;
@@ -274,11 +269,13 @@ html:not(.rp-dark) .sj-typst__thumbnail.medium-zoom-image--opened[data-typst-mod
   margin-inline: auto;
 }
 
+.sj-typst__source,
 .sj-mermaid__source {
   margin: 0.75rem -1rem -1rem;
   border-top: 1px solid var(--rp-c-divider-light);
 }
 
+.sj-typst__source > summary,
 .sj-mermaid__source > summary {
   padding: 0.625rem 1rem;
   color: var(--rp-c-text-2);
@@ -286,11 +283,13 @@ html:not(.rp-dark) .sj-typst__thumbnail.medium-zoom-image--opened[data-typst-mod
   cursor: pointer;
 }
 
+.sj-typst__source > summary:hover,
 .sj-mermaid__source > summary:hover {
   color: var(--rp-c-text-1);
 }
 
 /* 源码与图表共用画布和外框，代码功能仍由官方 CodeBlock 提供。 */
+.sj-typst__source .rp-codeblock,
 .sj-mermaid__source .rp-codeblock {
   margin: 0;
   border: 0;
@@ -310,7 +309,9 @@ html:not(.rp-dark) .sj-typst__thumbnail.medium-zoom-image--opened[data-typst-mod
 .sj-mermaid.cinderfolio-pele .sj-mermaid__diagram > svg { cursor: zoom-in; }
 .sj-mermaid__diagram a { cursor: pointer; }
 
+.sj-typst__open:focus-visible,
 .sj-mermaid__preview:focus-visible,
+.sj-typst__source > summary:focus-visible,
 .sj-mermaid__source > summary:focus-visible {
   outline: 2px solid var(--rp-c-brand);
   outline-offset: 3px;

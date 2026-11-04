@@ -39,7 +39,10 @@ export default function TypstFigure({ pages, heading, children }: { pages: strin
           </button>
         );
       })}
-      <details><summary>查看 Typst 源码</summary>{children}</details>
+      <details className="sj-typst__source rp-not-doc">
+        <summary>查看 Typst 源码</summary>
+        {children}
+      </details>
     </figure>
   );
 }
