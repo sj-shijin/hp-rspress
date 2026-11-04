@@ -6,14 +6,17 @@ import 'cinderfolio/themes/cf-pseudocode.css';
 import '../.generated/cinderfolio/cf-pseudocode-mathjax.css';
 import { Layout as OriginalLayout } from '@rspress/core/theme-original';
 import { CinderfolioProvider } from './CinderfolioTheme';
+import { emptySvg, peleZoomId } from './pele_zoom';
 import DocSlides from './DocSlides';
 import type { ComponentProps } from 'react';
 
 export * from '@rspress/core/theme-original';
 
 export function Layout(props: ComponentProps<typeof OriginalLayout>) {
-  return <CinderfolioProvider><OriginalLayout {...props}
-    afterDocContent={<>{props.afterDocContent}<DocSlides /></>} /></CinderfolioProvider>;
+  return <CinderfolioProvider>
+    <OriginalLayout {...props} afterDocContent={<>{props.afterDocContent}<DocSlides /></>} />
+    <span aria-hidden="true"><img id={peleZoomId} src={emptySvg} alt="" /></span>
+  </CinderfolioProvider>;
 }
 
 // 首页与知识库使用正文页相同的纯色背景，保留原生导航和领域卡片。

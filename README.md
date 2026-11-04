@@ -63,9 +63,9 @@ site/ 正文 + knowledge/publish.json 中的笔记与演示
 
 保留 Rspress 默认的 [WebMCP 工具](https://rspress.rs/zh/guide/basic/webmcp)，供支持该 API 的浏览器智能体检索和阅读公开内容；完整的 Markdown 读取能力在 `npm run build` 后通过 `npm run preview` 或线上站点验证。
 
-标准 `mermaid` 围栏由 Pele 在构建时生成 SVG，浏览器按需接管并随容器重排；配色跟随网站亮暗主题，源码可展开。公式和图表的语法由各自渲染器检查。Markdown 与 AI 入口保留原始公式、代码和图表源码，具体集成见 [Cinderfolio 集成](docs/cinderfolio.md)。
+标准 `mermaid` 围栏由 Pele 在构建时生成 SVG，浏览器按需接管并随容器重排。点击图表可在本页放大，再点一次或按 Esc 收起。配色跟随网站亮暗主题，源码可展开。公式和图表的语法由各自渲染器检查。Markdown 与 AI 入口保留原始公式、代码和图表源码，具体集成见 [Cinderfolio 集成](docs/cinderfolio.md)。
 
-`typst` 围栏在构建时编译为 SVG，网页显示图并可展开源码；`typ` 围栏仅展示代码高亮。编译器随 Python 依赖安装，首次构建会获取源码指定版本的 CeTZ 包。
+`typst` 围栏在构建时生成亮色和暗色 SVG，网页随主题显示对应的图。点击图片可在本页放大，再点一下或按 Esc 收起。展开可查看源码，`typ` 围栏仅展示代码高亮。编译器随 Python 依赖安装，首次构建会获取源码指定版本的 CeTZ 包。
 
 `postbuild` 复用导出 Markdown 以保留 LaTeX 原文，并过滤 sitemap 中的兼容旧地址。构建检查核验公开范围、摘要、搜索、链接、提示与 sitemap；失败时中止构建，报告写入 `.generated/build-check.json`。
 

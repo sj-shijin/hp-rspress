@@ -46,11 +46,11 @@ cinderfolio/dist/ → scripts/build_marp.mjs → .generated/cinderfolio/
 
 Typst/CeTZ 页面复用调色器，通过 `cinderfolio/typst` 生成当前配色的 `.typ` 模块。`CinderfolioTypstPrompt` 将当前种子传给同一入口，复用 Marp 页面的原生 `Prompt` 组件展示和复制。默认下载产物随主题复制，构建检查核对文件内容；[使用入口](../cinderfolio/README.md#typst-与-cetz)由主题包维护。
 
-导出时从公开页面提取 `typst` 围栏，使用[锁定的 Typst 编译器](https://pypi.org/project/typst/0.14.2/)逐页生成 SVG。每篇笔记在独立临时目录编译，仅提供原笔记的相对目录和 Obsidian 根目录下的 `.typst/cinderfolio.typ`；网站示例在源文件旁获得 Cinderfolio 的默认模块。图的颜色由源码选择，编译错误会指出文件和围栏行号。
+导出时从公开页面提取 `typst` 围栏，在独立临时目录保留源文件的相对位置以及允许的配色模块。每个围栏分别以 `sys.inputs.at("site-theme")` 为 `light` 和 `dark` 编译，默认纸色和字色来自 Cinderfolio。临时项目中的 `cf-palette` 用网站模式调用原配色模块，因此笔记里原先写定模式的图也能切换。图中直接指定的颜色仍按源码绘制。编译失败时报告来源、导出页行号和模式。[Typst 编译接口](https://pypi.org/project/typst/0.14.2/)
 
-网页以图片显示各页 SVG，点击可查看原图，展开可复制源码。Markdown 下载和全文索引保留原围栏；语法高亮演示使用 Shiki 的 `typ` 别名。
+网页按 Rspress 根元素上的 `rp-dark` 切换整组 SVG。点击 Typst 图由 Rspress 内置的 `mediumZoom` 在本页放大，再点图片、背景或按 Esc 收起。放大的图片也随站点主题切换。展开可复制源码，Markdown 下载和全文索引保留原围栏。语法高亮演示使用 Shiki 的 `typ` 别名。[Rspress 图片放大配置](https://rspress.rs/zh/api/config/config-basic#mediumzoom)
 
-标准 `mermaid` 围栏由 Pele 构建首屏 SVG，浏览器使用 `mountAsync()` 自适应接管，页面卸载时清理监听，加载失败时保留静态 SVG。标注 `renderer=mermaid` 的围栏交给 `CinderfolioMermaid`，在挂载后加载官方渲染器。网站与主题包的运行环境均为 Node.js 22.12+。
+标准 `mermaid` 围栏由 Pele 构建首屏 SVG，浏览器使用 `mountAsync()` 自适应接管。点击图表，或用 Tab 聚焦图表后按 Enter 或空格，Rspress 的 `mediumZoom` 会按当前布局和 Cinderfolio 配色放大 SVG。正文中的链接和连线悬停仍由内联 SVG 处理。标注 `renderer=mermaid` 的围栏交给 `CinderfolioMermaid`，在挂载后加载官方渲染器。
 
 Mermaid 使用 `createMermaidTheme()` 响应调色与亮暗变化，初始化和绘制串行执行，过期结果丢弃。实际容器传入渲染器供甘特图等布局；Tabs 使用 `keepDOM={false}` 挂载当前图表。源码使用原生 `details / summary`，静态下载入口与源码可独立读取。
 

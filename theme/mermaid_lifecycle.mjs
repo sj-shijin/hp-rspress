@@ -1,13 +1,12 @@
 import { withPeleHitAreas } from 'cinderfolio/pele';
 
 /** 返回同步清理函数，覆盖加载前离开、挂载中离开和正常卸载。 */
-export function enhanceMermaid(container, source, load = () => import('pele/lazy'), options = {}) {
+export function enhanceMermaid(container, source, load = () => import('pele/lazy')) {
   let disposed = false;
   let diagram;
   const reportError = error => {
     if (disposed) return;
-    if (options.onError) options.onError(error);
-    else console.warn('[Mermaid] 自适应布局加载失败，预生成图表仍可使用。', error);
+    console.warn('[Mermaid] 自适应布局加载失败，预生成图表仍可使用。', error);
   };
 
   void load().then(async ({ mountAsync }) => {
@@ -17,15 +16,13 @@ export function enhanceMermaid(container, source, load = () => import('pele/lazy
       directionBreakpoint: 640,
       // 不固定 maxWidth，让 Pele 自己监听容器的可用宽度。
       zoom: false,
-      // 在 Pele 插入 SVG 前补齐命中层，缩放与自适应重绘都保留同一规则。
+      // 在 Pele 插入 SVG 前补齐命中层，自适应重绘也保留连线交互。
       sanitize(svg) {
         const template = document.createElement('template');
         template.innerHTML = withPeleHitAreas(svg);
         return template.content;
       },
-      ...options,
       onError: reportError,
-      onRender: result => { if (!disposed) options.onRender?.(result); },
     });
     if (disposed) mounted.destroy();
     else diagram = mounted;

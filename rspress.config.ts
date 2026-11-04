@@ -58,6 +58,8 @@ export default defineConfig({
   siteOrigin,
   sitemap: { siteUrl: siteOrigin || 'http://127.0.0.1:1320' },
   route: { cleanUrls: true },
+  // Pele 的内联 SVG 通过一个固定图片入口放大，切换标签后也由 Rspress 接管。
+  mediumZoom: { selector: '.rspress-doc img, #sj-pele-zoom-target' },
   llms: {
     llmsTxt: context => renderLlmsTxt(context, knowledgeIndex),
   },
@@ -92,6 +94,7 @@ export default defineConfig({
   markdown: {
     globalComponents: [
       path.resolve('theme/Mermaid.tsx'),
+      path.resolve('theme/TypstFigure.tsx'),
       path.resolve('theme/CinderfolioPreview.tsx'),
       path.resolve('theme/CinderfolioDownload.tsx'),
       path.resolve('theme/CinderfolioTypstPrompt.tsx'),

@@ -56,10 +56,21 @@ def check_typst(output, routes):
     blocks = markdown_tools('typst', list(pages.values()))['blocks'] if pages else []
     for route, fences in zip(pages, blocks):
         html = Page(output / route.lstrip('/') / 'index.html')
-        figures = [attrs for tag, attrs in html.tags if tag == 'figure' and 'sj-typst' in attrs.get('class', '').split()]
-        images = [attrs['src'] for tag, attrs in html.tags if tag == 'img' and attrs.get('src', '').startswith('/typst/')]
-        require(len(figures) == len(fences) and len(images) >= len(fences), f'Typst 围栏与网页图不一致：{route}')
-        used.update(images)
+        figures = []
+        for tag, attrs in html.tags:
+            if tag == 'figure' and 'sj-typst' in attrs.get('class', '').split():
+                figures.append({'buttons': 0, 'modes': set()})
+            if tag == 'button' and 'sj-typst__open' in attrs.get('class', '').split():
+                require(figures and attrs.get('type') == 'button' and attrs.get('aria-label'),
+                        f'Typst 图片缺少键盘放大入口：{route}')
+                figures[-1]['buttons'] += 1
+            if tag == 'img' and 'data-typst-mode' in attrs:
+                url = attrs.get('src', '')
+                require(figures and url.startswith('/typst/') and attrs.get('alt'), f'Typst 预览图片缺失：{route}')
+                figures[-1]['modes'].add(attrs['data-typst-mode'])
+                used.add(url)
+        require(len(figures) == len(fences) and all(f['buttons'] and f['modes'] == {'light', 'dark'} for f in figures),
+                f'Typst 围栏与网页亮暗图不一致：{route}')
         count += len(figures)
     assets = {'/' + p.relative_to(output).as_posix() for p in (output / 'typst').rglob('*') if p.is_file()}
     require(assets == used, 'Typst 图片缺失或存在未引用的产物')

@@ -23,17 +23,9 @@ export default function remarkTypst({ docs, figures }) {
           visit(node);
           return;
         }
-        const urls = page?.[node.value];
-        if (!urls) file.fail('缺少 Typst 编译结果，请重新导出正文', node);
-        const images = urls.map((url, index) => element('a', { href: url }, [
-          element('img', { src: url, alt: [heading, 'Typst 图', urls.length > 1 && `第 ${index + 1} 页`]
-            .filter(Boolean).join(' · ') }),
-        ]));
-        parent.children[i] = element('figure', { className: 'sj-typst' }, [
-          ...images, element('details', {}, [
-            element('summary', {}, [{ type: 'text', value: '查看 Typst 源码' }]), node,
-          ]),
-        ]);
+        const variants = page?.[node.value];
+        if (!variants?.light || !variants.dark) file.fail('缺少 Typst 亮暗编译结果，请重新导出正文', node);
+        parent.children[i] = element('TypstFigure', { heading, pages: JSON.stringify(variants) }, [node]);
       });
     }
     visit(tree);

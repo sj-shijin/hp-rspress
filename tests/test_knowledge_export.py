@@ -7,6 +7,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -476,25 +477,48 @@ $$
         note = '格/约化/图.md'
         (self.vault / '格/约化').mkdir(parents=True)
         (self.vault / '.typst').mkdir()
-        (self.vault / '.typst/cinderfolio.typ').write_text('#let ink = rgb("#345678")')
-        code = ('#import "../../.typst/cinderfolio.typ": ink\n'
-                '#set page(width: auto, height: auto)\n#rect(fill: ink)\n#pagebreak()\nSecond page')
+        (self.vault / '.typst/cinderfolio.typ').write_text(
+            '#let ink = rgb("#345678")\n'
+            '#let cf-palette(mode: "light") = if mode == "dark" { rgb("#234567") } else { rgb("#fedcba") }')
+        code = ('#import "../../.typst/cinderfolio.typ": cf-palette as paper, ink\n'
+                '#set page(width: auto, height: auto, fill: paper(mode: "dark"))\n'
+                '#rect(fill: ink)\n#pagebreak()\nSecond page')
         self.write_note(note, '# 图\n\n```typst\n' + code + '\n```\n', '两页图示。')
         self.spec['notes'].append({'path': note, 'slug': 'diagram'})
         self.run_export()
 
         records = json.loads((self.out / 'typst.json').read_text())
-        urls = records['knowledge/diagram/index.md'][code]
-        self.assertEqual(len(set(urls)), 2)
-        svgs = [(self.out / 'docs/public' / url.lstrip('/')).read_text() for url in urls]
-        self.assertIn('#345678', svgs[0].lower())
-        self.assertTrue(all('class="typst-doc"' in svg for svg in svgs))
+        variants = records['knowledge/diagram/index.md'][code]
+        self.assertTrue({p['src'] for p in variants['light']}.isdisjoint(p['src'] for p in variants['dark']))
+        for mode, color in [('light', '#fedcba'), ('dark', '#234567')]:
+            urls = [p['src'] for p in variants[mode]]
+            self.assertEqual(len(set(urls)), 2)
+            svgs = [(self.out / 'docs/public' / url.lstrip('/')).read_text() for url in urls]
+            for page, svg in zip(variants[mode], svgs):
+                size = ET.fromstring(svg).attrib['viewBox'].split()[2:]
+                self.assertEqual([page['width'], page['height']], [round(float(pt) * 96 / 72) for pt in size])
+            self.assertIn('#345678', svgs[0])
+            self.assertTrue(all('class="typst-doc"' in svg and f'fill="{color}"' in svg for svg in svgs))
         self.assertIn('```typst\n' + code + '\n```',
                       (self.out / 'docs/public/knowledge/raw/diagram.md').read_text())
 
         self.spec['notes'].pop()
         self.run_export()
         self.assertFalse((self.out / 'docs/public/typst').exists())
+
+    def test_plain_typst_inherits_contrasting_page_and_text_colors(self):
+        code = '#set page(width: auto, height: auto)\nPlain text'
+        self.write_note('乙.md', f'# 乙\n\n```typst\n{code}\n```\n', '默认配色。')
+        self.run_export()
+        variants = json.loads((self.out / 'typst.json').read_text())['knowledge/beta/index.md'][code]
+        colors = []
+        for mode in ('light', 'dark'):
+            svg = (self.out / 'docs/public' / variants[mode][0]['src'].lstrip('/')).read_text()
+            paper = re.search(r'<path\b[^>]+fill="(#[\da-f]+)"', svg)[1]
+            ink = re.search(r'<use\b[^>]+fill="(#[\da-f]+)"', svg)[1]
+            self.assertNotEqual(paper, ink)
+            colors.append((paper, ink))
+        self.assertEqual(colors[0], colors[1][::-1])
 
     def test_typst_cannot_read_unpublished_vault_files(self):
         self.write_note('乙.md', '# 乙\n\n```typst\n#read("未公开.md")\n```\n', '私有文件隔离。')
