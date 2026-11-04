@@ -96,12 +96,32 @@ function citationSource(markdown, slug) {
   return { markdown: text, citations: matches.map(match => match.citation) };
 }
 
+function typstBlocks(markdown) {
+  const blocks = [];
+  visit(markdownParser.parse(markdown), node => {
+    if (node.type === 'code' && node.lang === 'typst') {
+      blocks.push({ code: node.value, line: node.position.start.line });
+    }
+  });
+  return blocks;
+}
+
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
 const request = JSON.parse(input);
-const result = request.action === 'prepare'
-  ? request.pages.map(page => prepareMarkdown(page.markdown, page.route, request.origin, request.routes))
-  : request.action === 'citations'
-    ? request.pages.map(page => citationSource(page.markdown, page.slug))
-    : request.pages.map(page => destinations(page.markdown).map(link => link.url));
+let result;
+switch (request.action) {
+  case 'typst':
+    result = { blocks: request.pages.map(page => typstBlocks(page.markdown)),
+      theme: (await import('cinderfolio/typst')).createTypstTheme() };
+    break;
+  case 'prepare':
+    result = request.pages.map(page => prepareMarkdown(page.markdown, page.route, request.origin, request.routes));
+    break;
+  case 'citations':
+    result = request.pages.map(page => citationSource(page.markdown, page.slug));
+    break;
+  default:
+    result = request.pages.map(page => destinations(page.markdown).map(link => link.url));
+}
 process.stdout.write(JSON.stringify(result));

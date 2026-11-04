@@ -202,6 +202,22 @@ html.rp-dark .rp-codeblock .shiki span {
   }
 }
 
+.sj-typst {
+  margin: 1.5rem 0;
+}
+
+.sj-typst img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.75rem auto;
+}
+
+.sj-typst summary {
+  color: var(--rp-c-text-2);
+  cursor: pointer;
+}
+
 /* Pele 在构建时生成 SVG，颜色继承网站主题，切换亮暗无需重新渲染。 */
 .sj-mermaid {
   /* 配色和描边由 Cinderfolio 的 Pele 适配负责；这里只保留站内字体与布局。 */

@@ -17,9 +17,11 @@ import yaml
 from markdown_tools import markdown_tools
 from site_projects import read_site_projects
 from site_slides import SlideRegistry, slides_markdown
+from site_typst import render_typst
 
 
 SECTIONS = {'projects': '项目', 'knowledge': '知识库'}
+DEFAULT_VAULT = Path(__file__).resolve().parents[1] / 'knowledge-vault' / '笔记'
 
 
 @dataclass
@@ -118,7 +120,7 @@ def render_citations(text: str, bibliography: Path, slug: str) -> str:
     if not citations:
         return text
     if not bibliography.is_file():
-        raise ValueError(f'引用文献需要知识库根目录的 references.bib：{slug}')
+        raise ValueError(f'引用文献需要 Obsidian 根目录的 references.bib：{slug}')
     if not shutil.which('pandoc'):
         raise ValueError('文献引用转换需要 Pandoc，请先安装 Pandoc（CI 使用 3.12.1）')
     project = Path(__file__).resolve().parents[1]
@@ -487,6 +489,8 @@ class Exporter:
         for source, name in self.used_assets.items():
             (public / 'attachments').mkdir(exist_ok=True)
             shutil.copyfile(source, public / 'attachments' / name)
+        render_typst(docs, self.vault, {
+            n.url.lstrip('/') + 'index.md': n.path.relative_to(self.vault) for n in self.notes})
         (public / 'index.json').write_text(
             json.dumps({'categories': categories, 'notes': records, 'siteProjects': site_projects},
                        ensure_ascii=False, indent=2)
@@ -514,7 +518,7 @@ def export(vault: Path, manifest: Path, output: Path, *, preview: bool = True,
 def main():
     site = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--vault', type=Path, default=site / 'knowledge-vault')
+    parser.add_argument('--vault', type=Path, default=DEFAULT_VAULT, help='Obsidian 仓库根目录')
     parser.add_argument('--manifest', type=Path, default=site / 'knowledge/publish.json')
     parser.add_argument('--output', type=Path, default=site / '.generated')
     args = parser.parse_args()

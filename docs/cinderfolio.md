@@ -46,6 +46,10 @@ cinderfolio/dist/ → scripts/build_marp.mjs → .generated/cinderfolio/
 
 Typst/CeTZ 页面复用调色器，通过 `cinderfolio/typst` 生成当前配色的 `.typ` 模块。`CinderfolioTypstPrompt` 将当前种子传给同一入口，复用 Marp 页面的原生 `Prompt` 组件展示和复制。默认下载产物随主题复制，构建检查核对文件内容；[使用入口](../cinderfolio/README.md#typst-与-cetz)由主题包维护。
 
+导出时从公开页面提取 `typst` 围栏，使用[锁定的 Typst 编译器](https://pypi.org/project/typst/0.14.2/)逐页生成 SVG。每篇笔记在独立临时目录编译，仅提供原笔记的相对目录和 Obsidian 根目录下的 `.typst/cinderfolio.typ`；网站示例在源文件旁获得 Cinderfolio 的默认模块。图的颜色由源码选择，编译错误会指出文件和围栏行号。
+
+网页以图片显示各页 SVG，点击可查看原图，展开可复制源码。Markdown 下载和全文索引保留原围栏；语法高亮演示使用 Shiki 的 `typ` 别名。
+
 标准 `mermaid` 围栏由 Pele 构建首屏 SVG，浏览器使用 `mountAsync()` 自适应接管，页面卸载时清理监听，加载失败时保留静态 SVG。标注 `renderer=mermaid` 的围栏交给 `CinderfolioMermaid`，在挂载后加载官方渲染器。网站与主题包的运行环境均为 Node.js 22.12+。
 
 Mermaid 使用 `createMermaidTheme()` 响应调色与亮暗变化，初始化和绘制串行执行，过期结果丢弃。实际容器传入渲染器供甘特图等布局；Tabs 使用 `keepDOM={false}` 挂载当前图表。源码使用原生 `details / summary`，静态下载入口与源码可独立读取。

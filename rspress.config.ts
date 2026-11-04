@@ -7,6 +7,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkMermaid from './scripts/remark_mermaid.mjs';
 import remarkPseudocode from './scripts/remark_pseudocode.mjs';
+import remarkTypst from './scripts/remark_typst.mjs';
 import { renderLlmsTxt } from './scripts/render_llms.mjs';
 import { createShikiTheme } from 'cinderfolio/shiki';
 
@@ -20,6 +21,7 @@ const navigation = JSON.parse(
 const knowledgeIndex = JSON.parse(
   fs.readFileSync(path.join(generated, 'docs/public/knowledge/index.json'), 'utf-8'),
 );
+const typstIndex = path.join(generated, 'typst.json');
 
 // Shiki 先于自定义 rehype 插件运行。
 // 块公式改用 div 传给 KaTeX，避免被识别为 language-math 代码块。
@@ -69,8 +71,9 @@ export default defineConfig({
       // 正式域名与本地预览的虚拟页面数据不能复用同一份缓存。
       buildCache: {
         cacheDigest: [siteOrigin],
-        // MDX 高亮结果依赖主题，变更后不能复用旧代码块。
-        buildDependencies: [require.resolve('cinderfolio/shiki'), require.resolve('cinderfolio/pseudocode-render')],
+        // 配色或 Typst 图变化后，正文需要重新编译。
+        buildDependencies: [require.resolve('cinderfolio/shiki'), require.resolve('cinderfolio/pseudocode-render'),
+          path.resolve('scripts/remark_typst.mjs'), typstIndex],
       },
     },
     output: {
@@ -103,7 +106,8 @@ export default defineConfig({
       defaultColor: false,
       transformers: [transformerNotationHighlight()],
     },
-    remarkPlugins: [remarkMath, remarkMathBlocks, remarkMermaid, remarkPseudocode],
+    remarkPlugins: [remarkMath, remarkMathBlocks, remarkMermaid, remarkPseudocode,
+      [remarkTypst, { docs: path.join(generated, 'docs'), figures: JSON.parse(fs.readFileSync(typstIndex, 'utf-8')) }]],
     rehypePlugins: [[rehypeKatex, { strict: 'ignore', throwOnError: true }]],
     link: {
       checkDeadLinks: true,

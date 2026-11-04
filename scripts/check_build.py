@@ -11,7 +11,7 @@ import re
 from urllib.parse import unquote, urljoin, urlsplit
 import xml.etree.ElementTree as ET
 
-from export_knowledge import SECTIONS, inside, outside_code, read_note
+from export_knowledge import DEFAULT_VAULT, SECTIONS, inside, outside_code, read_note
 from markdown_tools import markdown_tools
 from site_projects import read_site_projects
 from site_slides import SlideRegistry
@@ -44,6 +44,29 @@ class Page(HTMLParser):
     def has(self, tag, **attrs):
         return any(name == tag and all(actual.get(k) == v for k, v in attrs.items())
                    for name, actual in self.tags)
+
+
+def check_typst(output, routes):
+    pages = {}
+    for route in sorted(routes):
+        markdown = (output / route.lstrip('/') / 'index.md').read_text(encoding='utf-8')
+        if 'typst' in markdown:
+            pages[route] = {'markdown': markdown}
+    used, count = set(), 0
+    blocks = markdown_tools('typst', list(pages.values()))['blocks'] if pages else []
+    for route, fences in zip(pages, blocks):
+        html = Page(output / route.lstrip('/') / 'index.html')
+        figures = [attrs for tag, attrs in html.tags if tag == 'figure' and 'sj-typst' in attrs.get('class', '').split()]
+        images = [attrs['src'] for tag, attrs in html.tags if tag == 'img' and attrs.get('src', '').startswith('/typst/')]
+        require(len(figures) == len(fences) and len(images) >= len(fences), f'Typst 围栏与网页图不一致：{route}')
+        used.update(images)
+        count += len(figures)
+    assets = {'/' + p.relative_to(output).as_posix() for p in (output / 'typst').rglob('*') if p.is_file()}
+    require(assets == used, 'Typst 图片缺失或存在未引用的产物')
+    for url in used:
+        svg = ET.parse(output / url.lstrip('/')).getroot()
+        require(svg.tag == '{http://www.w3.org/2000/svg}svg' and svg.get('viewBox'), f'Typst SVG 无效：{url}')
+    return count
 
 
 def has_math(markdown):
@@ -292,6 +315,7 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
     require((output / 'llms-full.txt').read_text(encoding='utf-8') == bundle,
             'llms-full.txt 与单篇 Markdown 不一致')
     return {'notes': len(notes),
+            'typst_figures': check_typst(output, public_routes),
             'slides': len(slide_html),
             'site_project_pages': len(site_pages),
             'knowledge_html_pages': sum(p.startswith('knowledge/') for p in actual_html),
@@ -307,7 +331,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=site / '.generated/site')
     parser.add_argument('--manifest', type=Path, default=site / 'knowledge/publish.json')
-    parser.add_argument('--vault', type=Path, default=site / 'knowledge-vault')
+    parser.add_argument('--vault', type=Path, default=DEFAULT_VAULT, help='Obsidian 仓库根目录')
     args = parser.parse_args()
     report = check_build(args.output, args.manifest, args.vault, os.environ.get('SITE_ORIGIN', ''))
     (args.output.parent / 'build-check.json').write_text(

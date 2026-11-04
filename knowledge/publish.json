@@ -131,6 +131,27 @@
       "chapter": "格的几何与计算问题"
     },
     {
+      "path": "格问题与格密码/格约化/浮点 LLL 的精度与正确性.md",
+      "slug": "floating-point-lll",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格的几何与计算问题"
+    },
+    {
+      "path": "格问题与格密码/格约化/从高位近似基向原基传递换基矩阵.md",
+      "slug": "high-bit-basis-reduction",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格的几何与计算问题"
+    },
+    {
+      "path": "格问题与格密码/格约化/投影分块与局部换基.md",
+      "slug": "projected-block-basis-reduction",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格的几何与计算问题"
+    },
+    {
       "path": "格问题与格密码/格约化/Babai 最近平面算法与近似 CVP.md",
       "slug": "babai-nearest-plane",
       "category": "lattices",

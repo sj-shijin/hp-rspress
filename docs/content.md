@@ -2,7 +2,7 @@
 
 ## 来源与公开清单
 
-正式笔记在原 Obsidian 知识库维护，网站从 `knowledge-vault/` 固定提交读取。`knowledge/publish.json` 维护笔记路径、网址、类别、分组、章节和顺序；标题、摘要分别读取笔记的 `title`、`description`，供页面、关联索引与 llms.txt 共用。
+网站从私有子模块的固定提交读取正式笔记。Obsidian 根目录是 `knowledge-vault/笔记/`；`knowledge/publish.json` 中的 `notes[].path` 和 `attachments[]` 均相对此目录填写，例如 `SAT求解/CDCL.md`。清单维护网址、类别、分组、章节和顺序；标题、摘要分别读取笔记的 `title`、`description`，供页面、关联索引与 llms.txt 共用。
 
 公开范围由清单显式决定：导出清单中的笔记、获准附件、关联演示及所需前置属性。双链转换为链接，未公开的目标显示为文字；反链存入关联索引的 `backlinks`。整篇嵌入、块引用及未获允许的附件会中止导出。
 
@@ -71,7 +71,7 @@ paginate: true
 
 ## 文献引用
 
-文献在正式知识库根目录的 `references.bib` 维护，构建时只读。正文使用 Pandoc 引用：
+文献在 Obsidian 根目录的 `references.bib` 维护，与笔记一起由子模块提供，构建时只读。正文使用 Pandoc 引用：
 
 ```markdown
 关键结论 [@Regev2004Introduction, pp. 1, 3–4]。

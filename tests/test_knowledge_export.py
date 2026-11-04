@@ -472,6 +472,39 @@ $$
         with self.assertRaisesRegex(ValueError, '附件'):
             self.run_export()
 
+    def test_typst_keeps_source_and_compiles_all_pages_with_the_vault_palette(self):
+        note = '格/约化/图.md'
+        (self.vault / '格/约化').mkdir(parents=True)
+        (self.vault / '.typst').mkdir()
+        (self.vault / '.typst/cinderfolio.typ').write_text('#let ink = rgb("#345678")')
+        code = ('#import "../../.typst/cinderfolio.typ": ink\n'
+                '#set page(width: auto, height: auto)\n#rect(fill: ink)\n#pagebreak()\nSecond page')
+        self.write_note(note, '# 图\n\n```typst\n' + code + '\n```\n', '两页图示。')
+        self.spec['notes'].append({'path': note, 'slug': 'diagram'})
+        self.run_export()
+
+        records = json.loads((self.out / 'typst.json').read_text())
+        urls = records['knowledge/diagram/index.md'][code]
+        self.assertEqual(len(set(urls)), 2)
+        svgs = [(self.out / 'docs/public' / url.lstrip('/')).read_text() for url in urls]
+        self.assertIn('#345678', svgs[0].lower())
+        self.assertTrue(all('class="typst-doc"' in svg for svg in svgs))
+        self.assertIn('```typst\n' + code + '\n```',
+                      (self.out / 'docs/public/knowledge/raw/diagram.md').read_text())
+
+        self.spec['notes'].pop()
+        self.run_export()
+        self.assertFalse((self.out / 'docs/public/typst').exists())
+
+    def test_typst_cannot_read_unpublished_vault_files(self):
+        self.write_note('乙.md', '# 乙\n\n```typst\n#read("未公开.md")\n```\n', '私有文件隔离。')
+        with self.assertRaisesRegex(ValueError, r'Typst 编译失败：乙\.md（导出页 knowledge/beta/index\.md:\d+'):
+            self.run_export()
+        (self.vault / '.typst').mkdir()
+        (self.vault / '.typst/cinderfolio.typ').symlink_to(self.vault / '未公开.md')
+        with self.assertRaisesRegex(ValueError, '配色模块必须是仓库内的普通文件'):
+            self.run_export()
+
     def test_note_embeds_and_block_links_stop_export(self):
         for link in ['![[乙]]', '[[乙#^block]]']:
             self.write_note('甲.md', '# 甲\n\n' + link, '临时嵌入示例。')
