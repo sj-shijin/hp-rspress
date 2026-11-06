@@ -16,6 +16,28 @@ import { Callout, Tab, Tabs, languageLabel } from '@rspress/core/theme';
   <CinderfolioDownload target="shiki-dark" />
 </CinderfolioPreview>
 
+## 词高亮
+
+在代码块中单独写一行注释 `// [!code word:message]`，即可高亮后续代码中匹配的 `message`。标记注释在展示时隐藏，Rspress 2.1.1 已默认支持。高亮底色与边框跟随上方的品牌色和亮暗主题。
+
+```ts title="词高亮 · 后续匹配"
+// [!code word:message]
+const message = 'Hello, Shiki';
+console.log(message);
+```
+
+在词后追加行数，例如 `[!code word:message:1]`，可将匹配范围限制为标记后的 1 行：
+
+```ts title="词高亮 · 仅下一行"
+// [!code word:message:1]
+const message = 'Hello, Shiki';
+console.log(message);
+```
+
+上例的第二行 `console.log(message)` 保持普通语法颜色。完整语法见 [Shiki transformers](https://shiki.style/packages/transformers#transformernotationwordhighlight)。
+
+## 语言示例
+
 <Tabs className="cf-tabs">
 
 <Tab label="通用编程">

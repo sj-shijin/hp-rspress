@@ -22,8 +22,7 @@
   },
   "devDependencies": {
     "@marp-team/marp-cli": "4.5.1",
-    "@rspress/core": "2.1.0",
-    "@shikijs/transformers": "4.5.0",
+    "@rspress/core": "2.1.1",
     "cinderfolio": "file:./cinderfolio",
     "katex": "^0.16.22",
     "mermaid": "12.2.0",
