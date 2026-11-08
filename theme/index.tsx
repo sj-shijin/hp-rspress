@@ -11,6 +11,7 @@ import DocSlides from './DocSlides';
 import type { ComponentProps } from 'react';
 
 export * from '@rspress/core/theme-original';
+export { Sidebar } from './Sidebar';
 
 export function Layout(props: ComponentProps<typeof OriginalLayout>) {
   return <CinderfolioProvider>
