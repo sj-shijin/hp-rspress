@@ -10,6 +10,8 @@
 
 知识笔记的侧栏短标题在公开清单的 `notes[].sidebarTitle` 设置，省略时使用原始标题；页面、搜索和 AI 索引使用完整标题。项目分组显示项目名，组内菜单使用不带项目前缀的短标题。
 
+笔记改名或扩充时沿用原 `slug`。多篇合并时，在承接笔记的 `aliases` 数组中登记被合并笔记的旧 slug，例如 `"aliases": ["high-bit-basis-reduction"]`。旧网页跳转到当前正文，旧 `index.md` 和 `raw/<slug>.md` 返回更新后的内容；导航、搜索、站点地图和 AI 索引收录当前页面。
+
 ```text
 categories[].overview  → /knowledge/<category>/ 类别首页
 普通笔记的 slug         → /knowledge/<slug>/

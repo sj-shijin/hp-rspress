@@ -301,6 +301,47 @@ $$
         self.assertTrue((self.out / 'docs/knowledge/alpha/index.md').is_file())
         self.assertFalse((self.out / 'docs/knowledge/alpha/index.mdx').exists())
 
+    def test_merged_notes_keep_old_pages_and_markdown_downloads(self):
+        self.spec['notes'][1]['aliases'] = ['old-beta', 'older-beta']
+        self.run_export()
+        index = json.loads((self.out / 'docs/public/knowledge/index.json').read_text())
+        note = next(note for note in index['notes'] if note['id'] == 'beta')
+        self.assertEqual(note['aliases'], ['/knowledge/old-beta/', '/knowledge/older-beta/'])
+        for alias in note['aliases']:
+            page = self.out / 'docs' / alias.lstrip('/') / 'index.mdx'
+            metadata = yaml.safe_load(page.read_text().split('---', 2)[1])
+            self.assertFalse(metadata['search'])
+        for origin, folder in [('', 'local'), ('https://shijin.space', 'production')]:
+            with self.subTest(origin=origin):
+                listing = self.render_llms(origin)
+                self.assertEqual(listing.count(origin + '/knowledge/beta/index.md'), 1)
+                self.assertNotIn('old-beta', listing)
+                self.assertNotIn('older-beta', listing)
+                built = self.root / folder
+                shutil.copytree(self.out / 'docs/public', built)
+                (built / 'knowledge/index.md').write_text('# 知识库\n')
+                for entry in index['notes']:
+                    for url in [entry['url'], *entry.get('aliases', [])]:
+                        (built / url.lstrip('/')).mkdir(parents=True)
+                (built / 'llms.txt').write_text(listing)
+                finalize(built, origin)
+                current = (built / 'knowledge/beta/index.md').read_bytes()
+                self.assertIn((origin + '/knowledge/math/index.md').encode(), current)
+                for slug in ['old-beta', 'older-beta']:
+                    self.assertEqual((built / 'knowledge' / slug / 'index.md').read_bytes(), current)
+                    self.assertEqual((built / 'knowledge/raw' / f'{slug}.md').read_bytes(), current)
+
+    def test_note_aliases_reject_conflicts_and_invalid_paths(self):
+        for aliases in [['beta'], ['alpha'], ['math'], ['old', 'old'], ['../other'], 'old']:
+            with self.subTest(aliases=aliases):
+                self.spec['notes'][1]['aliases'] = aliases
+                with self.assertRaises(ValueError):
+                    self.run_export()
+        self.spec['notes'][0]['aliases'] = ['old']
+        self.spec['notes'][1]['aliases'] = ['old']
+        with self.assertRaisesRegex(ValueError, '旧网址'):
+            self.run_export()
+
     def test_manifest_removal_cleans_pages_assets_and_navigation(self):
         self.run_export()
         self.run_export({'notes': [{'path': '乙.md', 'slug': 'beta'}]})

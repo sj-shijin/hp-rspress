@@ -38,12 +38,18 @@ class Note:
     sidebar_title: str = ''
     section: str = 'knowledge'
     landing: bool = False
+    legacy_slugs: list[str] = field(default_factory=list)
     slides: list[str] = field(default_factory=list)
     links: set[str] = field(default_factory=set)
 
     @property
     def url(self) -> str:
         return f"/{self.section}/{self.category if self.landing else self.slug}/"
+
+    @property
+    def aliases(self) -> list[str]:
+        slugs = ([self.slug] if self.landing else []) + self.legacy_slugs
+        return [f'/{self.section}/{slug}/' for slug in slugs]
 
 
 def inside(root: Path, relative: str) -> Path:
@@ -58,8 +64,11 @@ def inside(root: Path, relative: str) -> Path:
 def read_note(vault: Path, item: dict) -> Note:
     path = inside(vault, item['path'])
     slug = item['slug']
-    if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', slug):
-        raise ValueError("slug 只能使用小写英文、数字和连字符")
+    legacy_slugs = item.get('aliases', [])
+    if not isinstance(legacy_slugs, list) or any(
+            not isinstance(value, str) or not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', value)
+            for value in [slug, *legacy_slugs]):
+        raise ValueError("slug 和 aliases 只能使用小写英文、数字和连字符")
     text = path.read_text(encoding='utf-8')
     metadata = {}
     if text.startswith('---\n'):
@@ -78,6 +87,7 @@ def read_note(vault: Path, item: dict) -> Note:
                 description=description, category=item.get('category', ''),
                 group=item.get('group', ''),
                 chapter=item.get('chapter', ''), sidebar_title=item.get('sidebarTitle', ''),
+                legacy_slugs=legacy_slugs,
                 slides=item.get('slides', []))
 
 
@@ -166,11 +176,11 @@ def headings(text: str) -> str:
 
 
 def redirect_page(target: str) -> str:
-    """旧概览地址保留为组件路由；使用原生运行时保留查询参数与章节锚点。"""
+    """旧地址保留为组件路由；使用原生运行时保留查询参数与章节锚点。"""
     return """import { useEffect } from 'react';
 import { useHead, useLocation, useNavigate, withBase, withSiteOrigin } from '@rspress/core/runtime';
 
-export function OverviewRedirect() {
+export function NoteRedirect() {
   const navigate = useNavigate();
   const { search, hash } = useLocation();
   const target = withBase(__TARGET__);
@@ -181,10 +191,10 @@ export function OverviewRedirect() {
   useEffect(() => {
     navigate(target + search + hash, { replace: true });
   }, [navigate, target, search, hash]);
-  return <p>概览已合并至<a href={target}>领域首页</a>。</p>;
+  return <p>内容已更新，请前往<a href={target}>当前页面</a>。</p>;
 }
 
-<OverviewRedirect />
+<NoteRedirect />
 """.replace('__TARGET__', json.dumps(target))
 
 
@@ -215,6 +225,13 @@ class Exporter:
                 if overview is None:
                     raise ValueError("概览必须是同一类别中已列入公开清单的笔记")
                 overview.landing = True
+        routes = {n.url for n in self.notes} | {
+            f'/{c.get("section", "knowledge")}/{identifier}/' for identifier, c in self.categories.items()}
+        for note in self.notes:
+            for alias in note.aliases:
+                if alias in routes:
+                    raise ValueError(f'旧网址与已有页面冲突：{alias}')
+                routes.add(alias)
         self.allowed_assets = {inside(self.vault, path).resolve() for path in manifest.get('attachments', [])}
         self.used_assets = {}
         self.unlinked = 0
@@ -316,7 +333,7 @@ class Exporter:
         slide_registry = SlideRegistry(site_source.parent)
         site_projects = read_site_projects(site_source, slide_registry)
         note_slides = {note.slug: slide_registry.resolve(note.slides) for note in self.notes}
-        reserved = {n.url for n in self.notes} | {f'/{n.section}/{n.slug}/' for n in self.notes} | {
+        reserved = {n.url for n in self.notes} | {url for n in self.notes for url in n.aliases} | {
             f'/{c.get("section", "knowledge")}/{identifier}/' for identifier, c in self.categories.items()}
         if any(page['url'] in reserved for project in site_projects for page in project['pages']):
             raise ValueError('网站项目与公开清单产生重复网址')
@@ -470,20 +487,21 @@ class Exporter:
             if slides:
                 metadata['slides'] = slides
             page(docs / note.url.lstrip('/') / 'index.md', metadata, headings(body))
-            (docs / 'public' / note.section / 'raw' / f'{note.slug}.md').write_text(
-                f'# {title}\n\n' + body.rstrip() + slides_markdown(slides) + '\n', encoding='utf-8')
-            if note.landing:
-                # 保留旧文章路由，使用原生运行时跳转；正文不再生成第二份页面。
-                page(docs / note.section / note.slug / 'index.mdx',
-                     {'title': '概览入口', 'pageType': 'blank', 'search': False},
+            for slug in [note.slug, *note.legacy_slugs]:
+                (docs / 'public' / note.section / 'raw' / f'{slug}.md').write_text(
+                    f'# {title}\n\n' + body.rstrip() + slides_markdown(slides) + '\n', encoding='utf-8')
+            for alias in note.aliases:
+                # 旧地址跳转到当前正文，同时保留 Markdown 下载入口。
+                page(docs / alias.lstrip('/') / 'index.mdx',
+                     {'title': '内容已更新', 'pageType': 'blank', 'search': False},
                      redirect_page(note.url))
             records.append({'id': note.slug, 'title': note.title, 'description': note.description,
                             'url': note.url,
                             'markdown': markdown_url, 'section': note.section, 'category': note.category,
                             'group': note.group, 'chapter': note.chapter,
                             'links': sorted(note.links), 'backlinks': [n.slug for n in incoming]})
-            if note.landing:
-                records[-1]['aliases'] = [f'/{note.section}/{note.slug}/']
+            if note.aliases:
+                records[-1]['aliases'] = note.aliases
             if slides:
                 records[-1]['slides'] = slides
         for source, name in self.used_assets.items():

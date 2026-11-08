@@ -151,6 +151,7 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
         landing = category.get('overview') == identifier
         url = f"/{section(item)}/{item['category'] if landing else identifier}/"
         old_urls = [f'/{section(item)}/{identifier}/'] if landing else []
+        old_urls += [f'/{section(item)}/{slug}/' for slug in item.get('aliases', [])]
         require(note['url'] == url and note.get('aliases', []) == old_urls,
                 f'笔记网址与清单不一致：{identifier}')
         require(note['description'] == description, f'笔记摘要不一致：{identifier}')
@@ -196,11 +197,14 @@ def check_build(output: Path, manifest: Path, vault: Path, site_origin: str = ''
                     f'旧网址兼容页未正确生成：{alias}')
             require((output / alias.lstrip('/') / 'index.md').read_bytes() == raw.read_bytes(),
                     f'旧 Markdown 网址失效：{alias}')
+            legacy_raw = output / section(item) / 'raw' / f'{Path(alias).name}.md'
+            require(legacy_raw.read_bytes() == raw.read_bytes(), f'旧 Markdown 下载内容不一致：{alias}')
 
     actual_html = {p.relative_to(output).as_posix()
                    for key in SECTIONS for p in (output / key).rglob('*.html')}
     require(actual_html == expected_html, '知识库网页范围与公开清单不一致')
-    expected_raw = {f"{section(item)}/raw/{identifier}.md" for identifier, item in expected.items()}
+    expected_raw = {f"{section(item)}/raw/{slug}.md" for identifier, item in expected.items()
+                    for slug in [identifier, *item.get('aliases', [])]}
     actual_raw = {p.relative_to(output).as_posix()
                   for key in SECTIONS for p in (output / key / 'raw').rglob('*') if p.is_file()}
     require(actual_raw == expected_raw, '原始 Markdown 公开范围不一致')

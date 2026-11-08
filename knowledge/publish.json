@@ -124,41 +124,6 @@
       "chapter": "格的几何与计算问题"
     },
     {
-      "path": "格问题与格密码/格约化/格基约化与 LLL 算法.md",
-      "slug": "lattice-reduction-and-lll",
-      "category": "lattices",
-      "group": "基础知识",
-      "chapter": "格的几何与计算问题"
-    },
-    {
-      "path": "格问题与格密码/格约化/浮点 LLL 的精度与正确性.md",
-      "slug": "floating-point-lll",
-      "category": "lattices",
-      "group": "基础知识",
-      "chapter": "格的几何与计算问题"
-    },
-    {
-      "path": "格问题与格密码/格约化/从高位近似基向原基传递换基矩阵.md",
-      "slug": "high-bit-basis-reduction",
-      "category": "lattices",
-      "group": "基础知识",
-      "chapter": "格的几何与计算问题"
-    },
-    {
-      "path": "格问题与格密码/格约化/投影分块与局部换基.md",
-      "slug": "projected-block-basis-reduction",
-      "category": "lattices",
-      "group": "基础知识",
-      "chapter": "格的几何与计算问题"
-    },
-    {
-      "path": "格问题与格密码/格约化/Babai 最近平面算法与近似 CVP.md",
-      "slug": "babai-nearest-plane",
-      "category": "lattices",
-      "group": "基础知识",
-      "chapter": "格的几何与计算问题"
-    },
-    {
       "path": "格问题与格密码/格几何/对偶格与对偶基.md",
       "slug": "dual-lattices",
       "category": "lattices",
@@ -171,6 +136,51 @@
       "category": "lattices",
       "group": "基础知识",
       "chapter": "格的几何与计算问题"
+    },
+    {
+      "path": "格问题与格密码/格约化/格基约化与 LLL 算法.md",
+      "slug": "lattice-reduction-and-lll",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格约化"
+    },
+    {
+      "path": "格问题与格密码/格约化/现代格基约化算法.md",
+      "slug": "modern-lattice-reduction",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格约化"
+    },
+    {
+      "path": "格问题与格密码/格约化/用局部换基矩阵更新全局格基.md",
+      "slug": "projected-block-basis-reduction",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格约化"
+    },
+    {
+      "path": "格问题与格密码/格约化/现代格基约化中的精度控制.md",
+      "slug": "floating-point-lll",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格约化",
+      "aliases": [
+        "high-bit-basis-reduction"
+      ]
+    },
+    {
+      "path": "格问题与格密码/格约化/Babai 最近平面算法与近似 CVP.md",
+      "slug": "babai-nearest-plane",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格约化"
+    },
+    {
+      "path": "格问题与格密码/格约化/投影格、BKZ 与局部 SVP.md",
+      "slug": "projected-lattices-bkz-and-local-svp",
+      "category": "lattices",
+      "group": "基础知识",
+      "chapter": "格约化"
     },
     {
       "path": "格问题与格密码/高斯分析/高斯函数与离散高斯分布.md",
@@ -219,28 +229,21 @@
       "slug": "gaussian-heuristic-and-random-spheres",
       "category": "lattices",
       "group": "基础知识",
-      "chapter": "格约化与筛法基础"
-    },
-    {
-      "path": "格问题与格密码/格约化/投影格、BKZ 与局部 SVP.md",
-      "slug": "projected-lattices-bkz-and-local-svp",
-      "category": "lattices",
-      "group": "基础知识",
-      "chapter": "格约化与筛法基础"
+      "chapter": "格筛法基础"
     },
     {
       "path": "格问题与格密码/格筛法/筛法的基本框架与两向量约化.md",
       "slug": "lattice-sieving-basics",
       "category": "lattices",
       "group": "基础知识",
-      "chapter": "格约化与筛法基础"
+      "chapter": "格筛法基础"
     },
     {
       "path": "格问题与格密码/格筛法/Nguyen–Vidick、ListSieve 与 GaussSieve.md",
       "slug": "nguyen-vidick-listsieve-and-gausssieve",
       "category": "lattices",
       "group": "基础知识",
-      "chapter": "格约化与筛法基础"
+      "chapter": "格筛法基础"
     },
     {
       "path": "格问题与格密码/格筛法/筛法中的近邻搜索与分桶.md",

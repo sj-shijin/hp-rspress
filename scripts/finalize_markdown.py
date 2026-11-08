@@ -36,11 +36,13 @@ def finalize(output: Path, site_origin: str = '') -> dict:
         contexts[source] = note['url']
         contexts[target] = note['url']
         routes[note['url']] = note['url'] + 'index.md'
-        # 兼容先前公开的 Markdown 链接；AI 索引只收录领域首页一次。
+        # 兼容先前公开的页面及下载链接；AI 索引只收录当前正文。
         for alias in note.get('aliases', []):
             legacy = output / alias.lstrip('/') / 'index.md'
             shutil.copyfile(source, legacy)
             contexts[legacy] = note['url']
+            legacy_raw = output / note['section'] / 'raw' / f'{Path(alias).name}.md'
+            contexts[legacy_raw] = note['url']
             routes[alias] = note['url'] + 'index.md'
 
     # 为原生 404 页的 Markdown alternate 链接提供对应内容。
